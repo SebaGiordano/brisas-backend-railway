@@ -1,0 +1,57 @@
+@model BrisasDeOro.Web.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Iniciar sesión";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Brisas de Oro</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+</head>
+<body class="bg-light">
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <h4 class="card-title text-center mb-4">Brisas de Oro</h4>
+                        <h6 class="text-center text-muted mb-4">Panel de administración</h6>
+
+                        <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+                            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+                            <div class="mb-3">
+                                <label asp-for="UserName" class="form-label">Usuario</label>
+                                <input asp-for="UserName" class="form-control" autocomplete="username" />
+                                <span asp-validation-for="UserName" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Password" class="form-label">Contraseña</label>
+                                <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input asp-for="RememberMe" class="form-check-input" />
+                                <label asp-for="RememberMe" class="form-check-label">Recordarme</label>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Ingresar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+</body>
+</html>

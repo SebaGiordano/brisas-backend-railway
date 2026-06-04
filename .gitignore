@@ -1,0 +1,79 @@
+## .gitignore para ASP.NET Core / Visual Studio
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Rider
+.idea/
+*.sln.iml
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# User-specific files
+*.rsuser
+*.pidb
+*.polystate
+*.rptproj.rsuser
+
+# Publishing
+*.[Pp]ublish.xml
+*.azurePubxml
+*.pubxml
+*.publishproj
+publish/
+PublishScripts/
+
+# Secrets / connection strings
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/secrets.json
+
+# SQLite databases (dev)
+*.db
+*.db-shm
+*.db-wal
+
+# OS generated
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Node (si hay front-end tooling)
+node_modules/
+npm-debug.log*
+
+# Test results
+TestResults/
+coverage/
+*.coverage
+*.coveragexml

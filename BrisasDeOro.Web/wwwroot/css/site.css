@@ -1,0 +1,86 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+/* ── Mobile Responsive (max-width: 767.98px) ────────────────────────────────── */
+@media (max-width: 767.98px) {
+
+    /* Evitar desbordamiento horizontal */
+    body { overflow-x: hidden; }
+    .container { padding-left: 12px; padding-right: 12px; }
+
+    /* Logo navbar reducido */
+    .navbar-brand img { height: 35px !important; }
+
+    /* Navbar: permitir que el menú colapsado se expanda */
+    .navbar { overflow: visible !important; }
+
+    /* Fuente mínima 14px (ya definida en html base) */
+    p, span, td, th, label, li, div { font-size: 14px; }
+    .small, small { font-size: 12px !important; }
+
+    /* Campos de formulario — mínimo 44px, sin zoom automático en iOS */
+    .form-control,
+    .form-select,
+    textarea.form-control {
+        min-height: 44px;
+        font-size: 16px !important;
+    }
+    .input-group-text { min-height: 44px; }
+    .form-control-sm,
+    .form-select-sm   { min-height: 38px; font-size: 14px !important; }
+
+    /* Botones — mínimo 44px alto */
+    .btn     { min-height: 44px; padding-left: 1rem; padding-right: 1rem; }
+    .btn-sm  { min-height: 38px; }
+    /* Botón activo/seleccionado en negrita */
+    .btn.active, .btn[aria-pressed="true"], .filtro-tipo.active, .filtro-tipo-aloj.active { font-weight: 700 !important; }
+
+    /* Cards */
+    .card-body   { padding: 0.75rem; }
+    .card-header { padding: 0.5rem 0.75rem; }
+
+    /* Modales — casi pantalla completa */
+    .modal-dialog {
+        margin: 0.25rem auto !important;
+        max-width: calc(100vw - 0.5rem) !important;
+    }
+    .modal-content { min-height: 80vh; display: flex; flex-direction: column; }
+    .modal-body    { flex: 1; overflow-y: auto; }
+    .modal-footer  { flex-wrap: wrap; gap: 0.5rem; }
+    .modal-footer .btn { flex: 1 1 auto; min-width: 120px; }
+
+    /* Tablas — scroll horizontal habilitado */
+    .table-responsive { -webkit-overflow-scrolling: touch; }
+
+    /* Paginación */
+    .pagination { flex-wrap: wrap; }
+}
+
+/* ── Utilidades responsive para tablas ──────────────────────────────────────── */
+@media (max-width: 767.98px) {
+    .d-mobile-none       { display: none !important; }
+    .d-mobile-table-cell { display: table-cell !important; }
+}
+@media (min-width: 768px) {
+    .d-desktop-none { display: none !important; }
+}
