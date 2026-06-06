@@ -24,6 +24,91 @@
         @@media (max-width: 575.98px) { body { padding-top: 60px; } }
         @@media (max-width: 767.98px) {
             footer .container { white-space: normal !important; word-wrap: break-word !important; text-align: center !important; }
+            /* 5px extra de separación entre el navbar y el contenido en mobile */
+            body > .container { padding-top: 12px !important; }
+
+            /* ── Hamburger menu: permitir que el menú desplegado se vea sobre el contenido ── */
+            .navbar { overflow: visible !important; }
+
+            /* ── Panel desplegado ── */
+            .navbar-collapse.show {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                background: #fff;
+                border-radius: 0 0 12px 12px;
+                box-shadow: 0 6px 20px rgba(0,0,0,.1);
+                padding: 8px 12px 14px;
+                width: 100%;
+            }
+
+            /* ── Lista de secciones ── */
+            .navbar-collapse.show .navbar-nav {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 6px;
+                width: 100%;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .navbar-collapse.show .navbar-nav .nav-item { width: 100%; }
+
+            /* ── Cada sección: botón redondeado ── */
+            .navbar-collapse.show .navbar-nav .nav-link {
+                display: block !important;
+                text-align: center !important;
+                padding: 12px 16px !important;
+                border-radius: 8px !important;
+                background-color: #f1f3f5 !important;
+                color: #343a40 !important;
+                font-weight: 500 !important;
+                line-height: 1.4 !important;
+            }
+            /* Sección activa: azul con texto blanco */
+            .navbar-collapse.show .navbar-nav .nav-link.active {
+                background-color: #0d6efd !important;
+                color: #fff !important;
+            }
+
+            /* ── Fila usuario: línea divisoria + nombre izq / Salir der ── */
+            .navbar-collapse.show > div {
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                border-top: 1px solid #dee2e6 !important;
+                padding-top: 10px !important;
+                margin-top: 6px !important;
+                width: 100% !important;
+            }
+
+            /* ── Nombre de usuario: 15px ── */
+            .navbar-collapse.show > div .text-muted { font-size: 15px !important; }
+
+            /* ── Botón Salir: rojo ── */
+            .navbar-collapse.show .btn-outline-secondary {
+                border-color: #dc3545 !important;
+                color: #dc3545 !important;
+            }
+
+            /* ── Botón hamburguesa: dimensiones fijas + ícono escalado ── */
+            .navbar-toggler {
+                height: 42px !important;
+                width: 42px !important;
+                padding: 6px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            .navbar-toggler .navbar-toggler-icon {
+                width: 26px !important;
+                height: 26px !important;
+            }
+            /* Feedback visual inmediato al tocar un link del menú */
+            .navbar-collapse.show .navbar-nav .nav-link.nav-tap-active {
+                background-color: #0d6efd !important;
+                color: #fff !important;
+            }
         }
     </style>
 </head>
@@ -46,7 +131,7 @@
              && !_act.Equals("Crear",    StringComparison.OrdinalIgnoreCase)
                     ? " active" : "";
         }
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3 fixed-top">
+        <nav class="navbar navbar-expand-md navbar-toggleable-md navbar-light bg-white border-bottom box-shadow mb-3 fixed-top">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Inicio" asp-action="Index">
                     <img src="~/images/logo.png" height="50" width="auto" alt="Brisas de Oro" style="height:50px; width:auto; object-fit:contain; display:block;" />
@@ -55,7 +140,7 @@
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <div class="navbar-collapse collapse d-md-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
                             <a class="nav-link text-dark@(Activo("Inicio"))" asp-controller="Inicio" asp-action="Index">Inicio</a>
@@ -84,7 +169,7 @@
                                 <a class="nav-link text-dark@(Activo("Facturacion"))" asp-controller="Facturacion" asp-action="Index">Facturación</a>
                             </li>
                         }
-                        @if (User.IsInRole("Administrador"))
+                        @if (User.IsInRole("Administrador") || User.IsInRole("Viewer"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark@(Activo("Alojamientos"))" asp-controller="Alojamientos" asp-action="Index">Alojamientos</a>
@@ -92,6 +177,9 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark@(Activo("Tarifas"))" asp-controller="Tarifas" asp-action="Index">Tarifas</a>
                             </li>
+                        }
+                        @if (User.IsInRole("Administrador"))
+                        {
                             <li class="nav-item">
                                 <a class="nav-link text-dark@(Activo("Usuarios"))" asp-controller="Usuarios" asp-action="Index">Usuarios</a>
                             </li>
@@ -130,5 +218,20 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    <script>
+    (function () {
+        if (!('ontouchstart' in window)) return;
+        var links = document.querySelectorAll('.navbar-collapse .navbar-nav .nav-link');
+        links.forEach(function (link) {
+            link.addEventListener('touchstart', function () {
+                links.forEach(function (l) {
+                    l.classList.remove('active');
+                    l.classList.remove('nav-tap-active');
+                });
+                link.classList.add('nav-tap-active');
+            }, { passive: true });
+        });
+    })();
+    </script>
 </body>
 </html>

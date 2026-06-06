@@ -41,4 +41,5 @@ public class PendienteCobroItem
     public string   NombreAlojamiento { get; init; } = string.Empty;
     public DateOnly FechaSalida       { get; init; }
     public decimal  SaldoPendiente    { get; init; }
+    public bool     EsHoy             { get; init; }
 }

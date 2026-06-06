@@ -2,6 +2,8 @@ using BrisasDeOro.Web.Data;
 using BrisasDeOro.Web.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using BrisasDeOro.Web.Infrastructure;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,12 +37,35 @@ builder.Services.AddAntiforgery(options =>
 
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title       = "Brisas de Oro",
+        Version     = "v1",
+        Description = "Backend ASP.NET Core MVC — Hotel y Cabañas Brisas de Oro"
+    });
+    c.ResolveConflictingActions(api => api.First());
+    c.DocumentFilter<SwaggerMvcDocumentFilter>();
+});
+
 var app = builder.Build();
 
 // Seed roles on startup
 using (var scope = app.Services.CreateScope())
 {
     await SeedData.InitializeAsync(scope.ServiceProvider);
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Brisas de Oro v1");
+        c.RoutePrefix = "swagger";
+    });
 }
 
 if (!app.Environment.IsDevelopment())

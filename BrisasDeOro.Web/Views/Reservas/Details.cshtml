@@ -60,6 +60,11 @@
         #fechas-precios-row .fp-total { flex: 0 0 100% !important; max-width: 100% !important; display: flex !important; justify-content: space-between !important; align-items: baseline !important; }
         #fechas-precios-row .fp-total .detalle-label,
         #fechas-precios-row .fp-total .detalle-valor { white-space: nowrap !important; }
+        /* Saldo pendiente: monto y leyenda alineados a la derecha; bold+rojo cuando el cliente debe */
+        #fp-saldo .detalle-valor { text-align: right !important; }
+        #fp-saldo .detalle-valor.text-danger { font-weight: bold !important; color: #dc3545 !important; }
+        /* Fecha de registro: separador arriba y abajo, fondo suave */
+        #fila-fecha-registro { border-top: 1px solid #dee2e6 !important; border-bottom: 1px solid #dee2e6 !important; background-color: #f8f9fa !important; border-radius: 4px !important; }
         /* Botón "Agregar pago" del card header: contenido centrado */
         .btn-agregar-pago-card { display: flex !important; align-items: center !important; justify-content: center !important; }
         /* Tabla de pagos: ancho mínimo y sin quiebre */
@@ -78,6 +83,12 @@
         #modal-cancelar-reserva .modal-dialog  { min-height: unset !important; }
         #modal-cancelar-reserva .modal-content { height: auto !important; min-height: unset !important; max-height: 90vh !important; }
         #modal-cancelar-reserva .modal-footer  { padding-bottom: .75rem !important; }
+    }
+    @@media (min-width: 769px) {
+        /* Fecha de registro: ancho completo, línea arriba y abajo, fondo suave, título y fecha en línea */
+        #fila-fecha-registro { flex: 0 0 100% !important; max-width: 100% !important; display: flex !important; align-items: center !important; gap: .75rem !important; border-top: 1px solid #dee2e6 !important; border-bottom: 1px solid #dee2e6 !important; background-color: #f8f9fa !important; border-radius: 0 !important; padding: .4rem .75rem !important; margin-top: 1.5rem !important; }
+        #fila-fecha-registro .detalle-label,
+        #fila-fecha-registro .detalle-valor { margin-bottom: 0 !important; }
     }
 </style>
 
@@ -302,17 +313,21 @@
                         </div>
                     </div>
                     <div class="col-sm-6 fp-total">
-                        <div class="detalle-label">Total cobrado</div>
+                        <div class="detalle-label" style="color:#198754;font-weight:bold;">Total cobrado</div>
                         <div class="detalle-valor text-success fw-semibold">$@totalCobrado.ToString("N0")</div>
                     </div>
-                    <div class="col-sm-6 fp-total">
-                        <div class="detalle-label">Saldo pendiente</div>
-                        <div class="detalle-valor fw-semibold @(saldoPendiente > 0 ? "text-danger" : "text-success")">
+                    <div id="fp-saldo" class="col-sm-6 fp-total">
+                        <div class="detalle-label" style="color:#dc3545;font-weight:bold;">Saldo pendiente</div>
+                        <div class="detalle-valor fw-bold @(saldoPendiente > 0 ? "text-danger" : "text-success")">
                             $@saldoPendiente.ToString("N0")
+                            @if (saldoPendiente < 0)
+                            {
+                                <span class="d-block small fw-normal mt-1" style="color:#000000 !important;">(A devolver al cliente)</span>
+                            }
                         </div>
                     </div>
-                    <div class="col-sm-6 fp-total">
-                        <div class="detalle-label">Fecha de carga</div>
+                    <div id="fila-fecha-registro" class="col-sm-6 fp-total">
+                        <div class="detalle-label">Fecha de registro</div>
                         <div class="detalle-valor text-muted small">@Model.FechaCarga.ToString("dd/MM/yyyy HH:mm")</div>
                     </div>
                 </div>
@@ -367,21 +382,25 @@
                             </tr>
                         }
                     </tbody>
-                    <tfoot class="table-light fw-semibold">
+                    <tfoot class="table-light fw-bold">
                         <tr>
-                            <td colspan="3" class="text-end">Total estadía:</td>
-                            <td class="text-end">$@Model.MontoTotal.ToString("N0")</td>
+                            <td colspan="3" class="text-end fw-bold">Total estadía:</td>
+                            <td class="text-end fw-bold">$@Model.MontoTotal.ToString("N0")</td>
                             <td></td>
                         </tr>
                         <tr>
-                            <td colspan="3" class="text-end">Total cobrado:</td>
-                            <td class="text-end text-success">$@totalCobrado.ToString("N0")</td>
+                            <td colspan="3" class="text-end fw-bold">Total cobrado:</td>
+                            <td class="text-end fw-bold text-success">$@totalCobrado.ToString("N0")</td>
                             <td></td>
                         </tr>
                         <tr>
-                            <td colspan="3" class="text-end">Saldo pendiente:</td>
-                            <td class="text-end @(saldoPendiente > 0 ? "text-danger" : "text-success")">
+                            <td colspan="3" class="text-end fw-bold">Saldo pendiente:</td>
+                            <td class="text-end fw-bold @(saldoPendiente > 0 ? "text-danger" : "text-success")">
                                 $@saldoPendiente.ToString("N0")
+                                @if (saldoPendiente < 0)
+                                {
+                                    <span class="d-block small fw-normal" style="color:#000000 !important;">(A devolver al cliente)</span>
+                                }
                             </td>
                             <td></td>
                         </tr>

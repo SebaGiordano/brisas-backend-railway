@@ -11,7 +11,7 @@
 <script type="application/json" id="cal-admin">@(esAdmin ? "true" : "false")</script>
 
 @* ── Título + controles ── *@
-<div class="mb-2 d-flex align-items-center justify-content-between gap-2 flex-wrap">
+<div id="cal-topbar" class="mb-2 d-flex align-items-center justify-content-between gap-2 flex-wrap">
     <h2 class="mb-0">Calendario</h2>
     <div class="d-flex align-items-center gap-2">
         <div class="btn-group btn-group-sm">
@@ -128,6 +128,11 @@
         #modal-reserva .modal-footer  { padding-bottom: .75rem !important; }
         /* Botones del modal: contenido centrado verticalmente */
         #modal-reserva .btn { display: flex !important; align-items: center !important; justify-content: center !important; }
+    }
+    @@media (min-width: 769px) {
+        /* Botones de navegación centrados en pantalla */
+        #cal-topbar { display: grid !important; grid-template-columns: 1fr auto 1fr !important; align-items: center !important; }
+        #cal-topbar > div { grid-column: 2 !important; }
     }
 </style>
 <script>
@@ -371,8 +376,10 @@
   ${res.precioPorDia != null ? `<tr><td class="text-muted">Tarifa por día</td><td>${fmtPeso(res.precioPorDia)}</td></tr>` : ''}
   <tr><td class="text-muted">Total estadía</td>
       <td>${fmtPeso(res.montoTotal)}</td></tr>
+  <tr><td class="text-muted">Total cobrado</td>
+      <td style="color:#198754;font-weight:bold;">${fmtPeso(res.totalCobrado)}</td></tr>
   <tr><td class="text-muted">Saldo pendiente</td>
-      <td class="${sal > .01 ? 'text-danger fw-semibold' : ''}">${fmtPeso(sal)}</td></tr>
+      <td class="${sal > .01 ? 'text-danger fw-bold' : 'fw-bold'}">${fmtPeso(sal)}</td></tr>
   <tr><td class="text-muted">Estado de pago</td>
       <td><span style="display:inline-block;padding:.2em .55em;border-radius:4px;font-size:.8em;font-weight:600;background:${c.bg};color:${c.fg};border:1px solid ${c.brd};">${est}</span></td></tr>
 </table>`;

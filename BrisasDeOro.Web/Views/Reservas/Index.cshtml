@@ -18,6 +18,9 @@
     .pago-pagado     { background-color: #CCFFCC; color: #1A5C1A; }
     .pago-invitacion { background-color: #E0E0E0; color: #333333; }
     .table > :not(caption) > * > * { vertical-align: middle; }
+    .col-titular-res .fw-semibold { font-weight: bold !important; }
+    .col-saldo-res { font-weight: bold !important; color: #dc3545 !important; }
+    .col-saldo-negativo { background-color: #fde8e8 !important; }
     @@media (max-width: 767.98px) {
         .tabla-reservas-responsive { overflow-x: auto; overflow-y: auto; max-height: 400px; -webkit-overflow-scrolling: touch; }
         .tabla-reservas-responsive table { min-width: 900px; }
@@ -25,8 +28,11 @@
         .tabla-reservas-responsive th { white-space: nowrap; }
         /* Centrado vertical y horizontal dentro de botones y celda de acciones */
         .btn { display: inline-flex !important; align-items: center; justify-content: center; }
-        /* Botones Filtrar + Limpiar: centrados horizontalmente en la fila */
-        #filtros-reservas-row { justify-content: center !important; }
+        /* Botones Filtrar + Limpiar: cada uno al 50% del ancho */
+        #filtros-reservas-row > div:nth-child(6),
+        #filtros-reservas-row > div:nth-child(7) { flex: 1 !important; }
+        #filtros-reservas-row > div:nth-child(6) .btn,
+        #filtros-reservas-row > div:nth-child(7) .btn { width: 100% !important; display: flex !important; }
         /* Modal de cancelación: altura adaptada al contenido */
         #modal-cancelar-reserva .modal-dialog  { min-height: unset !important; }
         #modal-cancelar-reserva .modal-content { height: auto !important; min-height: unset !important; max-height: 90vh !important; }
@@ -40,8 +46,16 @@
             position: sticky; left: 0; z-index: 2;
             background-color: #fff !important;
             box-shadow: 3px 0 6px -2px rgba(0,0,0,.15);
+            border-bottom: 1px solid #dee2e6 !important;
         }
         thead .col-titular-res { z-index: 3; background-color: #212529 !important; }
+        /* Titular con saldo negativo: fondo rojo claro visible sin scroll */
+        .titular-saldo-negativo { background-color: #fde8e8 !important; }
+    }
+    @@media (min-width: 769px) {
+        /* Filtros: una sola fila, campos proporcionales, margen derecho = izquierdo */
+        #filtros-reservas-row { flex-wrap: nowrap !important; }
+        #filtros-reservas-row > div:not(.col-auto) { flex: 1 !important; min-width: 0 !important; }
     }
 </style>
 
@@ -315,7 +329,7 @@ else
                 @foreach (var item in Model)
                 {
                     <tr class="@(item.Estado == EstadoReserva.Cancelada ? "table-secondary text-muted" : "")">
-                        <td class="col-titular-res">
+                        <td class="col-titular-res@(item.SaldoPendiente < 0 ? " titular-saldo-negativo" : "")">
                             <span class="fw-semibold">@item.NombreHuesped</span>
                             @if (item.EsInvitacion)
                             {
@@ -339,7 +353,7 @@ else
                         </td>
                         <td class="text-end text-nowrap">$@item.MontoTotal.ToString("N0")</td>
                         <td class="text-end text-nowrap">$@item.TotalCobrado.ToString("N0")</td>
-                        <td class="text-end text-nowrap @(item.SaldoPendiente > 0 ? "text-danger fw-semibold" : "")">
+                        <td class="text-end text-nowrap col-saldo-res@(item.SaldoPendiente < 0 ? " col-saldo-negativo" : "")">
                             $@item.SaldoPendiente.ToString("N0")
                         </td>
                         <td class="text-center">

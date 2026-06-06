@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BrisasDeOro.Web.Controllers;
 
-[Authorize(Roles = "Administrador")]
+[Authorize]
 public class AlojamientosController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -52,6 +52,7 @@ public class AlojamientosController : Controller
     // ── Editar GET ────────────────────────────────────────────────────────────
 
     [HttpGet]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Editar(int id)
     {
         var a = await _context.Alojamientos.FindAsync(id);
@@ -71,6 +72,7 @@ public class AlojamientosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Editar(EditarAlojamientoViewModel model)
     {
         if (!ModelState.IsValid)
@@ -95,6 +97,7 @@ public class AlojamientosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Desactivar(int id)
     {
         var a = await _context.Alojamientos.FindAsync(id);
@@ -112,6 +115,7 @@ public class AlojamientosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Activar(int id)
     {
         var a = await _context.Alojamientos.FindAsync(id);

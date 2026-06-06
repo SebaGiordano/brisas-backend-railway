@@ -20,6 +20,11 @@
 </div>
 
 <style>
+    /* Bold: Total en ingresos, Porcentaje en ocupación, % en canales */
+    #tabla-ingresos-wrap .fw-semibold { font-weight: bold !important; }
+    #tabla-ocu-un-wrap tr.table-light td.fw-semibold,
+    #tabla-ocu-pl-wrap tr.table-light td.fw-semibold { font-weight: bold !important; }
+    #tabla-canales-wrap td:nth-child(3) { font-weight: bold !important; }
     @@media (max-width: 767.98px) {
         /* Fila de botones Filtrar/Limpiar: ancho completo y centrada */
         #filtro-btns { flex: 0 0 100% !important; max-width: 100% !important; justify-content: center !important; }
@@ -49,6 +54,13 @@
         /* Modales de gráficos: altura auto, padding-bottom igual al lateral */
         .modal-grafico .modal-content { height: auto !important; min-height: unset !important; }
         .modal-grafico .modal-footer { padding-bottom: 1rem !important; }
+        /* Botones Ver gráfico: centrados horizontalmente */
+        .btn-grafico-container { display: flex !important; justify-content: center !important; }
+    }
+    @@media (min-width: 769px) {
+        /* Hint text: línea propia debajo de los filtros, alineada a la izquierda */
+        #filtro-hint { flex: 0 0 100% !important; }
+        #filtro-btns .btn { width: 110px !important; }
     }
 </style>
 
@@ -96,7 +108,7 @@
                 <i class="bi bi-x-lg me-1"></i>Limpiar
             </a>
         </div>
-        <div class="col-auto align-self-end pb-1">
+        <div id="filtro-hint" class="col-auto align-self-end pb-1">
             <span class="text-muted fst-italic" style="font-size:.74rem;">Desde/Hasta tiene prioridad sobre Mes/Año</span>
         </div>
     </div>
@@ -113,7 +125,7 @@
         </div>
         <div id="comp-row" class="@(Model.Comparar ? "d-contents" : "d-none")">
             <div class="col-auto">
-                <label class="form-label small mb-1">Mes comp.</label>
+                <label class="form-label small mb-1"><span class="d-none d-md-inline">Mes (<strong>Comparativo</strong>)</span><span class="d-md-none">Mes (<strong>Comparativo</strong>)</span></label>
                 <select name="mesComp" class="form-select form-select-sm">
                     <option value="" selected="@(Model.MesComp == null)">—</option>
                     @for (int i = 1; i <= 12; i++)
@@ -123,7 +135,7 @@
                 </select>
             </div>
             <div class="col-auto">
-                <label class="form-label small mb-1">Año comp.</label>
+                <label class="form-label small mb-1"><span class="d-none d-md-inline">Año (<strong>Comparativo</strong>)</span><span class="d-md-none">Año (<strong>Comparativo</strong>)</span></label>
                 <select name="annoComp" class="form-select form-select-sm">
                     <option value="" selected="@(Model.AnnoComp == null)">—</option>
                     @foreach (var y in Model.AnnosDisponibles)
@@ -133,13 +145,13 @@
                 </select>
             </div>
             <div class="col-auto">
-                <label class="form-label small mb-1">Desde comp.</label>
+                <label class="form-label small mb-1"><span class="d-none d-md-inline">Desde (<strong>Comparativo</strong>)</span><span class="d-md-none">Desde (<strong>Comparativo</strong>)</span></label>
                 <input type="date" name="desdeComp" class="form-control form-control-sm"
                        placeholder="dd/mm/aaaa"
                        value="@(Model.DesdeComp?.ToString("yyyy-MM-dd") ?? "")" />
             </div>
             <div class="col-auto">
-                <label class="form-label small mb-1">Hasta comp.</label>
+                <label class="form-label small mb-1"><span class="d-none d-md-inline">Hasta (<strong>Comparativo</strong>)</span><span class="d-md-none">Hasta (<strong>Comparativo</strong>)</span></label>
                 <input type="date" name="hastaComp" class="form-control form-control-sm"
                        placeholder="dd/mm/aaaa"
                        value="@(Model.HastaComp?.ToString("yyyy-MM-dd") ?? "")" />
@@ -166,7 +178,7 @@
         <div class="card text-center h-100 border-primary border-opacity-50">
             <div class="card-body py-3">
                 <div class="fs-4 fw-bold text-primary">$@Fmt(p.TotalIngresos)</div>
-                <div class="text-muted small mt-1">Total ingresos<br><span class="fst-italic">(por fecha ingreso)</span></div>
+                <div class="text-muted small mt-1"><strong>Total ingresos</strong><br><span class="fst-italic">(Por fecha ingreso)</span></div>
             </div>
         </div>
     </div>
@@ -174,7 +186,7 @@
         <div class="card text-center h-100 border-success border-opacity-50">
             <div class="card-body py-3">
                 <div class="fs-4 fw-bold text-success">@FmtPct(p.PctOcupacion)</div>
-                <div class="text-muted small mt-1">Ocupación total<br><span class="fst-italic">(hab. + cabañas)</span></div>
+                <div class="text-muted small mt-1"><strong>Ocupación total</strong><br><span class="fst-italic">(Hab. + Cabañas)</span></div>
             </div>
         </div>
     </div>
@@ -182,7 +194,7 @@
         <div class="card text-center h-100 border-warning border-opacity-50">
             <div class="card-body py-3">
                 <div class="fs-4 fw-bold text-warning">@p.CantidadReservas</div>
-                <div class="text-muted small mt-1">Reservas del período</div>
+                <div class="text-muted small mt-1"><strong>Reservas del período</strong><br><span class="fst-italic">(Ingreso en el período)</span></div>
             </div>
         </div>
     </div>
@@ -190,7 +202,7 @@
         <div class="card text-center h-100 border-info border-opacity-50">
             <div class="card-body py-3">
                 <div class="fs-4 fw-bold text-info">@p.PromedioNoches.ToString("F1")</div>
-                <div class="text-muted small mt-1">Prom. noches<br><span class="fst-italic">por reserva</span></div>
+                <div class="text-muted small mt-1"><strong>Promedio de noches</strong><br><span class="fst-italic">(Por reserva)</span></div>
             </div>
         </div>
     </div>
@@ -245,10 +257,12 @@
         <div class="d-md-none text-center text-muted" style="font-size:11px; margin-top:6px !important;">← Deslizá para ver más →</div>
         <hr class="my-3 d-mobile-none" style="border-color:#dee2e6;opacity:.6;" />
         <div style="max-height:220px;" class="d-mobile-none"><canvas id="chart-ing"></canvas></div>
-        <button type="button" class="btn btn-outline-primary btn-sm d-desktop-none mt-2"
-                data-bs-toggle="modal" data-bs-target="#modal-chart-ing">
-            <i class="bi bi-pie-chart me-1"></i>Ver gráfico
-        </button>
+        <div class="btn-grafico-container">
+            <button type="button" class="btn btn-outline-primary btn-sm d-desktop-none mt-2"
+                    data-bs-toggle="modal" data-bs-target="#modal-chart-ing">
+                <i class="bi bi-pie-chart me-1"></i>Ver gráfico de ingresos
+            </button>
+        </div>
     </div>
 </div>
 
@@ -297,10 +311,12 @@
         <div class="d-md-none text-center text-muted" style="font-size:11px; margin-top:6px !important;">← Deslizá para ver más →</div>
         <hr class="my-3 d-mobile-none" style="border-color:#dee2e6;opacity:.6;" />
         <div style="max-height:200px;" class="d-mobile-none"><canvas id="chart-ocu-un"></canvas></div>
-        <button type="button" class="btn btn-outline-primary btn-sm d-desktop-none mt-2"
-                data-bs-toggle="modal" data-bs-target="#modal-chart-ocu-un">
-            <i class="bi bi-pie-chart me-1"></i>Ver gráfico de unidades
-        </button>
+        <div class="btn-grafico-container">
+            <button type="button" class="btn btn-outline-primary btn-sm d-desktop-none mt-2"
+                    data-bs-toggle="modal" data-bs-target="#modal-chart-ocu-un">
+                <i class="bi bi-pie-chart me-1"></i>Ver gráfico de unidades
+            </button>
+        </div>
 
         @* Divisor entre bloques *@
         <hr class="my-4" style="border-width:2px;border-color:#495057;opacity:.2;" />
@@ -342,10 +358,12 @@
         <div class="d-md-none text-center text-muted" style="font-size:11px; margin-top:6px !important;">← Deslizá para ver más →</div>
         <hr class="my-3 d-mobile-none" style="border-color:#dee2e6;opacity:.6;" />
         <div style="max-height:200px;" class="d-mobile-none"><canvas id="chart-ocu-pl"></canvas></div>
-        <button type="button" class="btn btn-outline-primary btn-sm d-desktop-none mt-2"
-                data-bs-toggle="modal" data-bs-target="#modal-chart-ocu-pl">
-            <i class="bi bi-pie-chart me-1"></i>Ver gráfico de plazas
-        </button>
+        <div class="btn-grafico-container">
+            <button type="button" class="btn btn-outline-primary btn-sm d-desktop-none mt-2"
+                    data-bs-toggle="modal" data-bs-target="#modal-chart-ocu-pl">
+                <i class="bi bi-pie-chart me-1"></i>Ver gráfico de plazas
+            </button>
+        </div>
 
     </div>
 </div>
@@ -362,7 +380,7 @@
         }
         else
         {
-            <div class="table-responsive mb-3">
+            <div id="tabla-canales-wrap" class="table-responsive mb-3">
                 <table class="table table-sm table-bordered align-middle mb-0" style="font-size:.85rem;">
                     <thead class="table-dark">
                         <tr><th>Canal</th><th class="text-center">Reservas</th><th class="text-center">%</th></tr>
@@ -376,10 +394,12 @@
                 </table>
             </div>
             <div style="max-height:220px;" class="d-mobile-none"><canvas id="chart-can"></canvas></div>
-            <button type="button" class="btn btn-outline-primary btn-sm d-desktop-none mt-2"
-                    data-bs-toggle="modal" data-bs-target="#modal-chart-can">
-                <i class="bi bi-pie-chart me-1"></i>Ver gráfico de canales
-            </button>
+            <div class="btn-grafico-container">
+                <button type="button" class="btn btn-outline-primary btn-sm d-desktop-none mt-2"
+                        data-bs-toggle="modal" data-bs-target="#modal-chart-can">
+                    <i class="bi bi-pie-chart me-1"></i>Ver gráfico de canales
+                </button>
+            </div>
         }
     </div>
 </div>
@@ -649,7 +669,7 @@ const METODOS  = ['Efectivo','Transferencia','T. Crédito','T. Débito'];
 const C_AZ     = 'rgba(54,162,235,.75)';
 const C_OR     = 'rgba(255,159,64,.75)';
 const C_3        = ['rgba(54,162,235,.75)','rgba(75,192,192,.75)','rgba(255,99,132,.75)'];
-const OCU_LABELS    = ['Habitaciones ocupadas', 'Cabañas ocupadas', 'Libre'];
+const OCU_LABELS    = ['Habitaciones ocupadas', 'Cabañas ocupadas', 'Unidades disponibles'];
 const OCU_PL_LABELS = ['Personas en habitaciones', 'Personas en cabañas', 'Plazas libres'];
 const OCU_COLORS    = ['rgba(54,162,235,.75)', 'rgba(75,192,192,.75)', 'rgba(200,200,200,.5)'];
 
@@ -723,6 +743,46 @@ mkOcuBlock('chart-ocu-pl', ocuSlices(D.ocu.plazas), OCU_COLORS);
 mkCan('chart-can', D.can.labels, D.can.data, false);
 
 // ── Charts mobile (se inicializan al abrir el modal) ─────────────────────────
+
+// Variante de mkPie para gráficos de ocupación: agrega línea informativa "Total ocupado — X%"
+// después de la entrada de Cabañas (índice 1). No representa ninguna porción del gráfico.
+function mkPieOcu(id, labels, data, colors) {
+    const el = document.getElementById(id); if (!el) return;
+    if (el._chartInst) el._chartInst.destroy();
+    el._chartInst = new Chart(el, {
+        type: 'pie',
+        data: { labels, datasets: [{ data, backgroundColor: colors }] },
+        options: { responsive: true, maintainAspectRatio: true,
+            plugins: { legend: { position: 'bottom',
+                labels: { font: { size: 12 },
+                    generateLabels(chart) {
+                        const ds  = chart.data.datasets[0];
+                        const sum = ds.data.reduce((a, b) => a + b, 0);
+                        const items = chart.data.labels.map((lbl, i) => ({
+                            text:        `${lbl} — ${sum > 0 ? (ds.data[i] / sum * 100).toFixed(1) : '0.0'}%`,
+                            fillStyle:   Array.isArray(ds.backgroundColor) ? ds.backgroundColor[i] : ds.backgroundColor,
+                            strokeStyle: 'transparent',
+                            lineWidth:   0,
+                            hidden:      false,
+                            index:       i
+                        }));
+                        // Línea informativa: suma hab + cab (= 100 - disponible, ya que la suma total = 100)
+                        const totPct = sum > 0 ? (ds.data[0] + ds.data[1]).toFixed(1) : '0.0';
+                        items.splice(2, 0, {
+                            text:        `Total ocupado — ${totPct}%`,
+                            fillStyle:   'rgba(80,80,80,0.15)',
+                            strokeStyle: 'transparent',
+                            lineWidth:   0,
+                            hidden:      false,
+                            index:       -1
+                        });
+                        return items;
+                    }
+                }
+            }}}
+    });
+}
+
 function mkPie(id, labels, data, colors) {
     const el = document.getElementById(id); if (!el) return;
     if (el._chartInst) el._chartInst.destroy();
@@ -755,10 +815,10 @@ document.getElementById('modal-chart-ing')?.addEventListener('shown.bs.modal', (
         D.ing.fi, PIE_COLORS);
 });
 document.getElementById('modal-chart-ocu-un')?.addEventListener('shown.bs.modal', () => {
-    mkPie('chart-ocu-un-m', OCU_LABELS, ocuSlices(D.ocu.un), OCU_COLORS);
+    mkPieOcu('chart-ocu-un-m', OCU_LABELS, ocuSlices(D.ocu.un), OCU_COLORS);
 });
 document.getElementById('modal-chart-ocu-pl')?.addEventListener('shown.bs.modal', () => {
-    mkPie('chart-ocu-pl-m', OCU_PL_LABELS, ocuSlices(D.ocu.plazas), OCU_COLORS);
+    mkPieOcu('chart-ocu-pl-m', OCU_PL_LABELS, ocuSlices(D.ocu.plazas), OCU_COLORS);
 });
 document.getElementById('modal-chart-can')?.addEventListener('shown.bs.modal', () => {
     mkPie('chart-can-m', D.can.labels, D.can.data, PIE_COLORS);

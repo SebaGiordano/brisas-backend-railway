@@ -45,9 +45,11 @@ public class PagosController : Controller
             MontoTotal        = reserva.MontoTotal,
             TotalCobrado      = totalCobrado,
             SaldoPendiente    = saldoPendiente,
-            Monto             = saldoPendiente > 0 ? saldoPendiente : 0,
+            Monto             = saldoPendiente,
             Fecha             = DateTime.Today,
-            TipoPago          = tienePagosPrevios ? TipoPago.Cancelacion : TipoPago.Sena,
+            TipoPago          = saldoPendiente < 0 ? TipoPago.Ajuste
+                              : tienePagosPrevios  ? TipoPago.Cancelacion
+                              :                      TipoPago.Sena,
         };
 
         return View(vm);

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BrisasDeOro.Web.Controllers;
 
-[Authorize(Roles = "Administrador")]
+[Authorize]
 public class TarifasController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -91,6 +91,7 @@ public class TarifasController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> GuardarTemporadas(List<TemporadaEditItem> items)
     {
         foreach (var item in items)
@@ -110,6 +111,7 @@ public class TarifasController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> AjustarPrecios(
         decimal porcentaje, string tipoAloj, string servicio, int temporadaId)
     {
@@ -191,6 +193,7 @@ public class TarifasController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> EditarGrupo(
         List<TarifaEditItem> filas, int temporadaId, int cantPersonas)
     {
@@ -238,6 +241,7 @@ public class TarifasController : Controller
     // ── Editar GET ────────────────────────────────────────────────────────────
 
     [HttpGet]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Editar(int id)
     {
         var tarifa = await _context.Tarifas
@@ -262,6 +266,7 @@ public class TarifasController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Editar(EditarTarifaViewModel model)
     {
         if (!ModelState.IsValid)

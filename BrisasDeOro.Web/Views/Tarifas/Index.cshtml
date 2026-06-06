@@ -11,7 +11,7 @@
 </div>
 
 @* ── Barra superior: filtro | pestañas temporada | gestión de precios ── *@
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start mb-3 gap-3">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start mb-3 gap-3 barra-superior-tarifas">
 
     @* Filtro por tipo — izquierda *@
     <div class="d-flex align-items-center gap-2 flex-wrap pt-1 filtros-tipo-tarifas">
@@ -210,6 +210,19 @@
 @section Scripts {
 <style>
     .filtro-tipo { transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
+    /* Azul activo uniforme para ambas filas de filtros — desktop y mobile */
+    .temporadas-tarifas .btn-primary {
+        background-color: #0d6efd !important;
+        border-color: #0d6efd !important;
+    }
+    .filtros-tipo-tarifas .filtro-tipo.active {
+        background-color: #0d6efd !important;
+        border-color: #0d6efd !important;
+    }
+    @@media (min-width: 769px) {
+        .barra-superior-tarifas { align-items: stretch !important; }
+        .barra-superior-tarifas .temporadas-tarifas { justify-content: space-between !important; }
+    }
     @@media (max-width: 767.98px) {
         /* Filtro por tipo: ancho completo, botones distribuidos */
         .filtros-tipo-tarifas {
@@ -229,7 +242,7 @@
             flex: 1 !important; font-size: 12px !important; padding: 5px 4px !important;
             white-space: nowrap; display: flex !important; align-items: center !important; justify-content: center !important;
         }
-        /* Botón activo de temporada en negrita (mismo tono btn-primary) */
+        /* Negrita adicional en temporada activa solo en mobile */
         .temporadas-tarifas .btn-primary { font-weight: 700 !important; }
         /* Modal de temporadas: altura adaptada al contenido */
         #modal-temporadas .modal-content { min-height: unset !important; height: auto !important; }
@@ -476,17 +489,29 @@ else
         }
         /* Excluir .tar-aloj del highlight hover */
         #tabla-tarifas tbody tr:hover > .tar-aloj {
-            background-color: #D0E8F2 !important;
+            background-color: #343a40 !important;
         }
         /* Separación entre grupos */
         #tabla-tarifas tbody[data-tipo] + tbody[data-tipo] tr:first-child td {
             border-top: 2px solid #cccccc !important;
         }
+        /* Columnas de precio: valores a la derecha, encabezados centrados */
+        #tabla-tarifas tbody td.tar-cd,
+        #tabla-tarifas tbody td.tar-sd { text-align: right !important; }
+        #tabla-tarifas thead tr th:nth-child(3),
+        #tabla-tarifas thead tr th:nth-child(4) { text-align: center !important; }
         /* Desktop */
         @@media (min-width: 768px) {
             #tabla-tarifas td, #tabla-tarifas th { padding: .6rem .85rem; font-size: .92rem; }
             .tar-aloj { font-size: 1.2rem !important; font-weight: bold !important;
-                        line-height: 1 !important; background-color: #D0E8F2 !important; }
+                        line-height: 1 !important; background-color: #343a40 !important; color: #ffffff !important; }
+            table th { font-size: 1rem !important; }
+            #tabla-tarifas tbody td.tar-pers,
+            #tabla-tarifas tbody td.tar-cd,
+            #tabla-tarifas tbody td.tar-sd,
+            #tabla-tarifas thead tr th:nth-child(2),
+            #tabla-tarifas thead tr th:nth-child(3),
+            #tabla-tarifas thead tr th:nth-child(4) { border-right: 1px solid #dee2e6 !important; }
             /* Filas alternadas dentro de cada grupo (excluye la celda Alojamiento) */
             #tabla-tarifas tbody tr:nth-child(odd)  td:not(.tar-aloj) { background-color: #FFFFFF; }
             #tabla-tarifas tbody tr:nth-child(even) td:not(.tar-aloj) { background-color: #F5F5F5; }
@@ -495,8 +520,13 @@ else
         @@media (max-width: 767.98px) {
             #tabla-tarifas td, #tabla-tarifas th { padding: .28rem .35rem; font-size: .76rem; }
             .tar-aloj { font-size: .76rem !important; font-weight: bold !important;
-                        line-height: 1.4 !important; background-color: #D0E8F2 !important; }
-            #tabla-tarifas tbody tr:hover > .tar-aloj { background-color: #D0E8F2 !important; }
+                        line-height: 1.4 !important; background-color: #343a40 !important; color: #ffffff !important; }
+            #tabla-tarifas tbody tr:hover > .tar-aloj { background-color: #343a40 !important; }
+            table th { font-size: 13px !important; }
+            #tabla-tarifas tbody td.text-end { font-size: 15px !important; }
+            #tabla-tarifas tbody td.tar-pers { font-size: 15px !important; border-right: 1px solid #dee2e6 !important; }
+            #tabla-tarifas tbody td.tar-cd { border-right: 1px solid #dee2e6 !important; }
+            #tabla-tarifas tbody td.tar-sd { border-right: 1px solid #dee2e6 !important; }
             /* Filas alternadas */
             #tabla-tarifas tbody tr:nth-child(odd)  td:not(.tar-aloj) { background-color: #FFFFFF; }
             #tabla-tarifas tbody tr:nth-child(even) td:not(.tar-aloj) { background-color: #F5F5F5; }
@@ -509,20 +539,11 @@ else
                 <table class="table table-hover mb-0" id="tabla-tarifas">
                     <thead class="table-dark">
                         <tr>
-                            <th>Alojamiento</th>
-                            <th>
-                                <span class="d-none d-md-inline">Personas</span>
-                                <span class="d-md-none">Pers.</span>
-                            </th>
-                            <th>
-                                <span class="d-none d-md-inline">Con desayuno</span>
-                                <span class="d-md-none">C/D</span>
-                            </th>
-                            <th>
-                                <span class="d-none d-md-inline">Sin desayuno</span>
-                                <span class="d-md-none">S/D</span>
-                            </th>
-                            <th>Acciones</th>
+                            <th style="font-size: 13px; font-weight: bold;">Alojamiento</th>
+                            <th style="font-size: 13px; font-weight: bold;"><span class="d-none d-md-inline">Personas</span><span class="d-md-none">Pers.</span></th>
+                            <th style="font-size: 13px; font-weight: bold;"><span class="d-none d-md-inline">Con desayuno</span><span class="d-md-none">C/D</span></th>
+                            <th style="font-size: 13px; font-weight: bold;"><span class="d-none d-md-inline">Sin desayuno</span><span class="d-md-none">S/D</span></th>
+                            <th style="font-size: 13px; font-weight: bold;">Acciones</th>
                         </tr>
                     </thead>
                     @foreach (var g in tablaGrupos.Where(g => g.Activo))
@@ -544,12 +565,12 @@ else
                                             }
                                         </td>
                                     }
-                                    <td>@row.Pers</td>
-                                    <td class="text-end text-nowrap">
+                                    <td class="tar-pers">@row.Pers</td>
+                                    <td class="text-end text-nowrap tar-cd">
                                         @if (row.CD > 0) { <text>$@row.CD.ToString("N0")</text> }
                                         else             { <span class="text-muted">—</span> }
                                     </td>
-                                    <td class="text-end text-nowrap">
+                                    <td class="text-end text-nowrap tar-sd">
                                         @if (row.SD > 0) { <text>$@row.SD.ToString("N0")</text> }
                                         else             { <span class="text-muted">—</span> }
                                     </td>

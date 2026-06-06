@@ -73,17 +73,32 @@
         }
         /* Monto total de saldos en negrita */
         #pane-saldos tfoot td.text-danger { font-weight: 700 !important; }
-        /* Formulario Saldos: Titular + Filtrar + Limpiar en una sola fila */
-        #pane-saldos form .row { flex-wrap: nowrap !important; }
-        #pane-saldos form .row > div:first-child { flex: 1 !important; min-width: 0 !important; }
-        /* Formulario Movimientos: Titular+botones en fila 1, Método de pago en fila 2 */
-        #pane-movimientos form .row > div:first-child { flex: 1 !important; min-width: 0 !important; width: auto !important; max-width: none !important; }
-        #pane-movimientos form .row > div.col-auto { flex: 0 0 auto !important; width: auto !important; }
-        #pane-movimientos form .row > div:nth-child(4) { order: 10 !important; flex: 0 0 100% !important; width: 100% !important; max-width: 100% !important; }
+        /* Formulario Saldos: fila 1 = Titular, fila 2 = Filtrar + Limpiar al 50% */
+        #pane-saldos form .row { flex-wrap: wrap !important; }
+        #pane-saldos form .row > div:first-child { flex: 0 0 100% !important; width: 100% !important; max-width: 100% !important; }
+        #input-titular-saldos { font-size: 16px !important; }
+        #pane-saldos form .row > div:nth-child(2),
+        #pane-saldos form .row > div:nth-child(3) { flex: 1 !important; }
+        #pane-saldos form .row > div:nth-child(2) .btn,
+        #pane-saldos form .row > div:nth-child(3) .btn { width: 100% !important; display: flex !important; }
+        /* Formulario Movimientos: fila 1 = Titular, fila 2 = Método, fila 3 = Filtrar + Limpiar al 50% */
+        #pane-movimientos form .row > div:first-child { flex: 0 0 100% !important; width: 100% !important; max-width: 100% !important; }
+        #input-titular-mov { font-size: 16px !important; }
+        #pane-movimientos form select[name="metodoPago"] { font-size: 16px !important; }
+        #pane-movimientos form .row > div:nth-child(4) { flex: 0 0 100% !important; width: 100% !important; max-width: 100% !important; order: 2 !important; }
+        #pane-movimientos form .row > div:nth-child(7),
+        #pane-movimientos form .row > div:nth-child(8) { flex: 1 !important; order: 3 !important; }
+        #pane-movimientos form .row > div:nth-child(7) .btn,
+        #pane-movimientos form .row > div:nth-child(8) .btn { width: 100% !important; display: flex !important; }
         /* Autocompletado: scroll suave en iOS */
         .ac-dropdown { -webkit-overflow-scrolling: touch !important; }
         /* Prevenir zoom automático en iOS (ocurre cuando font-size < 16px) */
         input, select, textarea { font-size: 16px !important; }
+    }
+    @@media (min-width: 769px) {
+        /* Filtros Movimientos: una sola fila, campos proporcionales */
+        #pane-movimientos form .row { flex-wrap: nowrap !important; }
+        #pane-movimientos form .row > div:not(.col-auto) { flex: 1 !important; min-width: 0 !important; }
     }
 </style>
 
@@ -255,17 +270,17 @@
                                 <td>@mov.NombreAlojamiento</td>
                                 <td>@NombreTipoPago(mov.TipoPago)</td>
                                 <td>@NombreMetodoPago(mov.MetodoPago)</td>
-                                <td class="text-end fw-semibold text-nowrap @(mov.Monto < 0 ? "text-danger" : "text-success")">
+                                <td class="text-end fw-bold text-nowrap @(mov.Monto < 0 ? "text-danger" : "text-success")">
                                     $@mov.Monto.ToString("N0")
                                 </td>
                                 <td class="text-muted small">@(mov.Observaciones ?? "—")</td>
                             </tr>
                         }
                     </tbody>
-                    <tfoot class="table-light fw-semibold">
+                    <tfoot class="table-light fw-bold">
                         <tr>
                             <td colspan="5" class="text-end">Total del período:</td>
-                            <td class="text-end text-success fs-6 text-nowrap">
+                            <td class="text-end fs-6 text-nowrap" style="background-color:#d4edda;color:#155724;font-weight:bold;">
                                 $@Model.TotalPeriodo.ToString("N0")
                             </td>
                             <td></td>
@@ -375,24 +390,16 @@
                                             <i class="bi bi-plus-circle me-1"></i>Agregar Pago
                                         </a>
                                     }
-                                    else
-                                    {
-                                        <button type="button"
-                                                class="btn btn-outline-secondary btn-sm"
-                                                data-bs-toggle="modal" data-bs-target="#modalSinPermisos">
-                                            <i class="bi bi-plus-circle me-1"></i>Agregar Pago
-                                        </button>
-                                    }
                                 </td>
                             </tr>
                         }
                     </tbody>
-                    <tfoot class="table-light fw-semibold">
+                    <tfoot class="table-light fw-bold">
                         <tr>
                             <td colspan="2" class="text-end d-desktop-none">Total:</td>
                             <td colspan="2" class="d-mobile-none"></td>
                             <td colspan="4" class="text-end d-mobile-none">Total saldo pendiente:</td>
-                            <td class="text-end text-danger text-nowrap">
+                            <td class="text-end text-nowrap" style="background-color:#f8d7da;color:#721c24;font-weight:bold;">
                                 $@Model.SaldosPendientes.Sum(s => s.SaldoPendiente).ToString("N0")
                             </td>
                             <td class="d-mobile-none"></td>

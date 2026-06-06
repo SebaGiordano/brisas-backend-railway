@@ -232,6 +232,12 @@
         /* Botones inferiores: centrados horizontalmente, contenido centrado */
         #botones-crear { justify-content: center !important; }
         #botones-crear .btn { display: flex !important; align-items: center !important; justify-content: center !important; }
+        /* Modal de confirmación: altura adaptada al contenido */
+        #modal-confirmar-reserva .modal-content { height: auto !important; min-height: unset !important; }
+        #modal-confirmar-reserva .modal-footer { padding-bottom: 1rem !important; }
+    }
+    @@media (min-width: 769px) {
+        #botones-crear { justify-content: center !important; }
     }
 </style>
 

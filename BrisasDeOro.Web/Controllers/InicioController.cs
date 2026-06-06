@@ -207,7 +207,8 @@ public class InicioController : Controller
                 NombreHuesped     = x.r.NombreHuesped,
                 NombreAlojamiento = NombreAloj(x.r.Alojamiento),
                 FechaSalida       = FS(x.r),
-                SaldoPendiente    = x.saldo
+                SaldoPendiente    = x.saldo,
+                EsHoy             = FS(x.r) == hoy
             }).ToList();
 
         var vm = new InicioViewModel

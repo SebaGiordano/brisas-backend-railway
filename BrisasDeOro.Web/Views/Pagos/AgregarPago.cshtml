@@ -9,8 +9,9 @@
 <style>
     .detalle-label { font-size: .78rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: .04em; }
     .detalle-valor { font-size: 1rem; }
-    .saldo-cero    { color: #1A5C1A; }
-    .saldo-deuda   { color: #7A0000; font-weight: 700; }
+    .saldo-cero     { color: #1A5C1A; }
+    .saldo-deuda    { color: #dc3545; font-weight: bold; }
+    .saldo-negativo { color: #198754; font-weight: bold; }
     @@media (max-width: 767.98px) {
         /* Botón Ver detalle de reserva: ícono y texto centrados, font-size explícito */
         #header-pago #nav-bar-pago-mobile .btn-volver-detalle { display: flex !important; align-items: center !important; justify-content: center !important; font-size: 13px !important; }
@@ -49,6 +50,8 @@
         #resumen-row > div:nth-child(8) .detalle-valor,
         #resumen-row > div:nth-child(9) .detalle-valor,
         #resumen-row > div:nth-child(10) .detalle-valor { font-size: 1rem !important; }
+        /* Saldo pendiente: monto y leyenda alineados a la derecha */
+        #resumen-row > div:nth-child(10) .detalle-valor { text-align: right !important; }
     }
 </style>
 
@@ -92,10 +95,10 @@
             <div class="col-2">
                 <div class="detalle-label">Salida</div>
                 <div class="detalle-valor">@Model.FechaSalida.ToString("dd/MM/yyyy")</div>
-                <div class="text-muted small d-none d-md-block">@noches noche@(noches != 1 ? "s" : "")</div>
+                <div class="text-muted small d-none d-md-block">(<strong>@noches noche@(noches != 1 ? "s" : "")</strong>)</div>
             </div>
             <div class="col-2 d-md-none text-muted small">
-                (@noches noche@(noches != 1 ? "s" : ""))
+                (<strong>@noches noche@(noches != 1 ? "s" : "")</strong>)
             </div>
             <div class="col-2">
                 <div class="detalle-label">Tarifa por día</div>
@@ -118,16 +121,20 @@
                 <div class="detalle-valor fs-5 fw-semibold">$@Model.MontoTotal.ToString("N0")</div>
             </div>
             <div class="col-4">
-                <div class="detalle-label">Total cobrado</div>
+                <div class="detalle-label" style="color:#198754;font-weight:bold;">Total cobrado</div>
                 <div class="detalle-valor fs-5 text-success fw-semibold">$@Model.TotalCobrado.ToString("N0")</div>
             </div>
             <div class="col-4">
-                <div class="detalle-label">Saldo pendiente</div>
-                <div class="detalle-valor fs-4 @(Model.SaldoPendiente > 0 ? "saldo-deuda" : "saldo-cero")">
+                <div class="detalle-label" style="font-size:1.1rem;color:#dc3545;font-weight:bold;">Saldo pendiente</div>
+                <div class="detalle-valor @(Model.SaldoPendiente > 0 ? "saldo-deuda" : Model.SaldoPendiente < 0 ? "saldo-negativo" : "saldo-cero")" style="font-size:1.2rem;">
                     $@Model.SaldoPendiente.ToString("N0")
                     @if (Model.SaldoPendiente == 0)
                     {
                         <i class="bi bi-check-circle-fill fs-5 ms-1 text-success"></i>
+                    }
+                    @if (Model.SaldoPendiente < 0)
+                    {
+                        <span class="d-block small fw-normal mt-1" style="color:#000000 !important;">(A devolver al cliente)</span>
                     }
                 </div>
             </div>
@@ -252,7 +259,7 @@
                 <div class="col-md-8">
                     <label asp-for="Observaciones" class="form-label">Observaciones</label>
                     <input asp-for="Observaciones" class="form-control"
-                           placeholder="Ej: transferencia bancaria Alias BRISAS.ORO" />
+                           placeholder="Observaciones sobre este pago (opcional)" />
                 </div>
             </div>
 
