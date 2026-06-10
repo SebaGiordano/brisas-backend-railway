@@ -1,104 +1,58 @@
-# 🏨 Hotel y Cabañas Brisas de Oro — Sistema de Gestión (Backend)
+# Brisas de Oro — Sistema de Gestión Interno
 
-Sistema web integral de gestión de reservas para Hotel y Cabañas Brisas de Oro, complejo familiar ubicado en Villa Carlos Paz, Córdoba, Argentina.
+Sistema de gestión interno para Hotel y Cabañas Brisas de Oro, Villa Carlos Paz, Córdoba. Desarrollado como proyecto de tesis de la carrera Analista de Sistemas en IRESM.
 
-Este repositorio corresponde al panel de administración desarrollado con ASP.NET Core MVC, diseñado para uso diario en el complejo y como proyecto de tesis universitaria (Analista de Sistemas).
+> Versión preparada para deployment en Railway con PostgreSQL.  
+> [Ver sitio web público →](https://brisas-de-oro-next.vercel.app)
 
-Desarrollado en equipo como proyecto final de la carrera Analista de Sistemas.
+## 🚀 Estado del proyecto
 
----
+En proceso de migración a Railway con PostgreSQL. La versión original corre localmente con SQL Server.
 
-## ✨ Funcionalidades
+## ✨ Módulos del sistema
 
-- Sistema de autenticación con roles (Administrador y Viewer)
-- Gestión completa de reservas con validación de disponibilidad en tiempo real
-- Calendario tipo Gantt con visualización de todas las instalaciones
-- Módulo de pagos con historial y control de saldos
-- Panel de inicio con resumen operativo diario
-- Dashboard con métricas de ocupación e ingresos
-- Módulo de facturación con movimientos y saldos pendientes
-- Gestión de alojamientos y tarifas por temporada
-- Diseño responsive 100% funcional en desktop y mobile
+- Login y autenticación con roles (Administrador / Viewer)
+- Inicio — operativa diaria: check-ins, check-outs, limpieza, desayuno, cobros urgentes
+- Dashboard — métricas: ingresos, ocupación, canales de origen, comparación de períodos
+- Calendario — vista Gantt de reservas con navegación por fechas
+- Reservas — listado, detalle, edición y cancelación
+- Facturación — movimientos financieros y saldos pendientes
+- Alojamientos — gestión de las 16 unidades físicas del complejo
+- Tarifas — precios por temporada, alojamiento y cantidad de personas
+- Usuarios — administración de accesos al sistema
+- Nueva Reserva — formulario guiado con disponibilidad en tiempo real
 
----
-
-## 🛠 Tecnologías
+## 🛠️ Tecnologías
 
 - ASP.NET Core MVC (.NET 7)
-- SQL Server 2022 Express
-- Entity Framework Core
+- Entity Framework Core 7
+- PostgreSQL (Railway) / SQL Server 2022 Express (local)
 - ASP.NET Core Identity
-- HTML / CSS / Bootstrap 5
-- JavaScript
+- Bootstrap 5.3
 
----
-
-## 🚀 Correr localmente
+## ▶️ Correr localmente
 
 ```bash
-# Restaurar dependencias
 dotnet restore
-
-# Aplicar migraciones
-dotnet ef database update
-
-# Correr el servidor
 dotnet run
 ```
 
-Abrí `http://localhost:[puerto]` en el navegador.
-
----
+Abrí `http://localhost:5272` en el navegador.
 
 ## 📁 Estructura
 
 ```
-brisas-backend/
-├── Controllers/        ← Controladores MVC
-├── Models/             ← Modelos y ViewModels
-├── Views/              ← Vistas Razor (.cshtml)
-├── Data/               ← DbContext y migraciones
-├── wwwroot/            ← Archivos estáticos (CSS, JS, imágenes)
-├── Properties/         ← Configuración de lanzamiento
-└── appsettings.json    ← Configuración de conexión y app
+BrisasDeOro.Web/
+├── Controllers/    → Lógica de negocio por módulo
+├── Models/         → Entidades y ViewModels
+├── Views/          → Vistas Razor por módulo
+├── Data/           → DbContext y SeedData
+├── Migrations/     → Migraciones de EF Core
+└── wwwroot/        → Archivos estáticos
 ```
 
----
+## 🔮 Próximos pasos
 
-## ⚙️ Configuración
-
-La cadena de conexión se configura en `appsettings.json`:
-
-```json
-"ConnectionStrings": {
-  "DefaultConnection": "Server=localhost\\SQLEXPRESS;Database=BrisasDeOro;Trusted_Connection=True;TrustServerCertificate=True"
-}
-```
-
----
-
-## 📋 Módulos del sistema
-
-- **Inicio** — Resumen operativo del día: check-ins, check-outs, limpieza, desayunos y pendientes
-- **Dashboard** — Métricas de ocupación, ingresos por método de pago y canal de origen
-- **Calendario** — Vista Gantt de todas las instalaciones con reservas por estado de pago
-- **Reservas** — Alta, edición, cancelación y detalle de reservas
-- **Pagos** — Registro de pagos con historial por reserva
-- **Facturación** — Movimientos y saldos pendientes
-- **Alojamientos** — Gestión de habitaciones, aparts y cabañas
-- **Tarifas** — Precios por temporada, cantidad de personas y servicio de desayuno
-- **Usuarios** — Gestión de accesos con roles Administrador y Viewer
-
----
-
-## 🔜 Próximos pasos
-
-- Integración del backend con el frontend Next.js ya desarrollado
-- Migración del backend a API Routes de Next.js con Prisma
-- Base de datos MongoDB
-- Publicación en Railway
-- Dominio brisasdeoro.com.ar
-
----
-
-*Proyecto de tesis — Analista de Sistemas, IRESM*
+- Completar migración a PostgreSQL en Railway
+- Conectar con el sitio web público en producción
+- Implementar Swagger completo con la nueva arquitectura

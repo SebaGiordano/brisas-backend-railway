@@ -10,6 +10,12 @@
     <link rel="stylesheet" href="~/BrisasDeOro.Web.styles.css" asp-append-version="true" />
     <style>
         .navbar-nav { align-items: center; }
+        /* Botón Salir: hover y active en rojo */
+        .btn-salir:hover, .btn-salir:active, .btn-salir:focus {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: #fff !important;
+        }
         .navbar-nav .nav-link.active {
             background-color: #0d6efd;
             color: #fff !important;
@@ -191,10 +197,10 @@
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted small">@User.Identity.Name</span>
+                            <span class="text-muted small fw-bold">@User.Identity.Name</span>
                             <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-outline-secondary btn-sm">Salir</button>
+                                <button type="submit" class="btn btn-outline-secondary btn-sm fw-bold btn-salir">Salir</button>
                             </form>
                         </div>
                     }
