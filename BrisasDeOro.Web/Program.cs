@@ -7,8 +7,16 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (databaseUrl != null)
+        options.UseNpgsql(databaseUrl);
+    else
+        options.UseSqlServer(defaultConnection);
+});
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
