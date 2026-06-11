@@ -48,7 +48,7 @@ namespace BrisasDeOro.Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Alojamientos");
+                    b.ToTable("Alojamientos", (string)null);
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.ApartDetalle", b =>
@@ -76,7 +76,7 @@ namespace BrisasDeOro.Web.Migrations
 
                     b.HasIndex("AlojamientoHab2Id");
 
-                    b.ToTable("ApartDetalles");
+                    b.ToTable("ApartDetalles", (string)null);
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.ApplicationUser", b =>
@@ -178,7 +178,7 @@ namespace BrisasDeOro.Web.Migrations
 
                     b.HasIndex("ReservaId");
 
-                    b.ToTable("Pagos");
+                    b.ToTable("Pagos", (string)null);
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.Reserva", b =>
@@ -238,7 +238,7 @@ namespace BrisasDeOro.Web.Migrations
 
                     b.HasIndex("AlojamientoId");
 
-                    b.ToTable("Reservas");
+                    b.ToTable("Reservas", (string)null);
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.Tarifa", b =>
@@ -276,7 +276,7 @@ namespace BrisasDeOro.Web.Migrations
                     b.HasIndex("AlojamientoId", "CantidadPersonas", "TemporadaId")
                         .IsUnique();
 
-                    b.ToTable("Tarifas");
+                    b.ToTable("Tarifas", (string)null);
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.Temporada", b =>
@@ -302,7 +302,7 @@ namespace BrisasDeOro.Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Temporadas");
+                    b.ToTable("Temporadas", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
