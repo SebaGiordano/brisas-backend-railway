@@ -55,7 +55,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowWebApp", policy =>
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins("http://localhost:3000", "https://brisas-de-oro-next.vercel.app")
               .AllowAnyMethod()
               .AllowAnyHeader());
 });
