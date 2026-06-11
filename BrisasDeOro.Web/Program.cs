@@ -10,18 +10,18 @@ var builder = WebApplication.CreateBuilder(args);
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+if (databaseUrl != null)
 {
-    if (databaseUrl != null)
-    {
-        var uri = new Uri(databaseUrl);
-        var userInfo = uri.UserInfo.Split(':');
-        var npgsqlConn = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
-        options.UseNpgsql(npgsqlConn);
-    }
-    else
-        options.UseSqlServer(defaultConnection);
-});
+    var uri = new Uri(databaseUrl);
+    var userInfo = uri.UserInfo.Split(':');
+    var npgsqlConn = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+    builder.Services.AddDbContext<PostgresApplicationDbContext>(options => options.UseNpgsql(npgsqlConn));
+    builder.Services.AddScoped<ApplicationDbContext>(sp => sp.GetRequiredService<PostgresApplicationDbContext>());
+}
+else
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(defaultConnection));
+}
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
@@ -76,10 +76,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    if (databaseUrl != null)
-        await db.Database.EnsureCreatedAsync();
-    else
-        await db.Database.MigrateAsync();
+    await db.Database.MigrateAsync();
     await SeedData.InitializeAsync(scope.ServiceProvider);
 }
 

@@ -11,6 +11,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
     }
 
+    protected ApplicationDbContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
     public DbSet<Alojamiento> Alojamientos => Set<Alojamiento>();
     public DbSet<Reserva>     Reservas      => Set<Reserva>();
     public DbSet<ApartDetalle> ApartDetalles => Set<ApartDetalle>();
