@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using BrisasDeOro.Web.Infrastructure;
 using Microsoft.OpenApi.Models;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
