@@ -6,6 +6,7 @@ using BrisasDeOro.Web.Infrastructure;
 using Microsoft.OpenApi.Models;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+Environment.SetEnvironmentVariable("TZ", "America/Argentina/Buenos_Aires");
 
 var builder = WebApplication.CreateBuilder(args);
 
