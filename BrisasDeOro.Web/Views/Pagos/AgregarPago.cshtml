@@ -379,19 +379,34 @@
                 new bootstrap.Modal(document.getElementById('modal-sin-excedente')).show();
             }
         }
+
+        if (tipo === 'Cancelacion') {
+            montoInput.value = saldoPendiente;
+            montoInput.dispatchEvent(new Event('input'));
+        }
     }
 
     // Al cerrar el modal de sin excedente, volver el concepto a Cancelación
     document.getElementById('modal-sin-excedente').addEventListener('hidden.bs.modal', function () {
         if (tipoPagoSelect.value === 'Ajuste') {
             tipoPagoSelect.value = 'Cancelacion';
+            tipoPagoAnterior = 'Cancelacion';
             actualizarPanelSena();
             verificarExceso();
         }
     });
 
     // ── Eventos ───────────────────────────────────────────────────────────────
-    tipoPagoSelect.addEventListener('change', () => { actualizarPanelSena(); verificarExceso(); });
+    let tipoPagoAnterior = tipoPagoSelect.value;
+    tipoPagoSelect.addEventListener('change', () => {
+        // Si se sale de Cancelación hacia otro concepto, resetear el monto
+        if (tipoPagoAnterior === 'Cancelacion' && tipoPagoSelect.value !== 'Cancelacion') {
+            montoInput.value = '';
+        }
+        tipoPagoAnterior = tipoPagoSelect.value;
+        actualizarPanelSena();
+        verificarExceso();
+    });
     porcentajeInput.addEventListener('input', actualizarMontoSugerido);
     montoInput.addEventListener('input', verificarExceso);
 
