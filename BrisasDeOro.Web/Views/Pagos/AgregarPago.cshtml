@@ -370,43 +370,37 @@
         panelSena.classList.toggle('d-none', !esSena);
         if (esSena) actualizarMontoSugerido();
 
-        if (tipo === 'Ajuste') {
+        // El monto se recalcula siempre según el concepto actual, sin conservar
+        // el valor que hubiera quedado de un concepto anterior.
+        if (tipo === 'Cancelacion') {
+            montoInput.value = saldoPendiente;
+        } else if (tipo === 'Ajuste') {
             const excedente = totalCobrado - montoTotal;
             if (excedente > 0) {
                 montoInput.value = -excedente;
-                montoInput.dispatchEvent(new Event('input'));
             } else {
+                montoInput.value = '';
                 new bootstrap.Modal(document.getElementById('modal-sin-excedente')).show();
             }
+        } else {
+            // Seña o Pago parcial: se completa manualmente (Seña usa la calculadora de abajo)
+            montoInput.value = '';
         }
 
-        if (tipo === 'Cancelacion') {
-            montoInput.value = saldoPendiente;
-            montoInput.dispatchEvent(new Event('input'));
-        }
+        montoInput.dispatchEvent(new Event('input'));
     }
 
     // Al cerrar el modal de sin excedente, volver el concepto a Cancelación
     document.getElementById('modal-sin-excedente').addEventListener('hidden.bs.modal', function () {
         if (tipoPagoSelect.value === 'Ajuste') {
             tipoPagoSelect.value = 'Cancelacion';
-            tipoPagoAnterior = 'Cancelacion';
             actualizarPanelSena();
             verificarExceso();
         }
     });
 
     // ── Eventos ───────────────────────────────────────────────────────────────
-    let tipoPagoAnterior = tipoPagoSelect.value;
-    tipoPagoSelect.addEventListener('change', () => {
-        // Si se sale de Cancelación hacia otro concepto, resetear el monto
-        if (tipoPagoAnterior === 'Cancelacion' && tipoPagoSelect.value !== 'Cancelacion') {
-            montoInput.value = '';
-        }
-        tipoPagoAnterior = tipoPagoSelect.value;
-        actualizarPanelSena();
-        verificarExceso();
-    });
+    tipoPagoSelect.addEventListener('change', () => { actualizarPanelSena(); verificarExceso(); });
     porcentajeInput.addEventListener('input', actualizarMontoSugerido);
     montoInput.addEventListener('input', verificarExceso);
 
