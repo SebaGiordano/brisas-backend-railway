@@ -3,7 +3,8 @@
     ViewData["Title"] = "Registrar pago";
     var noches     = (Model.FechaSalida - Model.FechaIngreso).Days;
     var tarifaDia  = (noches > 0) ? (decimal?)(Model.MontoTotal / noches) : null;
-    var fromCalendario = Context.Request.Query["from"].ToString() == "calendario";
+    var fromCalendario       = Context.Request.Query["from"].ToString() == "calendario";
+    var fromSaldosPendientes = Context.Request.Query["from"].ToString() == "saldos-pendientes";
 }
 
 <style>
@@ -65,11 +66,21 @@
                 <i class="bi bi-arrow-left me-1"></i>Volver al calendario
             </a>
         }
-        <a asp-controller="Reservas" asp-action="Details" asp-route-id="@Model.ReservaId"
-           asp-route-from="@(fromCalendario ? "calendario" : null)"
-           class="btn btn-outline-secondary btn-sm btn-volver-detalle btn-nav-pago" style="font-size: 13px !important; white-space: nowrap !important">
-            <i class="bi bi-arrow-left me-1"></i><span class="d-none d-md-inline">Ir al detalle de la reserva</span><span class="d-md-none">Ver detalle de reserva</span>
-        </a>
+        @if (fromSaldosPendientes)
+        {
+            <a asp-controller="Facturacion" asp-action="Index" asp-route-tab="saldos"
+               class="btn btn-outline-secondary btn-sm btn-volver-detalle btn-nav-pago" style="font-size: 13px !important; white-space: nowrap !important">
+                <i class="bi bi-arrow-left me-1"></i>Volver a Saldos pendientes
+            </a>
+        }
+        else
+        {
+            <a asp-controller="Reservas" asp-action="Details" asp-route-id="@Model.ReservaId"
+               asp-route-from="@(fromCalendario ? "calendario" : null)"
+               class="btn btn-outline-secondary btn-sm btn-volver-detalle btn-nav-pago" style="font-size: 13px !important; white-space: nowrap !important">
+                <i class="bi bi-arrow-left me-1"></i><span class="d-none d-md-inline">Ir al detalle de la reserva</span><span class="d-md-none">Ver detalle de reserva</span>
+            </a>
+        }
     </div>
 </div>
 
