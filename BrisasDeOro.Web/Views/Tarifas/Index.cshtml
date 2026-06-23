@@ -505,6 +505,7 @@ else
             #tabla-tarifas td, #tabla-tarifas th { padding: .6rem .85rem; font-size: .92rem; }
             .tar-aloj { font-size: 1.2rem !important; font-weight: bold !important;
                         line-height: 1 !important; background-color: #343a40 !important; color: #ffffff !important; }
+            .tar-aloj-sub { display: block; margin-top: .35rem; }
             table th { font-size: 1rem !important; }
             #tabla-tarifas tbody td.tar-pers,
             #tabla-tarifas tbody td.tar-cd,
@@ -521,6 +522,7 @@ else
             #tabla-tarifas td, #tabla-tarifas th { padding: .28rem .35rem; font-size: .76rem; }
             .tar-aloj { font-size: .76rem !important; font-weight: bold !important;
                         line-height: 1.4 !important; background-color: #343a40 !important; color: #ffffff !important; }
+            .tar-aloj-sub { display: block; margin-top: .2rem; }
             #tabla-tarifas tbody tr:hover > .tar-aloj { background-color: #343a40 !important; }
             table th { font-size: 13px !important; }
             #tabla-tarifas tbody td.text-end { font-size: 15px !important; }
@@ -557,7 +559,7 @@ else
                                         <td rowspan="@row.Span" class="tar-aloj">
                                             @if (g.Label.StartsWith("CABAÑA "))
                                             {
-                                                <text>CABAÑA</text><br /><text>@g.Label.Substring(7)</text>
+                                                <text>CABAÑA</text><br /><span class="tar-aloj-sub">@g.Label.Substring(7)</span>
                                             }
                                             else
                                             {
