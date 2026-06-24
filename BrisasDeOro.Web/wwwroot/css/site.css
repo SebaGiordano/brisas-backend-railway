@@ -76,6 +76,12 @@ body {
     .pagination { flex-wrap: wrap; }
 }
 
+/* ── Separación entre links del navbar ──────────────────────────────────────── */
+header .navbar .navbar-nav .nav-link {
+  padding-left: .6rem !important;
+  padding-right: .6rem !important;
+}
+
 /* ── Links de navbar con ancho estable (evita salto de layout en hover/active) ── */
 .nav-link-stable {
   display: grid;
