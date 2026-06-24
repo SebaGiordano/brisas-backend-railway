@@ -23,7 +23,6 @@
             font-weight: 600 !important;
             padding: .35rem 1rem !important;
             line-height: 1.5 !important;
-            display: inline-block !important;
         }
         header .navbar .navbar-nav .nav-link:not(.active):hover {
             font-weight: 600 !important;
@@ -36,7 +35,8 @@
             footer .container { white-space: normal !important; word-wrap: break-word !important; text-align: center !important; }
             /* 5px extra de separación entre el navbar y el contenido en mobile */
             body > .container { padding-top: 12px !important; }
-
+        }
+        @@media (max-width: 1299.98px) {
             /* ── Hamburger menu: permitir que el menú desplegado se vea sobre el contenido ── */
             .navbar { overflow: visible !important; }
 
@@ -119,6 +119,34 @@
                 background-color: #0d6efd !important;
                 color: #fff !important;
             }
+
+            /* ── Centrado de links + ancho estable del link activo ── */
+            .navbar-collapse.show .navbar-nav {
+                align-items: stretch !important;
+                width: 100% !important;
+            }
+            .navbar-collapse.show .nav-item {
+                width: 100% !important;
+                display: flex !important;
+                justify-content: center !important;
+            }
+            .navbar-collapse.show .nav-link {
+                width: 100% !important;
+                text-align: center !important;
+                justify-content: center !important;
+            }
+            .navbar-collapse.show .nav-link.active {
+                width: 100% !important;
+                text-align: center !important;
+                margin: 0 !important;
+                align-self: stretch !important;
+            }
+            .navbar-collapse.show .nav-link-stable > .nav-link-ghost {
+                display: none !important;
+            }
+            .navbar-collapse.show .nav-link-stable {
+                display: flex !important;
+            }
         }
     </style>
 </head>
@@ -141,7 +169,7 @@
              && !_act.Equals("Crear",    StringComparison.OrdinalIgnoreCase)
                     ? " active" : "";
         }
-        <nav class="navbar navbar-expand-md navbar-toggleable-md navbar-light bg-white border-bottom box-shadow mb-3 fixed-top">
+        <nav class="navbar navbar-expand-xl navbar-toggleable-xl navbar-light bg-white border-bottom box-shadow mb-3 fixed-top">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Inicio" asp-action="Index">
                     <img src="~/images/logo.png" height="50" width="auto" alt="Brisas de Oro" style="height:50px; width:auto; object-fit:contain; display:block;" />
@@ -150,51 +178,78 @@
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-md-inline-flex justify-content-between">
+                <div class="navbar-collapse collapse d-xl-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark@(Activo("Inicio"))" asp-controller="Inicio" asp-action="Index">Inicio</a>
+                            <a class="nav-link text-dark nav-link-stable@(Activo("Inicio"))" asp-controller="Inicio" asp-action="Index">
+                                <span class="nav-link-text">Inicio</span>
+                                <span class="nav-link-ghost" aria-hidden="true">Inicio</span>
+                            </a>
                         </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark@(Activo("Dashboard"))" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                                <a class="nav-link text-dark nav-link-stable@(Activo("Dashboard"))" asp-controller="Dashboard" asp-action="Index">
+                                    <span class="nav-link-text">Dashboard</span>
+                                    <span class="nav-link-ghost" aria-hidden="true">Dashboard</span>
+                                </a>
                             </li>
                         }
                         @if (User.IsInRole("Administrador") || User.IsInRole("Viewer"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark@(Activo("Calendario"))" asp-controller="Calendario" asp-action="Index">Calendario</a>
+                                <a class="nav-link text-dark nav-link-stable@(Activo("Calendario"))" asp-controller="Calendario" asp-action="Index">
+                                    <span class="nav-link-text">Calendario</span>
+                                    <span class="nav-link-ghost" aria-hidden="true">Calendario</span>
+                                </a>
                             </li>
                         }
                         @if (User.IsInRole("Administrador") || User.IsInRole("Viewer"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark@(ActivoReservas())" asp-controller="Reservas" asp-action="Index">Reservas</a>
+                                <a class="nav-link text-dark nav-link-stable@(ActivoReservas())" asp-controller="Reservas" asp-action="Index">
+                                    <span class="nav-link-text">Reservas</span>
+                                    <span class="nav-link-ghost" aria-hidden="true">Reservas</span>
+                                </a>
                             </li>
                         }
                         @if (User.IsInRole("Administrador") || User.IsInRole("Viewer"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark@(Activo("Facturacion"))" asp-controller="Facturacion" asp-action="Index">Facturación</a>
+                                <a class="nav-link text-dark nav-link-stable@(Activo("Facturacion"))" asp-controller="Facturacion" asp-action="Index">
+                                    <span class="nav-link-text">Facturación</span>
+                                    <span class="nav-link-ghost" aria-hidden="true">Facturación</span>
+                                </a>
                             </li>
                         }
                         @if (User.IsInRole("Administrador") || User.IsInRole("Viewer"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark@(Activo("Alojamientos"))" asp-controller="Alojamientos" asp-action="Index">Alojamientos</a>
+                                <a class="nav-link text-dark nav-link-stable@(Activo("Alojamientos"))" asp-controller="Alojamientos" asp-action="Index">
+                                    <span class="nav-link-text">Alojamientos</span>
+                                    <span class="nav-link-ghost" aria-hidden="true">Alojamientos</span>
+                                </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark@(Activo("Tarifas"))" asp-controller="Tarifas" asp-action="Index">Tarifas</a>
+                                <a class="nav-link text-dark nav-link-stable@(Activo("Tarifas"))" asp-controller="Tarifas" asp-action="Index">
+                                    <span class="nav-link-text">Tarifas</span>
+                                    <span class="nav-link-ghost" aria-hidden="true">Tarifas</span>
+                                </a>
                             </li>
                         }
                         @if (User.IsInRole("Administrador"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark@(Activo("Usuarios"))" asp-controller="Usuarios" asp-action="Index">Usuarios</a>
+                                <a class="nav-link text-dark nav-link-stable@(Activo("Usuarios"))" asp-controller="Usuarios" asp-action="Index">
+                                    <span class="nav-link-text">Usuarios</span>
+                                    <span class="nav-link-ghost" aria-hidden="true">Usuarios</span>
+                                </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark fw-semibold@(Activo("Reservas", "Crear"))" asp-controller="Reservas" asp-action="Crear">+ Nueva Reserva</a>
+                                <a class="nav-link text-dark fw-semibold nav-link-stable@(Activo("Reservas", "Crear"))" asp-controller="Reservas" asp-action="Crear">
+                                    <span class="nav-link-text">+ Nueva Reserva</span>
+                                    <span class="nav-link-ghost" aria-hidden="true">+ Nueva Reserva</span>
+                                </a>
                             </li>
                         }
                     </ul>

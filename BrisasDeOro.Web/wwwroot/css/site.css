@@ -76,6 +76,61 @@ body {
     .pagination { flex-wrap: wrap; }
 }
 
+/* ── Links de navbar con ancho estable (evita salto de layout en hover/active) ── */
+.nav-link-stable {
+  display: grid;
+}
+.nav-link-stable .nav-link-text,
+.nav-link-stable .nav-link-ghost {
+  grid-row: 1;
+  grid-column: 1;
+}
+.nav-link-ghost {
+  visibility: hidden;
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Forzar hamburguesa entre 1200px y 1300px ───────────────────────────────── */
+@media (max-width: 1300px) and (min-width: 1200px) {
+  .navbar-expand-xl .navbar-collapse {
+    display: none !important;
+  }
+  .navbar-expand-xl .navbar-toggler {
+    display: block !important;
+  }
+  .navbar-expand-xl .navbar-collapse.show {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-basis: 100% !important;
+    align-items: stretch !important;
+    background: #fff;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.1);
+    padding: 8px 12px 14px;
+    width: 100% !important;
+  }
+}
+
+/* ── Botón hamburguesa: sin borde gris oscuro ───────────────────────────────── */
+.navbar-toggler {
+  border: none !important;
+  box-shadow: none !important;
+  transition: background-color .15s ease;
+}
+
+.navbar-toggler:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.navbar-toggler:focus,
+.navbar-toggler:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
 /* ── Utilidades responsive para tablas ──────────────────────────────────────── */
 @media (max-width: 767.98px) {
     .d-mobile-none       { display: none !important; }
