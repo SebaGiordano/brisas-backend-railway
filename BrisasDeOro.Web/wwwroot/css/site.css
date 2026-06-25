@@ -98,24 +98,106 @@ header .navbar .navbar-nav .nav-link {
   user-select: none;
 }
 
-/* ── Forzar hamburguesa entre 1200px y 1300px ───────────────────────────────── */
-@media (max-width: 1300px) and (min-width: 1200px) {
-  .navbar-expand-xl .navbar-collapse {
-    display: none !important;
-  }
-  .navbar-expand-xl .navbar-toggler {
-    display: block !important;
-  }
-  .navbar-expand-xl .navbar-collapse.show {
+/* Bloque 1: Reglas del menú colapsado, aplican desde 1249.98px hacia abajo */
+@media (max-width: 1249.98px) {
+  .navbar { overflow: visible !important; }
+  .navbar-collapse.show {
     display: flex !important;
     flex-direction: column !important;
-    flex-basis: 100% !important;
     align-items: stretch !important;
     background: #fff;
     border-radius: 0 0 12px 12px;
     box-shadow: 0 6px 20px rgba(0,0,0,.1);
     padding: 8px 12px 14px;
+    width: 100%;
+  }
+  .navbar-collapse.show .navbar-nav {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px;
     width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .navbar-collapse.show .nav-item {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+  .navbar-collapse.show .nav-link {
+    width: 100% !important;
+    text-align: center !important;
+    justify-content: center !important;
+    display: block !important;
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    background-color: #f1f3f5 !important;
+    color: #343a40 !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+  }
+  .navbar-collapse.show .nav-link.active {
+    width: 100% !important;
+    text-align: center !important;
+    margin: 0 !important;
+    align-self: stretch !important;
+    background-color: #0d6efd !important;
+    color: #fff !important;
+  }
+  .navbar-collapse.show .nav-link-stable > .nav-link-ghost {
+    display: none !important;
+  }
+  .navbar-collapse.show .nav-link-stable {
+    display: flex !important;
+  }
+  /* Feedback visual inmediato al tocar un link del menú */
+  .navbar-collapse.show .navbar-nav .nav-link.nav-tap-active {
+    background-color: #0d6efd !important;
+    color: #fff !important;
+  }
+  .navbar-collapse.show > div {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-top: 1px solid #dee2e6 !important;
+    padding-top: 10px !important;
+    margin-top: 6px !important;
+    width: 100% !important;
+  }
+  .navbar-collapse.show > div .text-muted { font-size: 15px !important; }
+  .navbar-collapse.show .btn-outline-secondary {
+    border-color: #dc3545 !important;
+    color: #dc3545 !important;
+  }
+  .navbar-toggler {
+    height: 42px !important;
+    width: 42px !important;
+    padding: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .navbar-toggler .navbar-toggler-icon {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .navbar-collapse.show .nav-link-stable:not(.active):hover > .nav-link-text {
+    font-weight: 700 !important;
+  }
+  .navbar-collapse.show .nav-link:not(.active):hover {
+    font-weight: 700 !important;
+  }
+}
+
+/* Bloque 2: Forzar a Bootstrap a activar el hamburguesa en el rango 1200-1249.98px */
+@media (min-width: 1200px) and (max-width: 1249.98px) {
+  .navbar-expand-xl .navbar-collapse:not(.show) {
+    display: none !important;
+  }
+  .navbar-expand-xl .navbar-toggler {
+    display: block !important;
   }
 }
 
