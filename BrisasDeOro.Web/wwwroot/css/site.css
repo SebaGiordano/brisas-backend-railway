@@ -17,8 +17,23 @@ html {
   min-height: 100%;
 }
 
+/* ── Layout en columna: el footer queda siempre después del contenido, ───────
+   nunca superpuesto, sin importar la altura de la página ── */
 body {
-  margin-bottom: 60px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+body > .container {
+  flex: 1;
+}
+
+/* ── Footer: espaciado balanceado arriba y abajo de la frase de copyright ───── */
+footer {
+  flex-shrink: 0;
+  margin-top: 1.2rem !important;
+  padding-top: 0.8rem !important;
+  padding-bottom: 2.2rem !important;
 }
 
 /* ── Mobile Responsive (max-width: 767.98px) ────────────────────────────────── */
