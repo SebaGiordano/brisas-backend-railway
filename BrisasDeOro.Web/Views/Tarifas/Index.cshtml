@@ -526,10 +526,12 @@ else
         /* Mobile */
         @@media (max-width: 767.98px) {
             #tabla-tarifas td, #tabla-tarifas th { padding: .28rem .35rem; font-size: .76rem; }
-            .tar-aloj { font-size: .76rem !important; font-weight: bold !important;
+            .tar-aloj { font-size: .9rem !important; font-weight: bold !important;
                         line-height: 1.4 !important; background-color: #EDEDED !important; color: #212529 !important;
-                        font-family: Georgia, 'Times New Roman', serif !important; letter-spacing: 0.5px !important; }
-            .tar-aloj-sub { display: block; margin-top: .2rem; }
+                        font-family: Georgia, 'Times New Roman', serif !important; letter-spacing: 0.5px !important;
+                        -webkit-text-size-adjust: 100% !important; text-size-adjust: 100% !important; }
+            .tar-aloj-sub { display: block; margin-top: .2rem; font-size: .9rem !important; }
+            .tar-aloj span { font-size: .9rem !important; }
             table th { font-size: 13px !important; }
             #tabla-tarifas tbody td.text-end { font-size: 15px !important; }
             #tabla-tarifas tbody td.tar-pers { font-size: 15px !important; border-right: 1px solid #dee2e6 !important; }
@@ -567,6 +569,10 @@ else
                                             {
                                                 <text>CABAÑA</text><br /><span class="tar-aloj-sub">@g.Label.Substring(7)</span>
                                             }
+                                            else if (g.Label == "HABITACIONES")
+                                            {
+                                                <span class="d-none d-md-inline">HABITACIONES</span><span class="d-md-none">HAB.</span>
+                                            }
                                             else
                                             {
                                                 @g.Label
@@ -597,7 +603,7 @@ else
                     }
                 </table>
             </div>
-            <div class="d-md-none text-center text-muted" style="font-size:11px; margin-top:6px !important;">← Deslizá para ver más →</div>
+            <div class="d-md-none text-center text-muted scroll-hint" style="font-size:11px;">← Deslizá para ver más →</div>
         </div>
     </div>
 }

@@ -89,6 +89,12 @@ footer {
 
     /* Paginación */
     .pagination { flex-wrap: wrap; }
+
+    /* "← Deslizá para ver más →": equidistante entre la tabla y lo que sigue */
+    .scroll-hint {
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
+    }
 }
 
 /* ── Separación entre links del navbar ──────────────────────────────────────── */
