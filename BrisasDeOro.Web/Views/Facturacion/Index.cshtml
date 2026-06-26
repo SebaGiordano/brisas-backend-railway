@@ -85,20 +85,47 @@
         #pane-movimientos form .row > div:first-child { flex: 0 0 100% !important; width: 100% !important; max-width: 100% !important; }
         #input-titular-mov { font-size: 16px !important; }
         #pane-movimientos form select[name="metodoPago"] { font-size: 16px !important; }
-        #pane-movimientos form .row > div:nth-child(4) { flex: 0 0 100% !important; width: 100% !important; max-width: 100% !important; order: 2 !important; }
-        #pane-movimientos form .row > div:nth-child(7),
-        #pane-movimientos form .row > div:nth-child(8) { flex: 1 !important; order: 3 !important; }
-        #pane-movimientos form .row > div:nth-child(7) .btn,
-        #pane-movimientos form .row > div:nth-child(8) .btn { width: 100% !important; display: flex !important; }
+        #pane-movimientos form .row > div:nth-child(5) { flex: 0 0 100% !important; width: 100% !important; max-width: 100% !important; order: 2 !important; }
+        #pane-movimientos form .row > div:nth-child(9),
+        #pane-movimientos form .row > div:nth-child(10) { flex: 1 !important; order: 3 !important; }
+        #pane-movimientos form .row > div:nth-child(9) .btn,
+        #pane-movimientos form .row > div:nth-child(10) .btn { width: 100% !important; display: flex !important; }
         /* Autocompletado: scroll suave en iOS */
         .ac-dropdown { -webkit-overflow-scrolling: touch !important; }
         /* Prevenir zoom automático en iOS (ocurre cuando font-size < 16px) */
         input, select, textarea { font-size: 16px !important; }
     }
-    @@media (min-width: 769px) {
-        /* Filtros Movimientos: una sola fila, campos proporcionales */
-        #pane-movimientos form .row { flex-wrap: nowrap !important; }
+    @@media (min-width: 768px) {
+        /* Filtros Movimientos: campos proporcionales (aplica a ambos sub-rangos: md y lg+) */
         #pane-movimientos form .row > div:not(.col-auto) { flex: 1 !important; min-width: 0 !important; }
+    }
+    @@media (min-width: 992px) {
+        /* A partir de "lg": una sola fila */
+        #pane-movimientos form .row { flex-wrap: nowrap !important; }
+    }
+    @@media (min-width: 768px) and (max-width: 991.98px) {
+        /* Rango intermedio ("md"): 3 filas (Titular/Desde/Hasta | Método/Concepto/Orden),
+           cada una con el mismo ancho total, y los botones Filtrar/Limpiar centrados
+           en una 3ra fila. */
+        #pane-movimientos form .row {
+            flex-wrap: wrap !important;
+            justify-content: center !important;
+        }
+        #pane-movimientos form .row > div.filtro-break-fact {
+            display: block !important;
+            flex: 0 0 100% !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+    }
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        /* Tabla de Movimientos: mismo diseño, anchos de columna y tamaño de letra que
+           a partir de 1200px — se evita que las columnas se compriman/envuelvan en este
+           rango más angosto; en su lugar aparece scroll horizontal (ya provisto por
+           .table-responsive) para recorrer la tabla sin alterar proporciones. */
+        .tabla-mov table th,
+        .tabla-mov table td { white-space: nowrap !important; }
     }
 </style>
 
@@ -160,6 +187,7 @@
                     <input type="date" name="hasta" value="@Model.FiltroHasta"
                            class="form-control form-control-sm" />
                 </div>
+                <div class="w-100 filtro-break-fact d-none"></div>
                 <div class="col-12 col-sm-6 col-md-auto">
                     <label class="form-label small fw-semibold mb-1">Método de pago</label>
                     <select name="metodoPago" class="form-select form-select-sm">
@@ -209,6 +237,7 @@
                         }
                     </select>
                 </div>
+                <div class="w-100 filtro-break-fact d-none"></div>
                 <div class="col-auto">
                     <button type="submit" class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-funnel me-1"></i>Filtrar

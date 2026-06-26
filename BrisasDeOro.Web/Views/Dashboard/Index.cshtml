@@ -56,11 +56,57 @@
         .modal-grafico .modal-footer { padding-bottom: 1rem !important; }
         /* Botones Ver gráfico: centrados horizontalmente */
         .btn-grafico-container { display: flex !important; justify-content: center !important; }
+
+        /* Botón "Cerrar" del modal de gráfico: centrado, tamaño normal (no ancho completo) */
+        .modal-grafico .modal-footer {
+            justify-content: center !important;
+        }
+        .modal-grafico .modal-footer .btn {
+            flex: 0 0 auto !important;
+            min-width: 0 !important;
+        }
+
+        /* Botón "Cerrar" y botones "Ver gráfico": mismo efecto sutil con transición.
+           :active da el feedback al tocar (no hay :hover real en pantallas táctiles). */
+        .modal-grafico .modal-footer .btn-outline-primary,
+        .btn-grafico-container .btn {
+            transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+        }
+        .modal-grafico .modal-footer .btn-outline-primary:active,
+        .btn-grafico-container .btn:active {
+            background-color: #e9ecef !important;
+            color: #0d6efd !important;
+            border-color: #0d6efd !important;
+        }
+        /* Botón "Cerrar": el modal se cierra (fade-out) casi al instante del toque,
+           lo que tapa visualmente el :active. Esta clase la aplica el JS de abajo
+           un instante antes de cerrar, para que el cambio de color sí se llegue a ver. */
+        .modal-grafico .modal-footer .btn-outline-primary.btn-cerrando {
+            background-color: #e9ecef !important;
+            color: #0d6efd !important;
+            border-color: #0d6efd !important;
+        }
+    }
+    @@media (max-width: 767.98px) and (hover: hover) {
+        /* En dispositivos con mouse real (tablet/notebook con puntero) sí existe :hover */
+        .modal-grafico .modal-footer .btn-outline-primary:hover,
+        .btn-grafico-container .btn:hover {
+            background-color: #e9ecef !important;
+            color: #0d6efd !important;
+            border-color: #0d6efd !important;
+        }
     }
     @@media (min-width: 769px) {
         /* Hint text: línea propia debajo de los filtros, alineada a la izquierda */
         #filtro-hint { flex: 0 0 100% !important; }
         #filtro-btns .btn { width: 110px !important; }
+    }
+    @@media (min-width: 768px) and (max-width: 991.98px) {
+        /* Tabla ingresos: el contenedor Bootstrap se achica en este rango ("md") y
+           "T. Crédito" / "T. Débito" se cortan en dos líneas — se reduce el font-size
+           de los encabezados para que entren en una sola línea hasta que el layout
+           se estabilice en "lg" (992px), donde vuelven a su tamaño normal */
+        #tabla-ingresos-wrap th { font-size: .7rem !important; white-space: nowrap !important; }
     }
 </style>
 
@@ -555,7 +601,7 @@
                     <canvas id="@canvasId" style="max-height:60vh;"></canvas>
                 </div>
                 <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -589,6 +635,24 @@ document.addEventListener('click', function (e) {
         });
     }
 }, true);
+
+// ── Botón "Cerrar" de los modales de gráfico (mobile): el cierre es casi
+//    instantáneo y el fade-out del modal tapa el cambio de color del :active.
+//    Se muestra el color un instante antes de cerrar para que se llegue a ver. ──
+document.querySelectorAll('.modal-grafico .modal-footer button[data-bs-dismiss="modal"]').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+        if (!window.matchMedia('(max-width: 767.98px)').matches) return;
+        if (btn.classList.contains('btn-cerrando')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        btn.classList.add('btn-cerrando');
+        var modalEl = btn.closest('.modal');
+        setTimeout(function () {
+            bootstrap.Modal.getInstance(modalEl)?.hide();
+            btn.classList.remove('btn-cerrando');
+        }, 150);
+    });
+});
 </script>
 <script>
 // ── Exclusión mutua Mes/Año ↔ Desde/Hasta ────────────────────────────────────

@@ -28,6 +28,9 @@
         .tabla-reservas-responsive th { white-space: nowrap; }
         /* Centrado vertical y horizontal dentro de botones y celda de acciones */
         .btn { display: inline-flex !important; align-items: center; justify-content: center; }
+        /* Campos de filtro: ancho completo (100%) en todo el rango mobile, incluido
+           576px-767.98px, donde Bootstrap activaría col-sm-6 (50%) si no se anulara */
+        #filtros-reservas-row > div:not(.col-auto) { flex: 0 0 100% !important; max-width: 100% !important; }
         /* Botones Filtrar + Limpiar: cada uno al 50% del ancho */
         #filtros-reservas-row > div:nth-child(6),
         #filtros-reservas-row > div:nth-child(7) { flex: 1 !important; }
@@ -52,10 +55,27 @@
         /* Titular con saldo negativo: fondo rojo claro visible sin scroll */
         .titular-saldo-negativo { background-color: #fde8e8 !important; }
     }
-    @@media (min-width: 769px) {
+    @@media (min-width: 768px) {
         /* Filtros: una sola fila, campos proporcionales, margen derecho = izquierdo */
         #filtros-reservas-row { flex-wrap: nowrap !important; }
         #filtros-reservas-row > div:not(.col-auto) { flex: 1 !important; min-width: 0 !important; }
+    }
+    @@media (min-width: 768px) and (max-width: 991.98px) {
+        /* Rango intermedio (contenedor "md" de Bootstrap, más angosto): los 5 campos
+           no entran cómodos en una sola fila. Se reorganizan en 2 filas (Buscar/Ingreso
+           desde/Ingreso hasta | Estado de reserva/Estado de pago), cada una ocupando el
+           mismo ancho total, y los botones Filtrar/Limpiar centrados en una 3ra fila. */
+        #filtros-reservas-row {
+            flex-wrap: wrap !important;
+            justify-content: center !important;
+        }
+        #filtros-reservas-row > div.filtro-break {
+            display: block !important;
+            flex: 0 0 100% !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
     }
 </style>
 
@@ -121,6 +141,7 @@
                 <label class="form-label small fw-semibold mb-1">Ingreso hasta</label>
                 <input type="date" name="hasta" value="@hasta" class="form-control" />
             </div>
+            <div class="w-100 filtro-break d-none"></div>
             <div class="col-12 col-sm-6 col-md-2 d-mobile-none">
                 <label class="form-label small fw-semibold mb-1">Estado de reserva</label>
                 <select name="estado" class="form-select">
@@ -153,6 +174,7 @@
                     }
                 </select>
             </div>
+            <div class="w-100 filtro-break d-none"></div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-outline-primary">
                     <i class="bi bi-funnel me-1"></i>Filtrar
