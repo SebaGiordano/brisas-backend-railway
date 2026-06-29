@@ -1,6 +1,7 @@
 using BrisasDeOro.Web.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BrisasDeOro.Web.Data;
 
@@ -31,6 +32,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             e.Property(r => r.MontoTotal).HasPrecision(18, 2);
             e.Property(r => r.MontoSena).HasPrecision(18, 2);
+
+            // Con "Npgsql.EnableLegacyTimestampBehavior" activo (necesario para que las
+            // comparaciones con DateTime.Today/Now de Kind=Unspecified no exploten contra
+            // columnas "timestamp with time zone"), Npgsql convierte automáticamente estas
+            // fechas a la hora local del proceso al LEERLAS. En horario Argentina (UTC-3)
+            // eso retrocede un día las fechas guardadas a medianoche UTC (ej. 31/12 → 30/12).
+            // Este converter deshace esa conversión al leer, devolviendo la fecha original.
+            e.Property(r => r.FechaIngreso).HasConversion(FechaSinConversionLocal);
+            e.Property(r => r.FechaSalida).HasConversion(FechaSinConversionLocal);
         });
 
         builder.Entity<Pago>(e =>
@@ -71,4 +81,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
              .OnDelete(DeleteBehavior.Cascade);
         });
     }
+
+    // Al escribir no hace falta tocar nada (Npgsql en modo legacy guarda el valor tal
+    // cual, sin conversión). Al leer, si Npgsql devolvió la fecha ya convertida a hora
+    // local (Kind=Local), se la vuelve a pasar a UTC para recuperar el valor original.
+    private static readonly ValueConverter<DateTime, DateTime> FechaSinConversionLocal = new(
+        v => v,
+        v => v.Kind == DateTimeKind.Local ? v.ToUniversalTime() : v);
 }
