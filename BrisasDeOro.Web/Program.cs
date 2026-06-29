@@ -5,7 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using BrisasDeOro.Web.Infrastructure;
 using Microsoft.OpenApi.Models;
 
-AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+// NOTA: "Npgsql.EnableLegacyTimestampBehavior" se removió porque hacía que Npgsql
+// convirtiera automáticamente las fechas (timestamp with time zone) a la hora local
+// del proceso al leerlas. Como el proceso corre en horario Argentina (UTC-3), esto
+// restaba 3 horas a cada fecha guardada a medianoche UTC, retrocediéndola al día
+// anterior (ej. FechaIngreso 31/12 se mostraba como 30/12). Sin el switch, Npgsql
+// devuelve las fechas en UTC sin conversión, que es lo correcto para columnas que
+// representan sólo un día calendario (FechaIngreso/FechaSalida de Reservas, etc.).
 Environment.SetEnvironmentVariable("TZ", "America/Argentina/Buenos_Aires");
 
 var builder = WebApplication.CreateBuilder(args);
