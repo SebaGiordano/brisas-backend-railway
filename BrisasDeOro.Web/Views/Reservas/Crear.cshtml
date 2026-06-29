@@ -631,8 +631,10 @@
 
         if (!ingreso)
             errores.push('Fecha de ingreso — Obligatorio');
-        else if (ingreso < today)
-            errores.push('Fecha de ingreso — No puede ser anterior a hoy');
+        // TEMPORAL: validación "no anterior a hoy" removida para poder cargar reservas
+        // históricas. Restaurar este bloque una vez finalizada la carga histórica.
+        // else if (ingreso < today)
+        //     errores.push('Fecha de ingreso — No puede ser anterior a hoy');
 
         if (!egreso)
             errores.push('Fecha de egreso — Obligatorio');
@@ -678,7 +680,9 @@
 
     // ── Inicialización ────────────────────────────────────────────────────────
     (function init() {
-        gid('FechaIngreso').min = new Date().toISOString().split('T')[0];
+        // TEMPORAL: atributo "min" removido para permitir seleccionar fechas pasadas
+        // y poder cargar reservas históricas. Restaurar esta línea después.
+        // gid('FechaIngreso').min = new Date().toISOString().split('T')[0];
 
         if (gid('EsInvitacion').checked) aplicarModoInvitacion(true);
 

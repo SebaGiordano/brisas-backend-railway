@@ -379,8 +379,10 @@ public class ReservasController : Controller
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Crear(ReservaViewModel model)
     {
-        if (model.FechaIngreso.HasValue && model.FechaIngreso.Value.Date < DateTime.Today)
-            ModelState.AddModelError("FechaIngreso", "La fecha de ingreso no puede ser anterior a hoy.");
+        // TEMPORAL: validación "no anterior a hoy" removida para poder cargar reservas
+        // históricas. Restaurar este bloque una vez finalizada la carga histórica.
+        // if (model.FechaIngreso.HasValue && model.FechaIngreso.Value.Date < DateTime.Today)
+        //     ModelState.AddModelError("FechaIngreso", "La fecha de ingreso no puede ser anterior a hoy.");
 
         if (model.FechaIngreso.HasValue && model.FechaSalida.HasValue
             && model.FechaSalida.Value <= model.FechaIngreso.Value)
