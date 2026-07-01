@@ -99,7 +99,6 @@
     @@media (min-width: 769px) {
         /* Hint text: línea propia debajo de los filtros, alineada a la izquierda */
         #filtro-hint { flex: 0 0 100% !important; }
-        #filtro-btns .btn { width: 110px !important; }
     }
     @@media (min-width: 768px) and (max-width: 991.98px) {
         /* Tabla ingresos: el contenedor Bootstrap se achica en este rango ("md") y
@@ -150,7 +149,7 @@
             <button type="submit" class="btn btn-primary btn-sm">
                 <i class="bi bi-funnel me-1"></i>Filtrar
             </button>
-            <a href="@Url.Action("Index","Dashboard")" class="btn btn-outline-secondary btn-sm">
+            <a href="@Url.Action("Index","Dashboard")" class="btn btn-outline-secondary btn-sm btn-hover-gris-claro">
                 <i class="bi bi-x-lg me-1"></i>Limpiar
             </a>
         </div>

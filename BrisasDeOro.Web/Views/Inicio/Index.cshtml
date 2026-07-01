@@ -58,8 +58,14 @@
         #tabla-limpieza td:last-child,
         #tabla-limpieza th:last-child { word-wrap: break-word !important; overflow-wrap: break-word !important; }
         #tabla-limpieza .badge { white-space: normal !important; }
+        /* Fila de grupo (colspan): no hereda el ancho fijo de la primera columna */
+        #tabla-limpieza td.td-limpieza-grupo { width: auto !important; white-space: normal !important; }
+        .grid-limpieza-grupo { grid-template-columns: auto 1fr; row-gap: .4rem; column-gap: 12px; }
     }
+    /* Padding-bottom ampliado en el bloque de grupo para separarlo del siguiente */
+    .td-limpieza-grupo { padding-bottom: .85rem !important; }
     @@media (min-width: 769px) {
+        .grid-limpieza-grupo { grid-template-columns: auto 1fr; row-gap: .4rem; column-gap: 12px; }
         /* Badges de alojamiento en desktop */
         .aloj-badge-checkin,
         .aloj-badge-checkout-hoy,
@@ -81,6 +87,37 @@
         .tabla-pendientes tbody td:first-child,
         .tabla-pendientes thead th:first-child { padding-left: 1rem !important; }
         .tabla-pendientes tbody td:last-child  { padding-right: 1rem !important; }
+    }
+
+    /* ── Hover gris claro y sutil en filas de Limpieza del día ─────────────── */
+    #tabla-limpieza > tbody > tr {
+        transition: background-color .15s ease;
+    }
+    #tabla-limpieza > tbody > tr:hover > td {
+        background-color: rgba(0, 0, 0, .03);
+    }
+
+    /* ── Hover gris claro en filas de Check-ins / Check-outs ───────────────── */
+    .lista-ver-items .list-group-item {
+        transition: background-color .15s ease;
+    }
+    .lista-ver-items .list-group-item:hover {
+        background-color: rgba(0, 0, 0, .03);
+    }
+
+    /* ── Hover en negrita en los nombres del bloque Estado de unidades ─────── */
+    .lista-unidades-estado li.small:hover {
+        font-weight: 700;
+        cursor: default;
+    }
+
+    /* ── Hover de elevación (sombra dorada suave) en tarjetas de estadísticas ─ */
+    .card-stat-inicio {
+        transition: box-shadow .2s ease, transform .2s ease;
+    }
+    .card-stat-inicio:hover {
+        box-shadow: 0 .3rem .9rem rgba(195, 155, 45, .28);
+        transform: translateY(-2px);
     }
 </style>
 
@@ -115,14 +152,31 @@
                     <ul class="list-group list-group-flush lista-ver-items">
                         @foreach (var item in Model.CheckInsHoy)
                         {
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <span>
-                                    <span class="fw-semibold">@item.NombreHuesped</span>
-                                    <span class="ms-1 aloj-badge-checkin">@item.NombreAlojamiento</span>
-                                </span>
-                                <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
-                                   class="btn btn-outline-secondary btn-sm py-0">Ver</a>
-                            </li>
+                            @if (item.EsGrupal)
+                            {
+                                <li class="list-group-item d-flex align-items-start gap-2 py-2">
+                                    <span class="fw-semibold flex-shrink-0">@item.NombreHuesped</span>
+                                    <span class="d-flex flex-column gap-1 flex-fill ps-3">
+                                        @foreach (var u in item.NombresUnidadesGrupales)
+                                        {
+                                            <span class="aloj-badge-checkin" style="width:fit-content;">@u</span>
+                                        }
+                                    </span>
+                                    <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
+                                       class="btn btn-outline-secondary btn-sm py-0 flex-shrink-0">Ver</a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                    <span>
+                                        <span class="fw-semibold">@item.NombreHuesped</span>
+                                        <span class="ms-1 aloj-badge-checkin">@item.NombreAlojamiento</span>
+                                    </span>
+                                    <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
+                                       class="btn btn-outline-secondary btn-sm py-0">Ver</a>
+                                </li>
+                            }
                         }
                     </ul>
                 }
@@ -147,14 +201,31 @@
                     <ul class="list-group list-group-flush lista-ver-items">
                         @foreach (var item in Model.CheckOutsHoy)
                         {
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <span>
-                                    <span class="fw-semibold">@item.NombreHuesped</span>
-                                    <span class="ms-1 aloj-badge-checkout-hoy">@item.NombreAlojamiento</span>
-                                </span>
-                                <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
-                                   class="btn btn-outline-secondary btn-sm py-0">Ver</a>
-                            </li>
+                            @if (item.EsGrupal)
+                            {
+                                <li class="list-group-item d-flex align-items-start gap-2 py-2">
+                                    <span class="fw-semibold flex-shrink-0">@item.NombreHuesped</span>
+                                    <span class="d-flex flex-column gap-1 flex-fill ps-3">
+                                        @foreach (var u in item.NombresUnidadesGrupales)
+                                        {
+                                            <span class="aloj-badge-checkout-hoy" style="width:fit-content;">@u</span>
+                                        }
+                                    </span>
+                                    <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
+                                       class="btn btn-outline-secondary btn-sm py-0 flex-shrink-0">Ver</a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                    <span>
+                                        <span class="fw-semibold">@item.NombreHuesped</span>
+                                        <span class="ms-1 aloj-badge-checkout-hoy">@item.NombreAlojamiento</span>
+                                    </span>
+                                    <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
+                                       class="btn btn-outline-secondary btn-sm py-0">Ver</a>
+                                </li>
+                            }
                         }
                     </ul>
                 }
@@ -176,7 +247,7 @@
         @* Stats — tres tarjetas: col-12 en mobile, col-sm-4 en desktop *@
         <div class="row g-3">
             <div class="col-12 col-sm-4 d-flex">
-                <div class="card text-center flex-grow-1">
+                <div class="card text-center flex-grow-1 card-stat-inicio">
                     <div class="card-body py-3 d-flex flex-column justify-content-center">
                         <div class="display-6 fw-bold text-primary">@Model.PlazasOcupadasHoy</div>
                         <div class="text-muted small mt-1">
@@ -187,7 +258,7 @@
                 </div>
             </div>
             <div class="col-12 col-sm-4 d-flex">
-                <div class="card text-center flex-grow-1">
+                <div class="card text-center flex-grow-1 card-stat-inicio">
                     <div class="card-body py-3 d-flex flex-column justify-content-center">
                         <div class="display-6 fw-bold text-success">@Model.ComensalesDesayunoHoy</div>
                         <div class="text-muted small mt-1">
@@ -198,7 +269,7 @@
                 </div>
             </div>
             <div class="col-12 col-sm-4 d-flex">
-                <div class="card text-center flex-grow-1">
+                <div class="card text-center flex-grow-1 card-stat-inicio">
                     <div class="card-body py-3 d-flex flex-column justify-content-center">
                         <div class="display-6 fw-bold text-info">@Model.ComensalesDesayunoManana</div>
                         <div class="text-muted small mt-1">
@@ -222,25 +293,73 @@
                 }
                 else
                 {
-                    <table id="tabla-limpieza" class="table table-sm table-hover align-middle mb-0">
+                    <table id="tabla-limpieza" class="table table-sm align-middle mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th style="width:120px">Unidad</th>
-                                <th>Tareas</th>
+                                <th class="ps-3">Tareas</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var item in Model.LimpiezaDelDia)
                             {
-                                <tr>
-                                    <td class="fw-semibold">@item.NombreAlojamiento</td>
-                                    <td>
-                                        @foreach (var tarea in item.Tareas)
-                                        {
-                                            <span class="badge bg-primary me-1 mb-1 fw-bold" style="font-size:.78rem;">@tarea</span>
-                                        }
-                                    </td>
-                                </tr>
+                                @if (item.EsGrupo)
+                                {
+                                    <tr>
+                                        <td colspan="2" class="p-2 td-limpieza-grupo">
+                                            <div class="fw-semibold mb-2">
+                                                <i class="bi bi-people-fill me-1"></i>Grupo (@item.CantUnidadesOriginales unidades)
+                                            </div>
+                                            <div class="d-grid grid-limpieza-grupo">
+                                                @foreach (var u in item.Unidades)
+                                                {
+                                                    @if (u.EsSubtituloApart)
+                                                    {
+                                                        <div style="grid-column:1/-1;" class="mt-1">
+                                                            <span class="small text-muted fst-italic">@u.NombreAlojamiento</span>
+                                                            @foreach (var tarea in u.Tareas)
+                                                            {
+                                                                <span class="badge bg-primary ms-1 mb-1 fw-bold" style="font-size:.78rem;">@tarea</span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    else if (u.EsHabDeApart)
+                                                    {
+                                                        <div class="align-self-start ps-3">@u.NombreAlojamiento</div>
+                                                        <div>
+                                                            @foreach (var tarea in u.Tareas)
+                                                            {
+                                                                <span class="badge bg-primary me-1 mb-1 fw-bold" style="font-size:.78rem;">@tarea</span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="align-self-start ps-3">@u.NombreAlojamiento</div>
+                                                        <div>
+                                                            @foreach (var tarea in u.Tareas)
+                                                            {
+                                                                <span class="badge bg-primary me-1 mb-1 fw-bold" style="font-size:.78rem;">@tarea</span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@item.NombreAlojamiento</td>
+                                        <td class="ps-3">
+                                            @foreach (var tarea in item.Tareas)
+                                            {
+                                                <span class="badge bg-primary me-1 mb-1 fw-bold" style="font-size:.78rem;">@tarea</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
@@ -275,7 +394,7 @@
                         }
                         else
                         {
-                            <ul class="list-unstyled mb-0">
+                            <ul class="list-unstyled mb-0 lista-unidades-estado">
                                 @foreach (var nombre in habitacionesLibres)
                                 {
                                     <li class="py-1 small">
@@ -308,7 +427,7 @@
                         }
                         else
                         {
-                            <ul class="list-unstyled mb-0">
+                            <ul class="list-unstyled mb-0 lista-unidades-estado">
                                 @foreach (var nombre in habOcupadas)
                                 {
                                     <li class="py-1 small">
@@ -419,14 +538,31 @@
                     <ul class="list-group list-group-flush lista-ver-items">
                         @foreach (var item in Model.CheckInsManana)
                         {
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <span>
-                                    <span class="fw-semibold">@item.NombreHuesped</span>
-                                    <span class="ms-1 aloj-badge-checkin">@item.NombreAlojamiento</span>
-                                </span>
-                                <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
-                                   class="btn btn-outline-secondary btn-sm py-0">Ver</a>
-                            </li>
+                            @if (item.EsGrupal)
+                            {
+                                <li class="list-group-item d-flex align-items-start gap-2 py-2">
+                                    <span class="fw-semibold flex-shrink-0">@item.NombreHuesped</span>
+                                    <span class="d-flex flex-column gap-1 flex-fill ps-3">
+                                        @foreach (var u in item.NombresUnidadesGrupales)
+                                        {
+                                            <span class="aloj-badge-checkin" style="width:fit-content;">@u</span>
+                                        }
+                                    </span>
+                                    <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
+                                       class="btn btn-outline-secondary btn-sm py-0 flex-shrink-0">Ver</a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                    <span>
+                                        <span class="fw-semibold">@item.NombreHuesped</span>
+                                        <span class="ms-1 aloj-badge-checkin">@item.NombreAlojamiento</span>
+                                    </span>
+                                    <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
+                                       class="btn btn-outline-secondary btn-sm py-0">Ver</a>
+                                </li>
+                            }
                         }
                     </ul>
                 }
@@ -451,14 +587,31 @@
                     <ul class="list-group list-group-flush lista-ver-items">
                         @foreach (var item in Model.CheckOutsManana)
                         {
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                                <span>
-                                    <span class="fw-semibold">@item.NombreHuesped</span>
-                                    <span class="ms-1 aloj-badge-manana">@item.NombreAlojamiento</span>
-                                </span>
-                                <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
-                                   class="btn btn-outline-secondary btn-sm py-0">Ver</a>
-                            </li>
+                            @if (item.EsGrupal)
+                            {
+                                <li class="list-group-item d-flex align-items-start gap-2 py-2">
+                                    <span class="fw-semibold flex-shrink-0">@item.NombreHuesped</span>
+                                    <span class="d-flex flex-column gap-1 flex-fill ps-3">
+                                        @foreach (var u in item.NombresUnidadesGrupales)
+                                        {
+                                            <span class="aloj-badge-manana" style="width:fit-content;">@u</span>
+                                        }
+                                    </span>
+                                    <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
+                                       class="btn btn-outline-secondary btn-sm py-0 flex-shrink-0">Ver</a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                    <span>
+                                        <span class="fw-semibold">@item.NombreHuesped</span>
+                                        <span class="ms-1 aloj-badge-manana">@item.NombreAlojamiento</span>
+                                    </span>
+                                    <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
+                                       class="btn btn-outline-secondary btn-sm py-0">Ver</a>
+                                </li>
+                            }
                         }
                     </ul>
                 }

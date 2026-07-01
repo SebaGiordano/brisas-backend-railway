@@ -240,6 +240,45 @@ header .navbar .navbar-nav .nav-link {
   border: none !important;
 }
 
+/* ── Botones unificados para modales de confirmación ──────────────────────────
+   .btn-modal-cancelar: acciones que descartan la operación y cierran el modal
+   sin guardar nada (ej. "Cancelar", "No, volver"). Hover en rojo como aviso.
+   .btn-modal-volver: revisar datos antes de confirmar, sin descartar nada
+   (ej. "Volver y corregir"). Hover en gris claro, no rojo. ── */
+.btn-modal-cancelar {
+  background-color: #fff;
+  color: #6c757d;
+  border: 1px solid #ced4da;
+}
+.btn-modal-cancelar:hover,
+.btn-modal-cancelar:focus {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: #fff;
+}
+
+.btn-modal-volver {
+  background-color: #fff;
+  color: #6c757d;
+  border: 1px solid #ced4da;
+}
+.btn-modal-volver:hover,
+.btn-modal-volver:focus {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+  color: #495057;
+}
+
+/* ── Hover gris claro y sutil para acciones neutrales (no cancelar/cerrar) ──
+   Reemplaza el hover gris oscuro nativo de Bootstrap en botones "Limpiar"
+   filtros (Reservas, Facturación, Dashboard) y otras acciones neutrales. ── */
+.btn-hover-gris-claro:hover,
+.btn-hover-gris-claro:focus {
+  background-color: #e9ecef !important;
+  border-color: #ced4da !important;
+  color: #495057 !important;
+}
+
 /* ── Utilidades responsive para tablas ──────────────────────────────────────── */
 @media (max-width: 767.98px) {
     .d-mobile-none       { display: none !important; }

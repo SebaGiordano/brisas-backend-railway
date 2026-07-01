@@ -131,58 +131,59 @@
     </div>
 </div>
 
-@* ── Datos de la reserva ── *@
-<div class="row g-3 mb-3">
+@* ── Datos de la reserva (layout condicional: grupal vs individual) ── *@
+@{
+    var noches    = (Model.FechaSalida - Model.FechaIngreso).Days;
+    var tarifaDia = (!Model.EsInvitacion && noches > 0)
+        ? (decimal?)(Model.MontoTotal / noches) : null;
 
-    @* Columna izquierda: Información de la reserva *@
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header fw-semibold bg-light">
-                <i class="bi bi-info-circle me-2"></i>Información de la reserva
-            </div>
-            <div class="card-body">
-                <div class="row g-0">
+    // Grupal: siempre evaluados (vacíos para reservas individuales, sin costo)
+    var habsAparts     = Model.UnidadesGrupales.Where(u => u.Alojamiento.Tipo != TipoAlojamiento.Cabaña).ToList();
+    var cabanas        = Model.UnidadesGrupales.Where(u => u.Alojamiento.Tipo == TipoAlojamiento.Cabaña).ToList();
+    var capacidadTotal = Model.UnidadesGrupales.Sum(u => u.Alojamiento.Capacidad);
+}
 
-                    @* Sub-columna izquierda: Datos del titular *@
-                    <div class="col-6 pe-3 border-end">
-                        <div class="small fw-semibold text-secondary text-uppercase mb-3" style="letter-spacing:.05em">
-                            Datos del titular
-                        </div>
+@if (Model.EsGrupal)
+{
+    @* ════════════════════════════════════════════════════════════════════ *@
+    @* RESERVA GRUPAL — 3 bloques de ancho completo                       *@
+    @* ════════════════════════════════════════════════════════════════════ *@
 
-                        <div class="mb-3">
+    @* ── Bloque 1: titular + alojamiento grupal ─────────────────────── *@
+    <div class="row g-3 mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header fw-semibold bg-light">
+                    <i class="bi bi-info-circle me-2"></i>Información de la reserva
+                </div>
+                <div class="card-body">
+
+                    @* Primera subfila: Datos del titular *@
+                    <div class="small fw-bold text-secondary text-uppercase mb-3" style="letter-spacing:.05em">
+                        Datos del titular
+                    </div>
+                    <div class="row g-2 mb-1">
+                        <div class="col-12 col-md-2">
                             <div class="detalle-label">Nombre del titular</div>
                             <div class="detalle-valor fw-semibold">@Model.NombreHuesped</div>
                         </div>
-
-                        <div class="mb-3">
+                        <div class="col-12 col-md-2">
                             <div class="detalle-label">Teléfono</div>
                             <div class="detalle-valor">
                                 @if (string.IsNullOrEmpty(Model.Telefono))
-                                {
-                                    <span class="text-muted fst-italic">No registrado</span>
-                                }
-                                else
-                                {
-                                    @Model.Telefono
-                                }
+                                { <span class="text-muted fst-italic">No registrado</span> }
+                                else { @Model.Telefono }
                             </div>
                         </div>
-
-                        <div class="mb-3">
+                        <div class="col-12 col-md-2">
                             <div class="detalle-label">Canal de origen</div>
                             <div class="detalle-valor">
                                 @if (string.IsNullOrEmpty(Model.CanalOrigen))
-                                {
-                                    <span class="text-muted">—</span>
-                                }
-                                else
-                                {
-                                    @Model.CanalOrigen
-                                }
+                                { <span class="text-muted">—</span> }
+                                else { @Model.CanalOrigen }
                             </div>
                         </div>
-
-                        <div class="mb-3">
+                        <div class="col-12 col-md-2">
                             <div class="detalle-label">Observaciones</div>
                             @if (string.IsNullOrEmpty(Model.Observaciones))
                             {
@@ -205,136 +206,319 @@
                                 </div>
                             }
                         </div>
-
-                        <div class="mb-0">
+                        <div class="col-12 col-md-2">
                             <div class="detalle-label">¿Es invitación?</div>
                             <div class="detalle-valor">
                                 @if (Model.EsInvitacion)
-                                {
-                                    <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Sí</span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">No</span>
-                                }
+                                { <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Sí</span> }
+                                else { <span class="text-muted">No</span> }
                             </div>
                         </div>
-                    </div>
-
-                    @* Sub-columna derecha: Datos del alojamiento *@
-                    <div class="col-6 ps-3">
-                        <div id="titulo-datos-aloj" class="small fw-semibold text-secondary text-uppercase mb-3" style="letter-spacing:.05em">
-                            Datos del alojamiento
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="detalle-label">Alojamiento</div>
-                            <div class="detalle-valor fw-semibold">@Model.Alojamiento.Nombre</div>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="detalle-label">Tipo</div>
-                            <div class="detalle-valor">@Model.Alojamiento.Tipo</div>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="detalle-label">Capacidad máxima</div>
-                            <div class="detalle-valor">@Model.Alojamiento.Capacidad personas</div>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="detalle-label">Huéspedes</div>
-                            <div class="detalle-valor">@Model.CantidadHuespedes personas</div>
-                        </div>
-
-                        <div class="mb-0">
+                        <div class="col-12 col-md-2">
                             <div class="detalle-label">¿Incluye desayuno?</div>
                             <div class="detalle-valor">
                                 @if (Model.IncluyeDesayuno)
-                                {
-                                    <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Sí</span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">No</span>
-                                }
+                                { <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Sí</span> }
+                                else { <span class="text-muted">No</span> }
                             </div>
                         </div>
                     </div>
 
+                    @* Segunda subfila: Alojamientos del grupo *@
+                    <div style="border-top:1px solid #dee2e6; margin-top:1rem; padding-top:.75rem;">
+                        <div class="small fw-bold text-secondary text-uppercase mb-3" style="letter-spacing:.05em">
+                            Unidades del grupo (@Model.UnidadesGrupales.Count)
+                        </div>
+                        <div class="row g-3">
+                            @if (habsAparts.Any())
+                            {
+                                <div class="col-sm-6">
+                                    <div class="fw-semibold small text-muted mb-2">Habitaciones y Aparts</div>
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach (var u in habsAparts)
+                                        {
+                                            <div class="ps-2" style="border-left:3px solid #6c8eef;">
+                                                <div><span class="fw-bold">@u.Alojamiento.Nombre</span> <span class="text-muted">(Cap. máx: @u.Alojamiento.Capacidad)</span></div>
+                                                @if (u.Alojamiento.Tipo == TipoAlojamiento.Apart)
+                                                {
+                                                    var compDict = ViewBag.ApartComposicion as Dictionary<int, string>;
+                                                    if (compDict != null && compDict.TryGetValue(u.AlojamientoId, out var comp))
+                                                    {
+                                                        <div class="small text-muted ps-3">Compuesto por: @comp</div>
+                                                    }
+                                                    <div class="small text-muted ps-3">Personas asignadas: @u.CantidadHuespedes</div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="small text-muted">Personas asignadas: @u.CantidadHuespedes</div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            @if (cabanas.Any())
+                            {
+                                <div class="col-sm-6">
+                                    <div class="fw-semibold small text-muted mb-2">Cabañas</div>
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach (var u in cabanas)
+                                        {
+                                            <div class="ps-2" style="border-left:3px solid #6c8eef;">
+                                                <div><span class="fw-bold">@u.Alojamiento.Nombre</span> <span class="text-muted">(Cap. máx: @u.Alojamiento.Capacidad)</span></div>
+                                                <div class="small text-muted">Personas asignadas: @u.CantidadHuespedes</div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center justify-content-center gap-3 mt-3 px-4 py-2 rounded"
+                             style="background-color:#f8f9fa; border:1px solid #e9ecef;">
+                            <span>
+                                <span class="text-muted small fw-semibold">Cap. máx:</span>
+                                <span class="fw-bold ms-1" style="font-size:1rem;">@capacidadTotal PERSONAS</span>
+                            </span>
+                            <span class="text-muted small">·</span>
+                            <span>
+                                <span class="text-muted small fw-semibold">Huéspedes registrados:</span>
+                                <span class="fw-bold ms-1" style="font-size:1rem;">@Model.CantidadHuespedes PERSONAS</span>
+                            </span>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
 
-    @* Columna derecha: Fechas + Precios *@
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header fw-semibold bg-light">
-                <i class="bi bi-calendar-range me-2"></i>Fechas y precios
-            </div>
-            <div class="card-body">
-                <div id="fechas-precios-row" class="row g-3">
-                    <div class="col-sm-4 fp-fecha">
-                        <div class="detalle-label">Ingreso</div>
-                        <div class="detalle-valor">@Model.FechaIngreso.ToString("dd/MM/yyyy")</div>
-                    </div>
-                    <div class="col-sm-4 fp-fecha">
-                        <div class="detalle-label">Egreso</div>
-                        <div class="detalle-valor">@Model.FechaSalida.ToString("dd/MM/yyyy")</div>
-                    </div>
-                    <div class="col-sm-4 fp-fecha">
-                        <div class="detalle-label">Noches</div>
-                        <div class="detalle-valor fw-semibold">
-                            @((Model.FechaSalida - Model.FechaIngreso).Days)
+    @* ── Bloque 2: Fechas y precios ─────────────────────────────────── *@
+    <div class="row g-3 mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header fw-semibold bg-light">
+                    <i class="bi bi-calendar-range me-2"></i>Fechas y precios
+                </div>
+                <div class="card-body">
+                    <div id="fechas-precios-row" class="row g-3">
+                        <div class="col-md-3 fp-fecha">
+                            <div class="detalle-label">Ingreso</div>
+                            <div class="detalle-valor">@Model.FechaIngreso.ToString("dd/MM/yyyy")</div>
                         </div>
-                    </div>
-                    @{
-                        var noches = (Model.FechaSalida - Model.FechaIngreso).Days;
-                        var tarifaDia = (!Model.EsInvitacion && noches > 0)
-                            ? (decimal?)(Model.MontoTotal / noches) : null;
-                    }
-                    @if (tarifaDia.HasValue)
-                    {
-                        <div class="col-sm-4 fp-fecha">
-                            <div class="detalle-label">Tarifa por día</div>
-                            <div class="detalle-valor fw-semibold">$@Math.Round(tarifaDia.Value, 0).ToString("N0")</div>
+                        <div class="col-md-3 fp-fecha">
+                            <div class="detalle-label">Egreso</div>
+                            <div class="detalle-valor">@Model.FechaSalida.ToString("dd/MM/yyyy")</div>
                         </div>
-                    }
-                    <div class="col-12"><hr class="my-1" /></div>
-                    <div class="col-sm-6 fp-total">
-                        <div class="detalle-label">Total estadía</div>
-                        <div class="detalle-valor fw-semibold fs-5">$@Model.MontoTotal.ToString("N0")</div>
-                    </div>
-                    <div class="col-sm-6 fp-total">
-                        <div class="detalle-label">Estado de pago</div>
-                        <div class="detalle-valor">
-                            <span class="badge-pago @estadoPagoClase">@estadoPagoTexto</span>
+                        <div class="col-md-3 fp-fecha">
+                            <div class="detalle-label">Noches</div>
+                            <div class="detalle-valor fw-semibold">@noches</div>
                         </div>
-                    </div>
-                    <div class="col-sm-6 fp-total">
-                        <div class="detalle-label" style="color:#198754;font-weight:bold;">Total cobrado</div>
-                        <div class="detalle-valor text-success fw-semibold">$@totalCobrado.ToString("N0")</div>
-                    </div>
-                    <div id="fp-saldo" class="col-sm-6 fp-total">
-                        <div class="detalle-label" style="color:#dc3545;font-weight:bold;">Saldo pendiente</div>
-                        <div class="detalle-valor fw-bold @(saldoPendiente > 0 ? "text-danger" : "text-success")">
-                            $@saldoPendiente.ToString("N0")
-                            @if (saldoPendiente < 0)
-                            {
-                                <span class="d-block small fw-normal mt-1" style="color:#000000 !important;">(A devolver al cliente)</span>
-                            }
+                        @if (tarifaDia.HasValue)
+                        {
+                            <div class="col-md-3 fp-fecha">
+                                <div class="detalle-label">Tarifa por día</div>
+                                <div class="detalle-valor fw-semibold">$@Math.Round(tarifaDia.Value, 0).ToString("N0")</div>
+                            </div>
+                        }
+                        <div class="col-12"><hr class="my-1" /></div>
+                        <div class="col-sm-6 col-md-3 fp-total">
+                            <div class="detalle-label">Total estadía</div>
+                            <div class="detalle-valor fw-semibold fs-5">$@Model.MontoTotal.ToString("N0")</div>
                         </div>
-                    </div>
-                    <div id="fila-fecha-registro" class="col-sm-6 fp-total">
-                        <div class="detalle-label">Fecha de registro</div>
-                        <div class="detalle-valor text-muted small">@Model.FechaCarga.ToString("dd/MM/yyyy HH:mm")</div>
+                        <div class="col-sm-6 col-md-3 fp-total">
+                            <div class="detalle-label">Estado de pago</div>
+                            <div class="detalle-valor"><span class="badge-pago @estadoPagoClase">@estadoPagoTexto</span></div>
+                        </div>
+                        <div class="col-sm-6 col-md-3 fp-total">
+                            <div class="detalle-label" style="color:#198754;font-weight:bold;">Total cobrado</div>
+                            <div class="detalle-valor text-success fw-semibold">$@totalCobrado.ToString("N0")</div>
+                        </div>
+                        <div id="fp-saldo" class="col-sm-6 col-md-3 fp-total">
+                            <div class="detalle-label" style="color:#dc3545;font-weight:bold;">Saldo pendiente</div>
+                            <div class="detalle-valor fw-bold @(saldoPendiente > 0 ? "text-danger" : "text-success")">
+                                $@saldoPendiente.ToString("N0")
+                                @if (saldoPendiente < 0)
+                                { <span class="d-block small fw-normal mt-1" style="color:#000000 !important;">(A devolver al cliente)</span> }
+                            </div>
+                        </div>
+                        <div id="fila-fecha-registro" class="col-sm-6 fp-total">
+                            <div class="detalle-label">Fecha de registro</div>
+                            <div class="detalle-valor text-muted small">@Model.FechaCarga.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+}
+else
+{
+    @* ════════════════════════════════════════════════════════════════════ *@
+    @* RESERVA INDIVIDUAL — layout original (2 columnas)                  *@
+    @* ════════════════════════════════════════════════════════════════════ *@
+    <div class="row g-3 mb-3">
+
+        @* Columna izquierda: Información de la reserva *@
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold bg-light">
+                    <i class="bi bi-info-circle me-2"></i>Información de la reserva
+                </div>
+                <div class="card-body">
+                    <div class="row g-0">
+
+                        @* Sub-columna izquierda: Datos del titular *@
+                        <div class="col-6 pe-3 border-end">
+                            <div class="small fw-bold text-secondary text-uppercase mb-3" style="letter-spacing:.05em">
+                                Datos del titular
+                            </div>
+                            <div class="mb-3">
+                                <div class="detalle-label">Nombre del titular</div>
+                                <div class="detalle-valor fw-semibold">@Model.NombreHuesped</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detalle-label">Teléfono</div>
+                                <div class="detalle-valor">
+                                    @if (string.IsNullOrEmpty(Model.Telefono))
+                                    { <span class="text-muted fst-italic">No registrado</span> }
+                                    else { @Model.Telefono }
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detalle-label">Canal de origen</div>
+                                <div class="detalle-valor">
+                                    @if (string.IsNullOrEmpty(Model.CanalOrigen))
+                                    { <span class="text-muted">—</span> }
+                                    else { @Model.CanalOrigen }
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detalle-label">Observaciones</div>
+                                @if (string.IsNullOrEmpty(Model.Observaciones))
+                                {
+                                    <div class="detalle-valor text-muted fst-italic">Sin observaciones</div>
+                                }
+                                else if (Model.Observaciones.Length <= 80)
+                                {
+                                    <div class="detalle-valor p-2 rounded" style="background-color:#FFFDE7; border:1px solid #FFF176; font-size:.9rem;">
+                                        @Model.Observaciones
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="detalle-valor p-2 rounded" style="background-color:#FFFDE7; border:1px solid #FFF176; font-size:.9rem;">
+                                        @(Model.Observaciones.Substring(0, 80))...
+                                        <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline"
+                                                data-bs-toggle="modal" data-bs-target="#modalObservaciones">
+                                            Ver más
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                            <div class="mb-0">
+                                <div class="detalle-label">¿Es invitación?</div>
+                                <div class="detalle-valor">
+                                    @if (Model.EsInvitacion)
+                                    { <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Sí</span> }
+                                    else { <span class="text-muted">No</span> }
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Sub-columna derecha: Datos del alojamiento *@
+                        <div class="col-6 ps-3">
+                            <div id="titulo-datos-aloj" class="small fw-bold text-secondary text-uppercase mb-3" style="letter-spacing:.05em">
+                                Datos del alojamiento
+                            </div>
+                            <div class="mb-3">
+                                <div class="detalle-label">Alojamiento</div>
+                                <div class="detalle-valor fw-semibold">@Model.Alojamiento.Nombre</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detalle-label">Tipo</div>
+                                <div class="detalle-valor">@Model.Alojamiento.Tipo</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detalle-label">Capacidad máxima</div>
+                                <div class="detalle-valor">@Model.Alojamiento.Capacidad personas</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="detalle-label">Huéspedes</div>
+                                <div class="detalle-valor">@Model.CantidadHuespedes personas</div>
+                            </div>
+                            <div class="mb-0">
+                                <div class="detalle-label">¿Incluye desayuno?</div>
+                                <div class="detalle-valor">
+                                    @if (Model.IncluyeDesayuno)
+                                    { <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Sí</span> }
+                                    else { <span class="text-muted">No</span> }
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Columna derecha: Fechas + Precios *@
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header fw-semibold bg-light">
+                    <i class="bi bi-calendar-range me-2"></i>Fechas y precios
+                </div>
+                <div class="card-body">
+                    <div id="fechas-precios-row" class="row g-3">
+                        <div class="col-sm-4 fp-fecha">
+                            <div class="detalle-label">Ingreso</div>
+                            <div class="detalle-valor">@Model.FechaIngreso.ToString("dd/MM/yyyy")</div>
+                        </div>
+                        <div class="col-sm-4 fp-fecha">
+                            <div class="detalle-label">Egreso</div>
+                            <div class="detalle-valor">@Model.FechaSalida.ToString("dd/MM/yyyy")</div>
+                        </div>
+                        <div class="col-sm-4 fp-fecha">
+                            <div class="detalle-label">Noches</div>
+                            <div class="detalle-valor fw-semibold">@noches</div>
+                        </div>
+                        @if (tarifaDia.HasValue)
+                        {
+                            <div class="col-sm-4 fp-fecha">
+                                <div class="detalle-label">Tarifa por día</div>
+                                <div class="detalle-valor fw-semibold">$@Math.Round(tarifaDia.Value, 0).ToString("N0")</div>
+                            </div>
+                        }
+                        <div class="col-12"><hr class="my-1" /></div>
+                        <div class="col-sm-6 fp-total">
+                            <div class="detalle-label">Total estadía</div>
+                            <div class="detalle-valor fw-semibold fs-5">$@Model.MontoTotal.ToString("N0")</div>
+                        </div>
+                        <div class="col-sm-6 fp-total">
+                            <div class="detalle-label">Estado de pago</div>
+                            <div class="detalle-valor"><span class="badge-pago @estadoPagoClase">@estadoPagoTexto</span></div>
+                        </div>
+                        <div class="col-sm-6 fp-total">
+                            <div class="detalle-label" style="color:#198754;font-weight:bold;">Total cobrado</div>
+                            <div class="detalle-valor text-success fw-semibold">$@totalCobrado.ToString("N0")</div>
+                        </div>
+                        <div id="fp-saldo" class="col-sm-6 fp-total">
+                            <div class="detalle-label" style="color:#dc3545;font-weight:bold;">Saldo pendiente</div>
+                            <div class="detalle-valor fw-bold @(saldoPendiente > 0 ? "text-danger" : "text-success")">
+                                $@saldoPendiente.ToString("N0")
+                                @if (saldoPendiente < 0)
+                                { <span class="d-block small fw-normal mt-1" style="color:#000000 !important;">(A devolver al cliente)</span> }
+                            </div>
+                        </div>
+                        <div id="fila-fecha-registro" class="col-sm-6 fp-total">
+                            <div class="detalle-label">Fecha de registro</div>
+                            <div class="detalle-valor text-muted small">@Model.FechaCarga.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @* ── Pagos ── *@
 <div class="card mb-4">
@@ -460,7 +644,7 @@
             </div>
             <div class="modal-footer">
                 <div class="d-flex gap-2 w-100">
-                    <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">No, volver</button>
+                    <button type="button" class="btn btn-modal-volver flex-fill" data-bs-dismiss="modal">No, volver</button>
                     <button type="button" class="btn btn-danger flex-fill" id="btn-confirmar-cancelar">Sí, cancelar reserva</button>
                 </div>
             </div>

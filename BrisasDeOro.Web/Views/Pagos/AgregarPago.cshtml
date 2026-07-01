@@ -274,13 +274,13 @@
                 </div>
             </div>
 
-            <div id="botones-pago" class="d-flex gap-2 mt-4">
+            <div id="botones-pago" class="d-flex gap-2 mt-4 justify-content-center">
                 <button type="submit" class="btn btn-success px-4" id="btn-registrar-pago">
                     <i class="bi bi-check-lg me-1"></i>Registrar pago
                 </button>
                 <a asp-controller="Reservas" asp-action="Details" asp-route-id="@Model.ReservaId"
                    asp-route-from="@(fromCalendario ? "calendario" : null)"
-                   class="btn btn-outline-secondary btn-cancelar-pago">Cancelar</a>
+                   class="btn btn-modal-cancelar btn-cancelar-pago">Cancelar</a>
                 @if (fromCalendario)
                 {
                     <a href="@Url.Action("Index", "Calendario")" class="btn btn-outline-secondary btn-cal-pago">
@@ -307,8 +307,8 @@
                 </p>
             </div>
             <div class="modal-footer py-2 gap-2">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-success btn-sm" id="btn-confirmar-pago">
+                <button type="button" class="btn btn-modal-cancelar btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-confirmar-pago">
                     <i class="bi bi-check-lg me-1"></i>Sí, registrar
                 </button>
             </div>

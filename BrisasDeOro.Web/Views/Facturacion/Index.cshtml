@@ -102,6 +102,8 @@
     @@media (min-width: 992px) {
         /* A partir de "lg": una sola fila */
         #pane-movimientos form .row { flex-wrap: nowrap !important; }
+        /* Titular más ancho en desktop para que los nombres entren en una línea */
+        #pane-movimientos form .row > div:nth-child(1) { flex: 1.5 !important; }
     }
     @@media (min-width: 768px) and (max-width: 991.98px) {
         /* Rango intermedio ("md"): 3 filas (Titular/Desde/Hasta | Método/Concepto/Orden),
@@ -126,6 +128,27 @@
            .table-responsive) para recorrer la tabla sin alterar proporciones. */
         .tabla-mov table th,
         .tabla-mov table td { white-space: nowrap !important; }
+    }
+    /* ── Modal de detalle de grupo en Facturación ─────────────────────────── */
+    #modal-grupo-fact .modal-header {
+        background-color: #eaf0ff;
+        border-bottom-color: #6c8eef;
+    }
+    /* Ajuste al contenido en todas las resoluciones (override del min-height
+       global de site.css que estira el modal en mobile) */
+    #modal-grupo-fact .modal-content {
+        min-height: unset !important;
+        height: auto !important;
+    }
+    #modal-grupo-fact .modal-body {
+        flex: 0 0 auto !important;
+        overflow-y: visible !important;
+    }
+    /* Botón Cerrar: tamaño normal (no ancho completo en mobile) y sin padding extra */
+    #modal-grupo-fact .modal-footer .btn {
+        flex: 0 0 auto !important;
+        min-width: unset !important;
+        width: auto !important;
     }
 </style>
 
@@ -227,13 +250,13 @@
                     <select name="orden" class="form-select form-select-sm">
                         @if (Model.FiltroOrden == "asc")
                         {
-                            <option value="desc">Más recientes primero</option>
-                            <option value="asc" selected>Más antiguos primero</option>
+                            <option value="desc">Más recientes</option>
+                            <option value="asc" selected>Más antiguas</option>
                         }
                         else
                         {
-                            <option value="desc" selected>Más recientes primero</option>
-                            <option value="asc">Más antiguos primero</option>
+                            <option value="desc" selected>Más recientes</option>
+                            <option value="asc">Más antiguas</option>
                         }
                     </select>
                 </div>
@@ -244,7 +267,7 @@
                     </button>
                 </div>
                 <div class="col-auto">
-                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-hover-gris-claro">
                         <i class="bi bi-x-lg me-1"></i>Limpiar
                     </a>
                 </div>
@@ -296,7 +319,27 @@
                                         <span class="fw-semibold text-dark">@mov.NombreHuesped</span>
                                     }
                                 </td>
-                                <td>@mov.NombreAlojamiento</td>
+                                <td>
+                                    @if (mov.EsGrupal)
+                                    {
+                                        var labelMov = $"Grupo ({mov.Unidades.Count} unidades)";
+                                        if (User.IsInRole("Administrador"))
+                                        {
+                                            <a href="#" class="link-grupo-fact fw-semibold text-decoration-none"
+                                               data-unidades="@System.Text.Json.JsonSerializer.Serialize(mov.Unidades.Select(u => new { u.Nombre, u.Personas }))">
+                                                @labelMov
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="fw-semibold">@labelMov</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @mov.NombreAlojamiento
+                                    }
+                                </td>
                                 <td>@NombreTipoPago(mov.TipoPago)</td>
                                 <td>@NombreMetodoPago(mov.MetodoPago)</td>
                                 <td class="text-end fw-bold text-nowrap @(mov.Monto < 0 ? "text-danger" : "text-success")">
@@ -347,7 +390,7 @@
                 </div>
                 <div class="col-auto">
                     <a asp-action="Index" asp-route-tab="saldos"
-                       class="btn btn-outline-secondary btn-sm">
+                       class="btn btn-outline-secondary btn-sm btn-hover-gris-claro">
                         <i class="bi bi-x-lg me-1"></i>Limpiar
                     </a>
                 </div>
@@ -393,7 +436,27 @@
                         {
                             <tr>
                                 <td class="fw-semibold">@s.NombreHuesped</td>
-                                <td>@s.NombreAlojamiento</td>
+                                <td>
+                                    @if (s.EsGrupal)
+                                    {
+                                        var labelSal = $"Grupo ({s.Unidades.Count} unidades)";
+                                        if (User.IsInRole("Administrador"))
+                                        {
+                                            <a href="#" class="link-grupo-fact fw-semibold text-decoration-none"
+                                               data-unidades="@System.Text.Json.JsonSerializer.Serialize(s.Unidades.Select(u => new { u.Nombre, u.Personas }))">
+                                                @labelSal
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="fw-semibold">@labelSal</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @s.NombreAlojamiento
+                                    }
+                                </td>
                                 <td class="text-center text-nowrap d-mobile-none">
                                     @s.FechaIngreso.ToString("dd/MM/yyyy")
                                 </td>
@@ -447,6 +510,22 @@
 
 </div>
 
+@* ── Modal: detalle de unidades de una reserva grupal ── *@
+<div class="modal fade" id="modal-grupo-fact" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+        <div class="modal-content">
+            <div class="modal-header py-3" style="background-color:#eaf0ff;border-bottom-color:#6c8eef;justify-content:center;position:relative;">
+                <h6 class="modal-title fw-semibold text-center" id="modal-grupo-fact-titulo">Unidades de la reserva grupal</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);"></button>
+            </div>
+            <div class="modal-body py-3" id="modal-grupo-fact-cuerpo"></div>
+            <div class="modal-footer py-2 justify-content-center">
+                <button type="button" class="btn btn-modal-cancelar btn-sm" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @* ── Modal: sin permisos ── *@
 <div class="modal fade" id="modalSinPermisos" tabindex="-1"
      aria-labelledby="modalSinPermisosLabel" aria-hidden="true">
@@ -484,6 +563,8 @@
         overflow-y: auto;
         display: none;
         box-shadow: 0 4px 8px rgba(0,0,0,.08);
+        padding: 0;
+        margin: 0;
     }
     .ac-dropdown li {
         padding: .35rem .6rem;
@@ -581,5 +662,26 @@
 
     initAutocomplete('input-titular-mov');
     initAutocomplete('input-titular-saldos');
+
+    // ── Modal de unidades de reserva grupal ──────────────────────────────────
+    // Delegado en document para cubrir ambas tablas (Movimientos y Saldos).
+    document.addEventListener('click', function (e) {
+        const a = e.target.closest('.link-grupo-fact');
+        if (!a) return;
+        e.preventDefault();
+
+        const unidades = JSON.parse(a.getAttribute('data-unidades'));
+
+        document.getElementById('modal-grupo-fact-cuerpo').innerHTML =
+            '<ul class="mb-0 ps-3">' +
+            unidades.map(u =>
+                `<li class="py-1"><strong>${u.Nombre}</strong> — ${u.Personas} persona${u.Personas !== 1 ? 's' : ''}</li>`
+            ).join('') +
+            '</ul>';
+
+        bootstrap.Modal.getOrCreateInstance(
+            document.getElementById('modal-grupo-fact')
+        ).show();
+    });
 </script>
 }

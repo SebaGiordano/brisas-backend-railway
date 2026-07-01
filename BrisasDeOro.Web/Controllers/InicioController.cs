@@ -31,6 +31,8 @@ public class InicioController : Controller
                      && r.FechaSalida  >= hoy.ToDateTime(TimeOnly.MinValue))
             .Include(r => r.Alojamiento)
             .Include(r => r.Pagos)
+            .Include(r => r.UnidadesGrupales)
+                .ThenInclude(u => u.Alojamiento)
             .ToListAsync();
 
         var alojamientos = (await _context.Alojamientos
@@ -63,38 +65,38 @@ public class InicioController : Controller
                 ? $"{a.Nombre} ({habs})"
                 : a.Nombre;
 
+        // Una reserva grupal "posee" todas las unidades de UnidadesGrupales, no solo
+        // la representativa (AlojamientoId). Esta es la fuente de verdad para saber
+        // si un alojamiento está vinculado a una reserva determinada.
+        bool PerteneceAReserva(Reserva r, int alojamientoId) =>
+            r.EsGrupal && r.UnidadesGrupales.Count > 0
+                ? r.UnidadesGrupales.Any(u => u.AlojamientoId == alojamientoId)
+                : r.AlojamientoId == alojamientoId;
+
         // ── Check-ins / outs ──────────────────────────────────────────────────
-        var checkInsHoy = reservas
-            .Where(r => FI(r) == hoy)
-            .Select(r => new MovimientoItem
-            {
-                ReservaId = r.Id, NombreHuesped = r.NombreHuesped,
-                NombreAlojamiento = NombreAloj(r.Alojamiento)
-            }).ToList();
+        // Reserva grupal: se listan todas las unidades del grupo (ReservaAlojamientos),
+        // no solo la unidad representativa.
+        MovimientoItem CrearMovimiento(Reserva r) =>
+            r.EsGrupal && r.UnidadesGrupales.Count > 0
+                ? new MovimientoItem
+                  {
+                      ReservaId = r.Id,
+                      NombreHuesped = r.NombreHuesped,
+                      EsGrupal = true,
+                      NombresUnidadesGrupales = r.UnidadesGrupales
+                          .Select(u => NombreAloj(u.Alojamiento))
+                          .ToList()
+                  }
+                : new MovimientoItem
+                  {
+                      ReservaId = r.Id, NombreHuesped = r.NombreHuesped,
+                      NombreAlojamiento = NombreAloj(r.Alojamiento)
+                  };
 
-        var checkOutsHoy = reservas
-            .Where(r => FS(r) == hoy)
-            .Select(r => new MovimientoItem
-            {
-                ReservaId = r.Id, NombreHuesped = r.NombreHuesped,
-                NombreAlojamiento = NombreAloj(r.Alojamiento)
-            }).ToList();
-
-        var checkInsManana = reservas
-            .Where(r => FI(r) == manana)
-            .Select(r => new MovimientoItem
-            {
-                ReservaId = r.Id, NombreHuesped = r.NombreHuesped,
-                NombreAlojamiento = NombreAloj(r.Alojamiento)
-            }).ToList();
-
-        var checkOutsManana = reservas
-            .Where(r => FS(r) == manana)
-            .Select(r => new MovimientoItem
-            {
-                ReservaId = r.Id, NombreHuesped = r.NombreHuesped,
-                NombreAlojamiento = NombreAloj(r.Alojamiento)
-            }).ToList();
+        var checkInsHoy      = reservas.Where(r => FI(r) == hoy).Select(CrearMovimiento).ToList();
+        var checkOutsHoy     = reservas.Where(r => FS(r) == hoy).Select(CrearMovimiento).ToList();
+        var checkInsManana   = reservas.Where(r => FI(r) == manana).Select(CrearMovimiento).ToList();
+        var checkOutsManana  = reservas.Where(r => FS(r) == manana).Select(CrearMovimiento).ToList();
 
         // ── Activas hoy (FI <= hoy < FS) ─────────────────────────────────────
         var activasHoy = reservas.Where(r => FI(r) <= hoy && FS(r) > hoy).ToList();
@@ -118,7 +120,13 @@ public class InicioController : Controller
 
         // ── Unidades libres / ocupadas hoy ────────────────────────────────────
         // Si un Apart está ocupado, sus habitaciones componentes se marcan como ocupadas.
-        var ocupadosHoyIds = activasHoy.Select(r => r.AlojamientoId).ToHashSet();
+        // Reserva grupal: TODAS sus unidades (no solo la representativa) cuentan como
+        // ocupadas.
+        var ocupadosHoyIds = activasHoy
+            .SelectMany(r => r.EsGrupal && r.UnidadesGrupales.Count > 0
+                ? r.UnidadesGrupales.Select(u => u.AlojamientoId)
+                : new[] { r.AlojamientoId })
+            .ToHashSet();
 
         var ocupadosExpandidos = new HashSet<int>(ocupadosHoyIds);
         foreach (var det in apartDetalles)
@@ -144,7 +152,9 @@ public class InicioController : Controller
         var habToApartActiva = new Dictionary<int, Reserva>();
         foreach (var det in apartDetalles)
         {
-            var apartActiva = activasHoy.FirstOrDefault(r => r.AlojamientoId == det.AlojamientoApartId);
+            var apartActiva = activasHoy.FirstOrDefault(r =>
+                r.AlojamientoId == det.AlojamientoApartId ||
+                (r.EsGrupal && r.UnidadesGrupales.Any(u => u.AlojamientoId == det.AlojamientoApartId)));
             if (apartActiva != null)
             {
                 habToApartActiva[det.AlojamientoHab1Id] = apartActiva;
@@ -153,15 +163,17 @@ public class InicioController : Controller
         }
 
         // ── Limpieza del día ──────────────────────────────────────────────────
-        var limpiezaItems = new List<LimpiezaItem>();
+        // Primera pasada: tareas por unidad individual, detectando además a qué
+        // reserva grupal (si la hay) pertenece esa unidad.
+        var tareasPorUnidad = new List<(Alojamiento Aloj, List<string> Tareas, Reserva? ReservaGrupal)>();
 
         foreach (var aloj in alojamientos)
         {
             var tareas = new List<string>();
 
-            var checkOut = reservas.FirstOrDefault(r => r.AlojamientoId == aloj.Id && FS(r) == hoy);
-            var checkIn  = reservas.FirstOrDefault(r => r.AlojamientoId == aloj.Id && FI(r) == hoy);
-            var activa   = activasHoy.FirstOrDefault(r => r.AlojamientoId == aloj.Id);
+            var checkOut = reservas.FirstOrDefault(r => PerteneceAReserva(r, aloj.Id) && FS(r) == hoy);
+            var checkIn  = reservas.FirstOrDefault(r => PerteneceAReserva(r, aloj.Id) && FI(r) == hoy);
+            var activa   = activasHoy.FirstOrDefault(r => PerteneceAReserva(r, aloj.Id));
 
             if (checkOut != null)
                 tareas.Add("Limpieza profunda + cambio total de blancos (ropa de cama y baño) — Checkout");
@@ -191,7 +203,97 @@ public class InicioController : Controller
             }
 
             if (tareas.Count > 0)
+            {
+                // Misma prioridad que la redacción de tareas: checkout > checkin > activa.
+                var reservaGrupal = checkOut?.EsGrupal == true ? checkOut
+                                   : checkIn?.EsGrupal  == true ? checkIn
+                                   : activa?.EsGrupal   == true ? activa
+                                   : habToApartActiva.TryGetValue(aloj.Id, out var apartRes) && apartRes.EsGrupal ? apartRes
+                                   : null;
+                tareasPorUnidad.Add((aloj, tareas, reservaGrupal));
+            }
+        }
+
+        // Segunda pasada: agrupar las unidades que pertenecen a una misma reserva
+        // grupal en un único LimpiezaItem; el resto queda como unidad individual.
+        var limpiezaItems = new List<LimpiezaItem>();
+        var unidadesAgrupadas = new HashSet<int>();
+
+        foreach (var (aloj, tareas, reservaGrupal) in tareasPorUnidad)
+        {
+            if (unidadesAgrupadas.Contains(aloj.Id)) continue;
+
+            if (reservaGrupal != null)
+            {
+                var unidadesDelGrupo = tareasPorUnidad
+                    .Where(x => x.ReservaGrupal?.Id == reservaGrupal.Id)
+                    .ToList();
+
+                foreach (var u in unidadesDelGrupo)
+                    unidadesAgrupadas.Add(u.Aloj.Id);
+
+                // Construir la lista de entradas respetando el orden de UnidadesGrupales
+                // y agrupando las habs físicas bajo el Apart cuando corresponde.
+                var unidades = new List<LimpiezaUnidadItem>();
+                foreach (var unidadOrig in reservaGrupal.UnidadesGrupales)
+                {
+                    var alojOrig = unidadOrig.Alojamiento;
+                    var det = apartDetalles.FirstOrDefault(d => d.AlojamientoApartId == alojOrig.Id);
+
+                    if (det != null) // la unidad original es un Apart
+                    {
+                        bool hasApart = unidadesDelGrupo.Any(x => x.Aloj.Id == alojOrig.Id);
+                        var apartTareas = hasApart
+                            ? unidadesDelGrupo.First(x => x.Aloj.Id == alojOrig.Id).Tareas
+                            : new List<string>();
+                        var habEntries = new[] { det.AlojamientoHab1Id, det.AlojamientoHab2Id }
+                            .Where(hId => unidadesDelGrupo.Any(x => x.Aloj.Id == hId))
+                            .Select(hId => unidadesDelGrupo.First(x => x.Aloj.Id == hId))
+                            .ToList();
+
+                        if (hasApart || habEntries.Any())
+                        {
+                            unidades.Add(new LimpiezaUnidadItem
+                            {
+                                NombreAlojamiento = alojOrig.Nombre,
+                                Tareas            = apartTareas,
+                                EsSubtituloApart  = true,
+                            });
+                            foreach (var habEntry in habEntries)
+                                unidades.Add(new LimpiezaUnidadItem
+                                {
+                                    NombreAlojamiento = habEntry.Aloj.Nombre,
+                                    Tareas            = habEntry.Tareas,
+                                    EsHabDeApart      = true,
+                                });
+                        }
+                    }
+                    else
+                    {
+                        if (unidadesDelGrupo.Any(x => x.Aloj.Id == alojOrig.Id))
+                        {
+                            var entry = unidadesDelGrupo.First(x => x.Aloj.Id == alojOrig.Id);
+                            unidades.Add(new LimpiezaUnidadItem
+                            {
+                                NombreAlojamiento = entry.Aloj.Nombre,
+                                Tareas            = entry.Tareas,
+                            });
+                        }
+                    }
+                }
+
+                limpiezaItems.Add(new LimpiezaItem
+                {
+                    EsGrupo                = true,
+                    CantUnidadesOriginales = reservaGrupal.UnidadesGrupales.Count,
+                    Unidades               = unidades,
+                });
+            }
+            else
+            {
                 limpiezaItems.Add(new LimpiezaItem { NombreAlojamiento = aloj.Nombre, Tareas = tareas });
+                unidadesAgrupadas.Add(aloj.Id);
+            }
         }
 
         // ── Pendientes a cobrar en 24 hs ─────────────────────────────────────

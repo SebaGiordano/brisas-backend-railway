@@ -3,6 +3,7 @@ using System;
 using BrisasDeOro.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BrisasDeOro.Web.Data.MigrationsPostgres
 {
     [DbContext(typeof(PostgresApplicationDbContext))]
-    partial class PostgresApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260629225605_AgregarReservaGrupal")]
+    partial class AgregarReservaGrupal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,7 +51,7 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
 
                     b.HasKey("Id");
 
-                    b.ToTable("Alojamientos", (string)null);
+                    b.ToTable("Alojamientos");
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.ApartDetalle", b =>
@@ -76,7 +79,7 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
 
                     b.HasIndex("AlojamientoHab2Id");
 
-                    b.ToTable("ApartDetalles", (string)null);
+                    b.ToTable("ApartDetalles");
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.ApplicationUser", b =>
@@ -177,7 +180,7 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
 
                     b.HasIndex("ReservaId");
 
-                    b.ToTable("Pagos", (string)null);
+                    b.ToTable("Pagos");
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.Reserva", b =>
@@ -240,7 +243,7 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
 
                     b.HasIndex("AlojamientoId");
 
-                    b.ToTable("Reservas", (string)null);
+                    b.ToTable("Reservas");
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.ReservaAlojamiento", b =>
@@ -266,7 +269,7 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
 
                     b.HasIndex("ReservaId");
 
-                    b.ToTable("ReservaAlojamientos", (string)null);
+                    b.ToTable("ReservaAlojamientos");
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.Tarifa", b =>
@@ -304,7 +307,7 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
                     b.HasIndex("AlojamientoId", "CantidadPersonas", "TemporadaId")
                         .IsUnique();
 
-                    b.ToTable("Tarifas", (string)null);
+                    b.ToTable("Tarifas");
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.Temporada", b =>
@@ -330,7 +333,7 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
 
                     b.HasKey("Id");
 
-                    b.ToTable("Temporadas", (string)null);
+                    b.ToTable("Temporadas");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

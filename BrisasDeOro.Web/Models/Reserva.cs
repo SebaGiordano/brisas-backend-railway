@@ -26,5 +26,11 @@ public class Reserva
     public string? Observaciones { get; set; }
     public DateTime FechaCarga { get; set; } = DateTime.Now;
 
+    // Reserva grupal: AlojamientoId/Alojamiento sigue apuntando a la primera unidad
+    // tildada (compatibilidad con Calendario/Dashboard/Facturación, que todavía asumen
+    // una sola unidad por reserva). El detalle completo vive en UnidadesGrupales.
+    public bool EsGrupal { get; set; } = false;
+    public List<ReservaAlojamiento> UnidadesGrupales { get; set; } = new();
+
     public List<Pago> Pagos { get; set; } = new();
 }

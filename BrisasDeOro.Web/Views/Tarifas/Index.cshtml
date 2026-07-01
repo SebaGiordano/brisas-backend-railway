@@ -114,7 +114,7 @@
             </div>
             <div class="modal-body" id="modal-aj-texto" style="font-size:.92rem;"></div>
             <div class="modal-footer py-2 gap-2">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-modal-cancelar btn-sm" data-bs-dismiss="modal">Cancelar</button>
                 <form asp-action="AjustarPrecios" method="post" id="form-ajuste" class="d-inline">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="porcentaje"  id="hid-pct" />
@@ -171,7 +171,7 @@
                     }
                 </div>
                 <div class="modal-footer py-2 gap-2">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-modal-cancelar btn-sm" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary btn-sm">
                         <i class="bi bi-check-lg me-1"></i>Guardar fechas
                     </button>
@@ -197,7 +197,7 @@
                     @* filas generadas por JS *@
                 </div>
                 <div class="modal-footer py-2 gap-2">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-modal-cancelar btn-sm" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary btn-sm px-4">
                         <i class="bi bi-check-lg me-1"></i>Guardar
                     </button>
@@ -218,6 +218,13 @@
     .filtros-tipo-tarifas .filtro-tipo.active {
         background-color: #0d6efd !important;
         border-color: #0d6efd !important;
+    }
+    /* Hover gris claro y sutil en filtros y pestañas de temporada no seleccionados */
+    .filtro-tipo:not(.active):hover,
+    .temporadas-tarifas a.btn-outline-secondary:hover {
+        background-color: #e9ecef !important;
+        border-color: #ced4da !important;
+        color: #495057 !important;
     }
     @@media (min-width: 769px) {
         .barra-superior-tarifas { align-items: stretch !important; }

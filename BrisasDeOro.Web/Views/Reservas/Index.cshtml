@@ -9,6 +9,7 @@
     string estadoPago = ViewBag.EstadoPago;
     string desde      = ViewBag.Desde;
     string hasta      = ViewBag.Hasta;
+    string ordenar    = ViewBag.Ordenar ?? "recientes";
 }
 
 <style>
@@ -28,18 +29,19 @@
         .tabla-reservas-responsive th { white-space: nowrap; }
         /* Centrado vertical y horizontal dentro de botones y celda de acciones */
         .btn { display: inline-flex !important; align-items: center; justify-content: center; }
-        /* Campos de filtro: ancho completo (100%) en todo el rango mobile, incluido
-           576px-767.98px, donde Bootstrap activaría col-sm-6 (50%) si no se anulara */
-        #filtros-reservas-row > div:not(.col-auto) { flex: 0 0 100% !important; max-width: 100% !important; }
+        /* Campos de filtro: 3 por fila en mobile (33.33% cada uno) */
+        #filtros-reservas-row > div:not(.col-auto):not(.filtro-break) { flex: 0 0 33.33% !important; max-width: 33.33% !important; }
         /* Botones Filtrar + Limpiar: cada uno al 50% del ancho */
-        #filtros-reservas-row > div:nth-child(6),
-        #filtros-reservas-row > div:nth-child(7) { flex: 1 !important; }
-        #filtros-reservas-row > div:nth-child(6) .btn,
-        #filtros-reservas-row > div:nth-child(7) .btn { width: 100% !important; display: flex !important; }
+        #filtros-reservas-row > div:nth-last-child(-n+2) { flex: 1 !important; }
+        #filtros-reservas-row > div:nth-last-child(-n+2) .btn { width: 100% !important; display: flex !important; }
         /* Modal de cancelación: altura adaptada al contenido */
         #modal-cancelar-reserva .modal-dialog  { min-height: unset !important; }
         #modal-cancelar-reserva .modal-content { height: auto !important; min-height: unset !important; max-height: 90vh !important; }
         #modal-cancelar-reserva .modal-footer  { padding-bottom: .75rem !important; }
+        /* Modal de eliminación: altura adaptada al contenido */
+        #modal-eliminar-reserva .modal-dialog  { min-height: unset !important; }
+        #modal-eliminar-reserva .modal-content { height: auto !important; min-height: unset !important; max-height: 90vh !important; }
+        #modal-eliminar-reserva .modal-footer  { padding-bottom: .75rem !important; }
         .tabla-reservas-responsive td.text-center { vertical-align: middle; }
         /* Encabezado fijo al hacer scroll vertical */
         .tabla-reservas-responsive thead { position: sticky; top: 0; z-index: 4; }
@@ -60,11 +62,15 @@
         #filtros-reservas-row { flex-wrap: nowrap !important; }
         #filtros-reservas-row > div:not(.col-auto) { flex: 1 !important; min-width: 0 !important; }
     }
+    @@media (min-width: 992px) {
+        /* Buscar por nombre más ancho en desktop para que los nombres entren en una línea */
+        #filtros-reservas-row > div:nth-child(1) { flex: 1.5 !important; }
+    }
     @@media (min-width: 768px) and (max-width: 991.98px) {
-        /* Rango intermedio (contenedor "md" de Bootstrap, más angosto): los 5 campos
-           no entran cómodos en una sola fila. Se reorganizan en 2 filas (Buscar/Ingreso
-           desde/Ingreso hasta | Estado de reserva/Estado de pago), cada una ocupando el
-           mismo ancho total, y los botones Filtrar/Limpiar centrados en una 3ra fila. */
+        /* Rango intermedio (contenedor "md" de Bootstrap, más angosto): los 6 campos
+           se reorganizan en 2 filas de 3 (Buscar/Ingreso desde/Ingreso hasta |
+           Estado de reserva/Estado de pago/Ordenar por), cada una ocupando el mismo
+           ancho total, y los botones Filtrar/Limpiar centrados en una 3ra fila. */
         #filtros-reservas-row {
             flex-wrap: wrap !important;
             justify-content: center !important;
@@ -128,21 +134,21 @@
             };
         }
         <div id="filtros-reservas-row" class="row g-2 align-items-end">
-            <div class="col-12 col-sm-6 col-md-2">
+            <div class="col-4 col-md-2">
                 <label class="form-label small fw-semibold mb-1">Buscar por nombre</label>
                 <input type="text" id="input-busqueda-reservas" name="busqueda" value="@busqueda"
                        class="form-control" placeholder="Titular..." autocomplete="off" />
             </div>
-            <div class="col-12 col-sm-6 col-md-2 d-mobile-none">
+            <div class="col-4 col-md-2">
                 <label class="form-label small fw-semibold mb-1">Ingreso desde</label>
                 <input type="date" name="desde" value="@desde" class="form-control" />
             </div>
-            <div class="col-12 col-sm-6 col-md-2 d-mobile-none">
+            <div class="col-4 col-md-2">
                 <label class="form-label small fw-semibold mb-1">Ingreso hasta</label>
                 <input type="date" name="hasta" value="@hasta" class="form-control" />
             </div>
             <div class="w-100 filtro-break d-none"></div>
-            <div class="col-12 col-sm-6 col-md-2 d-mobile-none">
+            <div class="col-4 col-md-2">
                 <label class="form-label small fw-semibold mb-1">Estado de reserva</label>
                 <select name="estado" class="form-select">
                     @foreach (var (val, label) in opcionesEstado)
@@ -158,7 +164,7 @@
                     }
                 </select>
             </div>
-            <div class="col-12 col-sm-6 col-md-2">
+            <div class="col-4 col-md-2">
                 <label class="form-label small fw-semibold mb-1">Estado de pago</label>
                 <select name="estadoPago" class="form-select">
                     @foreach (var (val, label) in opcionesPago)
@@ -174,6 +180,21 @@
                     }
                 </select>
             </div>
+            <div class="col-4 col-md-2">
+                <label class="form-label small fw-semibold mb-1">Ordenar por</label>
+                <select name="ordenar" class="form-select" onchange="this.form.submit()">
+                    @if (ordenar == "antiguas")
+                    {
+                        <option value="recientes">Más recientes</option>
+                        <option value="antiguas" selected>Más antiguas</option>
+                    }
+                    else
+                    {
+                        <option value="recientes" selected>Más recientes</option>
+                        <option value="antiguas">Más antiguas</option>
+                    }
+                </select>
+            </div>
             <div class="w-100 filtro-break d-none"></div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-outline-primary">
@@ -181,7 +202,7 @@
                 </button>
             </div>
             <div class="col-auto">
-                <a asp-action="Index" class="btn btn-outline-secondary">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-hover-gris-claro">
                     <i class="bi bi-x-lg me-1"></i>Limpiar
                 </a>
             </div>
@@ -205,6 +226,8 @@
         overflow-y: auto;
         display: none;
         box-shadow: 0 4px 8px rgba(0,0,0,.08);
+        padding: 0;
+        margin: 0;
     }
     .ac-dropdown li {
         padding: .35rem .6rem;
@@ -313,6 +336,23 @@
         bootstrap.Modal.getInstance(document.getElementById('modal-cancelar-reserva')).hide();
         _formCancelar?.submit();
     });
+
+    // ── Modal de eliminación ──────────────────────────────────────────────────
+    let _formEliminar = null;
+    document.querySelectorAll('.btn-abrir-eliminar').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.getElementById('modal-eliminar-nombre').textContent = this.dataset.nombre;
+            _formEliminar = document.getElementById(this.dataset.form);
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-eliminar-reserva')).show();
+        });
+    });
+    const btnConfirmarEliminar = document.getElementById('btn-confirmar-eliminar');
+    if (btnConfirmarEliminar) {
+        btnConfirmarEliminar.addEventListener('click', function () {
+            bootstrap.Modal.getInstance(document.getElementById('modal-eliminar-reserva')).hide();
+            _formEliminar?.submit();
+        });
+    }
 </script>
 }
 
@@ -350,7 +390,7 @@ else
             <tbody>
                 @foreach (var item in Model)
                 {
-                    <tr class="@(item.Estado == EstadoReserva.Cancelada ? "table-secondary text-muted" : "")">
+                    <tr class="@(item.Estado == EstadoReserva.Cancelada && estado != "Cancelada" ? "table-secondary text-muted" : "")">
                         <td class="col-titular-res@(item.SaldoPendiente < 0 ? " titular-saldo-negativo" : "")">
                             <span class="fw-semibold">@item.NombreHuesped</span>
                             @if (item.EsInvitacion)
@@ -358,7 +398,16 @@ else
                                 <br /><small class="text-muted"><i class="bi bi-gift me-1"></i>Invitación</small>
                             }
                         </td>
-                        <td>@item.NombreAlojamiento</td>
+                        <td>
+                            @if (item.EsGrupal)
+                            {
+                                <span class="fw-semibold">Grupo (@item.CantUnidadesGrupales unidades)</span>
+                            }
+                            else
+                            {
+                                @item.NombreAlojamiento
+                            }
+                        </td>
                         <td class="text-center text-nowrap">@item.FechaIngreso.ToString("dd/MM/yyyy")</td>
                         <td class="text-center text-nowrap">@item.FechaSalida.ToString("dd/MM/yyyy")</td>
                         <td class="text-center">@item.CantidadNoches</td>
@@ -418,6 +467,19 @@ else
                                     </button>
                                 </form>
                             }
+                            @if (User.IsInRole("Administrador") && item.Estado == EstadoReserva.Cancelada)
+                            {
+                                <form asp-action="Eliminar" asp-route-id="@item.Id" method="post"
+                                      class="d-inline" id="form-eliminar-@item.Id">
+                                    @Html.AntiForgeryToken()
+                                    <button type="button" class="btn btn-danger btn-sm btn-abrir-eliminar"
+                                            title="Eliminar permanentemente"
+                                            data-nombre="@item.NombreHuesped"
+                                            data-form="form-eliminar-@item.Id">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            }
                         </td>
                     </tr>
                 }
@@ -438,7 +500,8 @@ else
                        asp-route-estado="@estado"
                        asp-route-estadoPago="@estadoPago"
                        asp-route-desde="@desde"
-                       asp-route-hasta="@hasta">‹</a>
+                       asp-route-hasta="@hasta"
+                       asp-route-ordenar="@ordenar">‹</a>
                 </li>
                 @for (int i = 1; i <= totalPaginas; i++)
                 {
@@ -447,8 +510,10 @@ else
                            asp-route-pagina="@i"
                            asp-route-busqueda="@busqueda"
                            asp-route-estado="@estado"
+                           asp-route-estadoPago="@estadoPago"
                            asp-route-desde="@desde"
-                           asp-route-hasta="@hasta">@i</a>
+                           asp-route-hasta="@hasta"
+                           asp-route-ordenar="@ordenar">@i</a>
                     </li>
                 }
                 <li class="page-item @(pagina == totalPaginas ? "disabled" : "")">
@@ -458,12 +523,37 @@ else
                        asp-route-estado="@estado"
                        asp-route-estadoPago="@estadoPago"
                        asp-route-desde="@desde"
-                       asp-route-hasta="@hasta">›</a>
+                       asp-route-hasta="@hasta"
+                       asp-route-ordenar="@ordenar">›</a>
                 </li>
             </ul>
         </nav>
     }
 }
+
+@* ── Modal: Confirmar eliminación ── *@
+<div class="modal fade" id="modal-eliminar-reserva" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-semibold">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Eliminar reserva permanentemente
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Estás a punto de eliminar la reserva de <strong id="modal-eliminar-nombre"></strong>.</p>
+                <p class="mb-0 fw-semibold">Esta acción eliminará permanentemente la reserva y todos sus pagos asociados. Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <div class="d-flex gap-2 w-100">
+                    <button type="button" class="btn btn-outline-danger flex-fill" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger flex-fill" id="btn-confirmar-eliminar">Sí, eliminar permanentemente</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @* ── Modal: Confirmar cancelación ── *@
 <div class="modal fade" id="modal-cancelar-reserva" tabindex="-1" aria-hidden="true">
@@ -478,7 +568,7 @@ else
             </div>
             <div class="modal-footer">
                 <div class="d-flex gap-2 w-100">
-                    <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">No, volver</button>
+                    <button type="button" class="btn btn-modal-volver flex-fill" data-bs-dismiss="modal">No, volver</button>
                     <button type="button" class="btn btn-danger flex-fill" id="btn-confirmar-cancelar-idx">Sí, cancelar reserva</button>
                 </div>
             </div>

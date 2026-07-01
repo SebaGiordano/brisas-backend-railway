@@ -23,15 +23,39 @@ public class InicioViewModel
 
 public class MovimientoItem
 {
-    public string NombreHuesped     { get; init; } = string.Empty;
-    public string NombreAlojamiento { get; init; } = string.Empty;
-    public int    ReservaId         { get; init; }
+    public string       NombreHuesped           { get; init; } = string.Empty;
+    public string       NombreAlojamiento       { get; init; } = string.Empty;
+    public int          ReservaId               { get; init; }
+
+    // Reserva grupal: cuando EsGrupal es true, NombreAlojamiento se ignora y
+    // se muestra en su lugar la lista de unidades individuales del grupo.
+    public bool         EsGrupal                { get; init; }
+    public List<string> NombresUnidadesGrupales { get; init; } = new();
 }
 
 public class LimpiezaItem
 {
+    // Unidad individual (no agrupada)
     public string       NombreAlojamiento { get; init; } = string.Empty;
     public List<string> Tareas            { get; init; } = new();
+
+    // Reserva grupal: cuando EsGrupo es true, se ignoran NombreAlojamiento/Tareas
+    // y se usa Unidades, con una entrada por cada unidad del grupo.
+    public bool                      EsGrupo                { get; init; }
+    public int                       CantUnidadesOriginales { get; init; }
+    public List<LimpiezaUnidadItem>  Unidades               { get; init; } = new();
+}
+
+public class LimpiezaUnidadItem
+{
+    public string       NombreAlojamiento { get; init; } = string.Empty;
+    public List<string> Tareas            { get; init; } = new();
+
+    // Para subgrupos de Apart dentro de un grupal:
+    // EsSubtituloApart = fila de encabezado "Apart X" (span 2 columnas).
+    // EsHabDeApart = habitación física indentada bajo ese Apart.
+    public bool EsSubtituloApart { get; init; }
+    public bool EsHabDeApart     { get; init; }
 }
 
 public class PendienteCobroItem

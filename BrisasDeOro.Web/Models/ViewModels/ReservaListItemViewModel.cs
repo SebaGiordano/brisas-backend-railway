@@ -12,7 +12,9 @@ public class ReservaListItemViewModel
     public bool EsInvitacion { get; set; }
     public decimal MontoTotal { get; set; }
     public decimal TotalCobrado { get; set; }
-    public EstadoReserva Estado { get; set; }
+    public EstadoReserva Estado            { get; set; }
+    public bool          EsGrupal          { get; set; }
+    public int           CantUnidadesGrupales { get; set; }
 
     // Calculados
     public decimal SaldoPendiente => MontoTotal - TotalCobrado;

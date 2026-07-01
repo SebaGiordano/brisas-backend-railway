@@ -15,9 +15,9 @@
     <h2 class="mb-0">Calendario</h2>
     <div class="d-flex align-items-center gap-2">
         <div class="btn-group btn-group-sm">
-            <button id="btn-prev" class="btn btn-outline-secondary" title="7 días atrás" style="min-height:38px;min-width:48px;"><i class="bi bi-chevron-left"></i></button>
+            <button id="btn-prev" class="btn btn-outline-secondary btn-hover-gris-claro" title="7 días atrás" style="min-height:38px;min-width:48px;"><i class="bi bi-chevron-left"></i></button>
             <button id="btn-hoy" class="btn btn-primary" style="min-height:38px;min-width:48px;">Hoy</button>
-            <button id="btn-next" class="btn btn-outline-secondary" title="7 días adelante" style="min-height:38px;min-width:48px;"><i class="bi bi-chevron-right"></i></button>
+            <button id="btn-next" class="btn btn-outline-secondary btn-hover-gris-claro" title="7 días adelante" style="min-height:38px;min-width:48px;"><i class="bi bi-chevron-right"></i></button>
         </div>
     </div>
 </div>
@@ -61,11 +61,11 @@
                 </a>
                 @if (esAdmin)
                 {
-                    <a id="modal-btn-pago" href="#" class="btn btn-outline-primary btn-sm">
+                    <a id="modal-btn-pago" href="#" class="btn btn-outline-success btn-sm">
                         <i class="bi bi-cash me-1"></i>Agregar pago
                     </a>
                 }
-                <button id="modal-btn-cerrar" class="btn btn-secondary btn-sm ms-auto">Cerrar</button>
+                <button id="modal-btn-cerrar" class="btn btn-danger btn-sm ms-auto">Cerrar</button>
             </div>
         </div>
     </div>
@@ -87,7 +87,13 @@
         text-overflow: ellipsis;
         /* font-size, text-align y white-space los afina ajustarFonts() tras el render */
     }
-    .cal-res:hover { filter: brightness(.93); }
+    /* Celdas individuales (sin grupo): hover normal vía CSS. */
+    .cal-res:not([data-grupo-id]):hover { filter: brightness(.93); }
+    /* Celdas grupales: el hover CSS queda desactivado (el JS maneja el estado
+       de toda la reserva junto). Al activar la clase, TODAS las celdas del
+       grupo —incluida la directamente hovereada— usan el mismo brightness(.82),
+       sin competencia con el pseudo-selector :hover. */
+    .cal-res.cal-res-grupo-activo { filter: brightness(.82); }
     /* Fila divisoria */
     .cal-divider td {
         padding: 0 !important;
@@ -253,10 +259,10 @@
     }
 
     // ── Contenido de celda según duración ────────────────────────────────────
-    function textoReserva(res, nights) {
+    function textoReserva(res, nights, personasOverride) {
         const full      = res.nombreHuesped.trim();
         const firstName = full.split(/\s+/)[0];
-        const p         = res.cantidadHuespedes;
+        const p         = personasOverride ?? res.cantidadHuespedes;
         const d         = res.incluyeDesayuno;
         const des       = d ? 'C/D' : 'S/D';
         if (nights === 1) return firstName;
@@ -355,6 +361,36 @@
         });
     }
 
+    // Reserva grupal: misma estructura de 2 columnas que el modal de confirmación
+    // de Nueva Reserva (Habitaciones y Aparts | Cabañas), con líneas separadoras
+    // sutiles arriba y abajo. Reserva individual: nombre del alojamiento tal cual.
+    function alojamientoInfoHtml(res) {
+        if (!res.esGrupal || !res.unidadesGrupales || !res.unidadesGrupales.length) {
+            return res.nombreAlojamiento;
+        }
+
+        const izq = res.unidadesGrupales.filter(u => u.tipo !== 'Cabaña');
+        const der = res.unidadesGrupales.filter(u => u.tipo === 'Cabaña');
+
+        const fmtUnidad = u =>
+            `<div><strong>${u.nombre}</strong> <span class="fw-normal text-muted">(${u.personas} pers.)</span></div>`;
+
+        const fmtColumna = (titulo, lista) => lista.length === 0 ? '' : `
+            <div class="flex-fill">
+                <div class="text-muted small mb-1">${titulo}</div>
+                ${lista.map(fmtUnidad).join('')}
+            </div>`;
+
+        const linea = `<div style="border-top:1px solid #dee2e6; width:100%; margin:.4rem 0;"></div>`;
+
+        return linea +
+            `<div class="d-flex flex-column flex-sm-row gap-3 py-1">` +
+            fmtColumna('Habitaciones y Aparts', izq) +
+            fmtColumna('Cabañas', der) +
+            `</div>` +
+            linea;
+    }
+
     function mostrarModal(res) {
         document.getElementById('modal-titulo').textContent = `Reserva — ${res.nombreHuesped}`;
 
@@ -367,7 +403,7 @@
         document.getElementById('modal-cuerpo').innerHTML = `
 <table class="table table-sm table-borderless mb-0" style="font-size:.88rem;">
   <tr><td class="text-muted pe-3" style="white-space:nowrap">Alojamiento</td>
-      <td class="fw-semibold">${res.nombreAlojamiento}</td></tr>
+      <td class="${res.esGrupal ? '' : 'fw-semibold'}">${alojamientoInfoHtml(res)}</td></tr>
   <tr><td class="text-muted">Ingreso</td>    <td>${fmtFecha(res.fechaIngreso)}</td></tr>
   <tr><td class="text-muted">Egreso</td>     <td>${fmtFecha(res.fechaSalida)}</td></tr>
   <tr><td class="text-muted">Noches</td>     <td>${noches}</td></tr>
@@ -529,12 +565,25 @@
             });
             tr.appendChild(tdC);
 
-            // Reservas directas de este alojamiento
-            const resDirectas = RESERVAS.filter(r => r.alojamientoId === aloj.id);
+            // Reservas directas de este alojamiento. Una reserva grupal pinta cada
+            // unidad del grupo (ReservaAlojamientos) de forma independiente en su
+            // propia fila, no solo la unidad representativa (alojamientoId).
+            const resDirectas = RESERVAS.filter(r =>
+                r.alojamientoId === aloj.id ||
+                (r.esGrupal && r.unidadesGrupales && r.unidadesGrupales.some(u => u.alojamientoId === aloj.id))
+            );
 
-            // Si esta fila es hab1 de un Apart, pre-cargar las reservas del Apart
+            // Si esta fila es hab1 de un Apart, pre-cargar las reservas del Apart:
+            // tanto individuales (alojamientoId = el Apart) como grupales que
+            // incluyan ese Apart entre sus unidades (representativa o no). El
+            // Apart no tiene fila propia en el calendario — solo existe como la
+            // barra rowspan=2 sobre sus dos habitaciones componentes, así que una
+            // unidad grupal de tipo Apart debe pasar por acá, no por resDirectas.
             const infoH1     = hab1ToApart[aloj.id];
-            const resApart   = infoH1 ? RESERVAS.filter(r => r.alojamientoId === infoH1.apartId) : [];
+            const resApart   = infoH1 ? RESERVAS.filter(r =>
+                (r.alojamientoId === infoH1.apartId && !r.esGrupal) ||
+                (r.esGrupal && r.unidadesGrupales && r.unidadesGrupales.some(u => u.alojamientoId === infoH1.apartId))
+            ) : [];
 
             // Días que esta fila debe omitir (cubiertos por rowspan de hab1)
             const misSkips = skipDays[aloj.id] || new Set();
@@ -564,8 +613,12 @@
                     td.rowSpan          = 2; // abarca hab1 y hab2
                     td.className        = 'cal-res';
                     td.dataset.nights   = span; // usado por ajustarFonts
+                    if (resAptHoy.esGrupal) td.dataset.grupoId = resAptHoy.id;
 
-                    td.textContent = textoReserva(resAptHoy, span);
+                    const pApt = resAptHoy.esGrupal
+                        ? resAptHoy.unidadesGrupales?.find(u => u.alojamientoId === infoH1.apartId)?.personas
+                        : undefined;
+                    td.textContent = textoReserva(resAptHoy, span, pApt);
 
                     Object.assign(td.style, {
                         background:    c.bg,
@@ -604,8 +657,12 @@
                     td.colSpan        = span;
                     td.className      = 'cal-res';
                     td.dataset.nights = span; // usado por ajustarFonts
+                    if (res.esGrupal) td.dataset.grupoId = res.id;
 
-                    td.textContent = textoReserva(res, span);
+                    const pDir = res.esGrupal
+                        ? res.unidadesGrupales?.find(u => u.alojamientoId === aloj.id)?.personas
+                        : undefined;
+                    td.textContent = textoReserva(res, span, pDir);
 
                     Object.assign(td.style, {
                         background:    c.bg,
@@ -650,6 +707,25 @@
         renderCuerpo(dias, dmMap);
         ajustarFonts();   // ajustar font-size individual tras renderizar
     }
+
+    // ── Hover vinculado de reserva grupal ────────────────────────────────────
+    // Delegado sobre #cal-tbody (el elemento persiste entre renders, solo se
+    // vacía y repuebla su contenido en cada render()).
+    const calTbody = document.getElementById('cal-tbody');
+    calTbody.addEventListener('mouseover', (e) => {
+        const td = e.target.closest('.cal-res[data-grupo-id]');
+        if (!td) return;
+        const gid = td.dataset.grupoId;
+        calTbody.querySelectorAll(`.cal-res[data-grupo-id="${gid}"]`)
+            .forEach(el => el.classList.add('cal-res-grupo-activo'));
+    });
+    calTbody.addEventListener('mouseout', (e) => {
+        const td = e.target.closest('.cal-res[data-grupo-id]');
+        if (!td) return;
+        const gid = td.dataset.grupoId;
+        calTbody.querySelectorAll(`.cal-res[data-grupo-id="${gid}"]`)
+            .forEach(el => el.classList.remove('cal-res-grupo-activo'));
+    });
 
     // ── Controles ─────────────────────────────────────────────────────────────
 

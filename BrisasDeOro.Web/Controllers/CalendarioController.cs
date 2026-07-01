@@ -28,6 +28,8 @@ public class CalendarioController : Controller
                      && r.FechaSalida  > desde)
             .Include(r => r.Pagos)
             .Include(r => r.Alojamiento)
+            .Include(r => r.UnidadesGrupales)
+                .ThenInclude(u => u.Alojamiento)
             .ToListAsync();
 
         var alojamientos = await _context.Alojamientos
@@ -53,6 +55,16 @@ public class CalendarioController : Controller
                                         ? Math.Round(r.MontoTotal / (r.FechaSalida - r.FechaIngreso).Days, 0)
                                         : (decimal?)null,
                 esInvitacion      = r.EsInvitacion,
+                esGrupal          = r.EsGrupal,
+                unidadesGrupales  = r.EsGrupal
+                    ? r.UnidadesGrupales.Select(u => new
+                      {
+                          alojamientoId = u.AlojamientoId,
+                          nombre        = u.Alojamiento.Nombre,
+                          personas      = u.CantidadHuespedes,
+                          tipo          = u.Alojamiento.Tipo.ToString()
+                      }).ToList()
+                    : null,
                 totalCobrado,
                 saldoPendiente
             };

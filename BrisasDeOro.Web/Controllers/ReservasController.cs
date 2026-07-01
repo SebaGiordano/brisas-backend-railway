@@ -23,6 +23,7 @@ public class ReservasController : Controller
     public async Task<IActionResult> Index(
         string? busqueda, string? estado, string? estadoPago,
         DateTime? desde, DateTime? hasta,
+        string? ordenar,
         int pagina = 1)
     {
         const int porPagina = 20;
@@ -75,8 +76,11 @@ public class ReservasController : Controller
         var totalPaginas = (int)Math.Ceiling(totalItems / (double)porPagina);
         pagina = Math.Clamp(pagina, 1, Math.Max(1, totalPaginas));
 
-        var reservas = await query
-            .OrderBy(r => r.FechaIngreso)
+        var ordenado = (ordenar == "antiguas")
+            ? query.OrderBy(r => r.FechaIngreso)
+            : query.OrderByDescending(r => r.FechaIngreso);
+
+        var reservas = await ordenado
             .Skip((pagina - 1) * porPagina)
             .Take(porPagina)
             .Select(r => new ReservaListItemViewModel
@@ -90,8 +94,10 @@ public class ReservasController : Controller
                 IncluyeDesayuno   = r.IncluyeDesayuno,
                 EsInvitacion      = r.EsInvitacion,
                 MontoTotal        = r.MontoTotal,
-                TotalCobrado      = r.Pagos.Sum(p => p.Monto),
-                Estado            = r.Estado
+                TotalCobrado         = r.Pagos.Sum(p => p.Monto),
+                Estado               = r.Estado,
+                EsGrupal             = r.EsGrupal,
+                CantUnidadesGrupales = r.UnidadesGrupales.Count()
             })
             .ToListAsync();
 
@@ -100,6 +106,7 @@ public class ReservasController : Controller
         ViewBag.EstadoPago   = estadoPago  ?? string.Empty;
         ViewBag.Desde        = desde?.ToString("yyyy-MM-dd") ?? string.Empty;
         ViewBag.Hasta        = hasta?.ToString("yyyy-MM-dd") ?? string.Empty;
+        ViewBag.Ordenar      = (ordenar == "antiguas") ? "antiguas" : "recientes";
         ViewBag.Pagina       = pagina;
         ViewBag.TotalPaginas = totalPaginas;
         ViewBag.TotalItems   = totalItems;
@@ -114,9 +121,30 @@ public class ReservasController : Controller
         var reserva = await _context.Reservas
             .Include(r => r.Alojamiento)
             .Include(r => r.Pagos.OrderBy(p => p.Fecha))
+            .Include(r => r.UnidadesGrupales)
+                .ThenInclude(u => u.Alojamiento)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (reserva == null) return NotFound();
+
+        var apartIds = reserva.UnidadesGrupales
+            .Where(u => u.Alojamiento.Tipo == TipoAlojamiento.Apart)
+            .Select(u => u.AlojamientoId)
+            .ToList();
+
+        if (apartIds.Any())
+        {
+            var detalles = await _context.ApartDetalles
+                .Include(d => d.AlojamientoHab1)
+                .Include(d => d.AlojamientoHab2)
+                .Where(d => apartIds.Contains(d.AlojamientoApartId))
+                .ToListAsync();
+
+            ViewBag.ApartComposicion = detalles.ToDictionary(
+                d => d.AlojamientoApartId,
+                d => $"{d.AlojamientoHab1.Nombre.Replace("Habitación", "Hab.")} y {d.AlojamientoHab2.Nombre.Replace("Habitación", "Hab.")}"
+            );
+        }
 
         return View(reserva);
     }
@@ -129,6 +157,8 @@ public class ReservasController : Controller
     {
         var reserva = await _context.Reservas
             .Include(r => r.Alojamiento)
+            .Include(r => r.UnidadesGrupales)
+                .ThenInclude(u => u.Alojamiento)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (reserva == null) return NotFound();
@@ -152,8 +182,25 @@ public class ReservasController : Controller
             EsInvitacion      = reserva.EsInvitacion,
             Telefono          = reserva.Telefono,
             CanalOrigen       = reserva.CanalOrigen,
-            Observaciones     = reserva.Observaciones
+            Observaciones     = reserva.Observaciones,
+            EsGrupal          = reserva.EsGrupal,
+            UnidadesGrupales  = reserva.UnidadesGrupales
+                .Select(u => new UnidadGrupalViewModel
+                {
+                    AlojamientoId     = u.AlojamientoId,
+                    CantidadHuespedes = u.CantidadHuespedes
+                }).ToList()
         };
+
+        ViewBag.UnidadesGrupalesJson = System.Text.Json.JsonSerializer.Serialize(
+            reserva.UnidadesGrupales.Select(u => new
+            {
+                id        = u.AlojamientoId,
+                nombre    = u.Alojamiento.Nombre,
+                capacidad = u.Alojamiento.Capacidad,
+                personas  = u.CantidadHuespedes,
+                tipo      = u.Alojamiento.Tipo.ToString()
+            }));
 
         await PopularViewModel(vm);
         return View(vm);
@@ -172,16 +219,26 @@ public class ReservasController : Controller
             ModelState.AddModelError("FechaSalida",
                 "La fecha de egreso debe ser posterior a la de ingreso.");
 
-        if (model.AlojamientoId.HasValue && model.CantidadHuespedes.HasValue)
+        if (model.EsGrupal)
         {
-            var aloj = await _context.Alojamientos.FindAsync(model.AlojamientoId.Value);
-            if (aloj != null && model.CantidadHuespedes.Value > aloj.Capacidad)
-                ModelState.AddModelError("CantidadHuespedes",
-                    $"Supera la capacidad máxima de {aloj.Capacidad} personas.");
+            if (model.UnidadesGrupales.Count < 2)
+                ModelState.AddModelError("", "Una reserva grupal debe incluir al menos 2 unidades.");
+            if (model.UnidadesGrupales.Any(u => u.CantidadHuespedes < 1))
+                ModelState.AddModelError("", "Cada unidad debe tener al menos 1 persona asignada.");
         }
+        else
+        {
+            if (model.AlojamientoId.HasValue && model.CantidadHuespedes.HasValue)
+            {
+                var aloj = await _context.Alojamientos.FindAsync(model.AlojamientoId.Value);
+                if (aloj != null && model.CantidadHuespedes.Value > aloj.Capacidad)
+                    ModelState.AddModelError("CantidadHuespedes",
+                        $"Supera la capacidad máxima de {aloj.Capacidad} personas.");
+            }
 
-        if (!model.EsInvitacion && (!model.PrecioPorDia.HasValue || model.PrecioPorDia <= 0))
-            ModelState.AddModelError("PrecioPorDia", "El precio por día es obligatorio.");
+            if (!model.EsInvitacion && (!model.PrecioPorDia.HasValue || model.PrecioPorDia <= 0))
+                ModelState.AddModelError("PrecioPorDia", "El precio por día es obligatorio.");
+        }
 
         if (!model.EsInvitacion && (!model.MontoTotal.HasValue || model.MontoTotal <= 0))
             ModelState.AddModelError("MontoTotal", "El total de la estadía es obligatorio.");
@@ -189,6 +246,32 @@ public class ReservasController : Controller
         if (!ModelState.IsValid)
         {
             await PopularViewModel(model);
+            if (model.EsGrupal && model.UnidadesGrupales.Any())
+            {
+                var alojIds = model.UnidadesGrupales.Select(u => u.AlojamientoId).ToList();
+                var alojs   = await _context.Alojamientos
+                    .Where(a => alojIds.Contains(a.Id))
+                    .Select(a => new { a.Id, a.Nombre, a.Capacidad, a.Tipo })
+                    .ToListAsync();
+                var alojMap = alojs.ToDictionary(a => a.Id);
+                ViewBag.UnidadesGrupalesJson = System.Text.Json.JsonSerializer.Serialize(
+                    model.UnidadesGrupales.Select(u =>
+                    {
+                        alojMap.TryGetValue(u.AlojamientoId, out var a);
+                        return new
+                        {
+                            id        = u.AlojamientoId,
+                            nombre    = a?.Nombre    ?? string.Empty,
+                            capacidad = a?.Capacidad ?? 0,
+                            personas  = u.CantidadHuespedes,
+                            tipo      = a?.Tipo.ToString() ?? string.Empty
+                        };
+                    }));
+            }
+            else
+            {
+                ViewBag.UnidadesGrupalesJson = "[]";
+            }
             return View(model);
         }
 
@@ -197,8 +280,7 @@ public class ReservasController : Controller
         if (reserva == null) return NotFound();
 
         reserva.NombreHuesped     = model.NombreHuesped;
-        reserva.AlojamientoId     = model.AlojamientoId!.Value;
-        reserva.CantidadHuespedes = model.CantidadHuespedes!.Value;
+        reserva.EsGrupal          = model.EsGrupal;
         reserva.IncluyeDesayuno   = model.IncluyeDesayuno;
         reserva.FechaIngreso      = model.FechaIngreso!.Value;
         reserva.FechaSalida       = model.FechaSalida!.Value;
@@ -208,6 +290,34 @@ public class ReservasController : Controller
         reserva.CanalOrigen       = model.CanalOrigen;
         reserva.Observaciones     = model.Observaciones;
         // FechaCarga no se toca — preserva la fecha original de carga
+
+        if (model.EsGrupal && model.UnidadesGrupales.Count > 0)
+        {
+            reserva.AlojamientoId     = model.UnidadesGrupales[0].AlojamientoId;
+            reserva.CantidadHuespedes = model.UnidadesGrupales.Sum(u => u.CantidadHuespedes);
+        }
+        else
+        {
+            reserva.AlojamientoId     = model.AlojamientoId!.Value;
+            reserva.CantidadHuespedes = model.CantidadHuespedes!.Value;
+        }
+
+        // Sync ReservaAlojamientos
+        var existentes = await _context.ReservaAlojamientos
+            .Where(ra => ra.ReservaId == reserva.Id)
+            .ToListAsync();
+        _context.ReservaAlojamientos.RemoveRange(existentes);
+
+        if (model.EsGrupal)
+        {
+            foreach (var u in model.UnidadesGrupales)
+                _context.ReservaAlojamientos.Add(new ReservaAlojamiento
+                {
+                    ReservaId         = reserva.Id,
+                    AlojamientoId     = u.AlojamientoId,
+                    CantidadHuespedes = u.CantidadHuespedes
+                });
+        }
 
         await _context.SaveChangesAsync();
 
@@ -225,7 +335,7 @@ public class ReservasController : Controller
             return Json(Array.Empty<string>());
 
         var titulares = await _context.Reservas
-            .Where(r => r.NombreHuesped.StartsWith(q))
+            .Where(r => r.NombreHuesped.ToLower().StartsWith(q.ToLower()))
             .Select(r => r.NombreHuesped)
             .Distinct()
             .OrderBy(n => n)
@@ -249,14 +359,28 @@ public class ReservasController : Controller
             !DateTime.TryParse(fechaEgreso,  out var fe) || fe <= fi)
             return Json(Array.Empty<object>());
 
-        var ocupadosBase = await _context.Reservas
+        var reservasEnRango = await _context.Reservas
             .Where(r => r.Estado != EstadoReserva.Cancelada
                      && r.FechaIngreso < fe
                      && r.FechaSalida  > fi
                      && (excludeReservaId == null || r.Id != excludeReservaId.Value))
-            .Select(r => r.AlojamientoId)
-            .Distinct()
+            .Select(r => new { r.Id, r.AlojamientoId, r.EsGrupal })
             .ToListAsync();
+
+        var reservaIdsEnRango = reservasEnRango.Select(r => r.Id).ToList();
+
+        // Grupales: las unidades reales están en ReservaAlojamientos, no en AlojamientoId
+        var ocupadosGrupales = await _context.ReservaAlojamientos
+            .Where(ra => reservaIdsEnRango.Contains(ra.ReservaId))
+            .Select(ra => ra.AlojamientoId)
+            .ToListAsync();
+
+        var ocupadosBase = reservasEnRango
+            .Where(r => !r.EsGrupal)
+            .Select(r => r.AlojamientoId)
+            .Concat(ocupadosGrupales)
+            .Distinct()
+            .ToList();
 
         // Bloqueo bidireccional Apart ↔ Habitaciones componentes
         var apDetalles    = await _context.ApartDetalles.ToListAsync();
@@ -298,7 +422,8 @@ public class ReservasController : Controller
                 nombre    = a.Tipo == TipoAlojamiento.Apart &&
                             apartDetalles.TryGetValue(a.Id, out var det)
                                 ? $"{a.Nombre} ({det})" : a.Nombre,
-                capacidad = a.Capacidad
+                capacidad = a.Capacidad,
+                tipo      = a.Tipo.ToString()
             })
             .ToList();
 
@@ -361,6 +486,32 @@ public class ReservasController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // ── Eliminar ──────────────────────────────────────────────────────────────
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador")]
+    public async Task<IActionResult> Eliminar(int id)
+    {
+        var reserva = await _context.Reservas
+            .Include(r => r.Pagos)
+            .Include(r => r.UnidadesGrupales)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (reserva == null) return NotFound();
+        if (reserva.Estado != EstadoReserva.Cancelada)
+            return BadRequest("Solo se pueden eliminar reservas canceladas.");
+
+        _context.Pagos.RemoveRange(reserva.Pagos);
+        _context.ReservaAlojamientos.RemoveRange(reserva.UnidadesGrupales);
+        _context.Reservas.Remove(reserva);
+        await _context.SaveChangesAsync();
+
+        TempData["Mensaje"]     = $"La reserva de {reserva.NombreHuesped} fue eliminada permanentemente.";
+        TempData["MensajeTipo"] = "success";
+        return RedirectToAction(nameof(Index), new { estado = "Cancelada" });
+    }
+
     // ── Crear GET ─────────────────────────────────────────────────────────────
 
     [HttpGet]
@@ -388,7 +539,7 @@ public class ReservasController : Controller
             && model.FechaSalida.Value <= model.FechaIngreso.Value)
             ModelState.AddModelError("FechaSalida", "La fecha de egreso debe ser posterior a la de ingreso.");
 
-        if (model.AlojamientoId.HasValue && model.CantidadHuespedes.HasValue)
+        if (!model.EsGrupal && model.AlojamientoId.HasValue && model.CantidadHuespedes.HasValue)
         {
             var alojamiento = await _context.Alojamientos.FindAsync(model.AlojamientoId.Value);
             if (alojamiento != null && model.CantidadHuespedes.Value > alojamiento.Capacidad)
@@ -396,7 +547,16 @@ public class ReservasController : Controller
                     $"Supera la capacidad máxima de {alojamiento.Capacidad} personas.");
         }
 
-        if (!model.EsInvitacion && (!model.PrecioPorDia.HasValue || model.PrecioPorDia <= 0))
+        if (model.EsGrupal)
+        {
+            if (model.UnidadesGrupales.Count < 2)
+                ModelState.AddModelError("", "Una reserva grupal debe incluir al menos 2 unidades.");
+            if (model.UnidadesGrupales.Any(u => u.CantidadHuespedes < 1))
+                ModelState.AddModelError("", "Cada unidad debe tener al menos 1 persona asignada.");
+        }
+
+        if (!model.EsInvitacion && (!model.PrecioPorDia.HasValue || model.PrecioPorDia <= 0)
+            && !model.EsGrupal)
             ModelState.AddModelError("PrecioPorDia", "El precio por día es obligatorio.");
 
         if (!model.EsInvitacion && (!model.MontoTotal.HasValue || model.MontoTotal <= 0))
@@ -420,11 +580,22 @@ public class ReservasController : Controller
             MontoSena         = 0,
             EsInvitacion      = model.EsInvitacion,
             IncluyeDesayuno   = model.IncluyeDesayuno,
+            EsGrupal          = model.EsGrupal,
             CanalOrigen       = model.CanalOrigen,
             Observaciones     = model.Observaciones,
             Estado            = EstadoReserva.Confirmada,
             FechaCarga        = DateTime.Now,
         };
+
+        if (model.EsGrupal)
+        {
+            foreach (var u in model.UnidadesGrupales)
+                reserva.UnidadesGrupales.Add(new ReservaAlojamiento
+                {
+                    AlojamientoId     = u.AlojamientoId,
+                    CantidadHuespedes = u.CantidadHuespedes
+                });
+        }
 
         _context.Reservas.Add(reserva);
         await _context.SaveChangesAsync();

@@ -95,6 +95,7 @@ public class DashboardController : Controller
 
         var reservas = await _context.Reservas
             .Include(r => r.Pagos)
+            .Include(r => r.UnidadesGrupales)
             .Where(r => r.Estado       != EstadoReserva.Cancelada
                      && !r.EsInvitacion
                      && r.FechaIngreso  < hastaExcl
@@ -151,7 +152,9 @@ public class DashboardController : Controller
         {
             return reservas
                 .Where(r => r.AlojamientoId == alojId
-                         || (altApartId.HasValue && r.AlojamientoId == altApartId.Value))
+                         || (altApartId.HasValue && r.AlojamientoId == altApartId.Value)
+                         || (r.EsGrupal && r.UnidadesGrupales.Any(u => u.AlojamientoId == alojId))
+                         || (altApartId.HasValue && r.EsGrupal && r.UnidadesGrupales.Any(u => u.AlojamientoId == altApartId.Value)))
                 .Sum(r =>
                 {
                     var s = r.FechaIngreso.Date > desde.Date ? r.FechaIngreso.Date : desde.Date;
@@ -182,9 +185,9 @@ public class DashboardController : Controller
         };
 
         // ── Ocupación de plazas ───────────────────────────────────────────────
-        // Denominador: capacidad de TODAS las unidades × días del período.
-        // Numerador:   CantidadHuespedes × días solapados por reserva.
-        // Solo Habitaciones y Cabañas; Aparts excluidos (igual que en unidades).
+        // Denominador: capacidad de todas las habs (incluye componentes de Aparts) × días.
+        // Numerador:   CantidadHuespedes × días solapados.
+        // Apart se trata como Habitacion (sus habs componentes ya están en el denominador).
         var alojMap = alojamientos.ToDictionary(a => a.Id);
 
         int plazasHabOcup = 0;
@@ -192,17 +195,29 @@ public class DashboardController : Controller
 
         foreach (var r in reservas)
         {
-            if (!alojMap.TryGetValue(r.AlojamientoId, out var aloj)) continue;
-            if (aloj.Tipo != TipoAlojamiento.Habitacion &&
-                aloj.Tipo != TipoAlojamiento.Cabaña) continue;
-
             var os = r.FechaIngreso.Date > desde.Date ? r.FechaIngreso.Date : desde.Date;
             var oe = r.FechaSalida.Date  < hastaExcl  ? r.FechaSalida.Date  : hastaExcl;
             var od = (oe - os).Days;
             if (od <= 0) continue;
 
-            if (aloj.Tipo == TipoAlojamiento.Habitacion) plazasHabOcup += r.CantidadHuespedes * od;
-            else                                         plazasCabOcup += r.CantidadHuespedes * od;
+            if (r.EsGrupal && r.UnidadesGrupales.Count > 0)
+            {
+                foreach (var u in r.UnidadesGrupales)
+                {
+                    if (!alojMap.TryGetValue(u.AlojamientoId, out var uAloj)) continue;
+                    if (uAloj.Tipo == TipoAlojamiento.Habitacion ||
+                        uAloj.Tipo == TipoAlojamiento.Apart)       plazasHabOcup += u.CantidadHuespedes * od;
+                    else if (uAloj.Tipo == TipoAlojamiento.Cabaña) plazasCabOcup += u.CantidadHuespedes * od;
+                }
+            }
+            else
+            {
+                if (!alojMap.TryGetValue(r.AlojamientoId, out var aloj)) continue;
+
+                if (aloj.Tipo == TipoAlojamiento.Habitacion ||
+                    aloj.Tipo == TipoAlojamiento.Apart)       plazasHabOcup += r.CantidadHuespedes * od;
+                else if (aloj.Tipo == TipoAlojamiento.Cabaña) plazasCabOcup += r.CantidadHuespedes * od;
+            }
         }
 
         int plazasHabDisp = habitaciones.Sum(h => h.Capacidad) * periodDays;

@@ -25,6 +25,7 @@ public class PagosController : Controller
         var reserva = await _context.Reservas
             .Include(r => r.Alojamiento)
             .Include(r => r.Pagos)
+            .Include(r => r.UnidadesGrupales)
             .FirstOrDefaultAsync(r => r.Id == reservaId);
 
         if (reserva == null) return NotFound();
@@ -39,7 +40,9 @@ public class PagosController : Controller
         {
             ReservaId         = reserva.Id,
             NombreHuesped     = reserva.NombreHuesped,
-            NombreAlojamiento = reserva.Alojamiento.Nombre,
+            NombreAlojamiento = reserva.EsGrupal && reserva.UnidadesGrupales.Count > 0
+                                    ? $"Grupo ({reserva.UnidadesGrupales.Count} unidades)"
+                                    : reserva.Alojamiento.Nombre,
             FechaIngreso      = reserva.FechaIngreso,
             FechaSalida       = reserva.FechaSalida,
             MontoTotal        = reserva.MontoTotal,
@@ -98,6 +101,7 @@ public class PagosController : Controller
         var reserva = await _context.Reservas
             .Include(r => r.Alojamiento)
             .Include(r => r.Pagos)
+            .Include(r => r.UnidadesGrupales)
             .FirstOrDefaultAsync(r => r.Id == vm.ReservaId);
 
         if (reserva == null) return;
@@ -107,7 +111,9 @@ public class PagosController : Controller
         ViewBag.TienePagosPrevios = reserva.Pagos.Any();
 
         vm.NombreHuesped     = reserva.NombreHuesped;
-        vm.NombreAlojamiento = reserva.Alojamiento.Nombre;
+        vm.NombreAlojamiento = reserva.EsGrupal && reserva.UnidadesGrupales.Count > 0
+                                   ? $"Grupo ({reserva.UnidadesGrupales.Count} unidades)"
+                                   : reserva.Alojamiento.Nombre;
         vm.FechaIngreso      = reserva.FechaIngreso;
         vm.FechaSalida       = reserva.FechaSalida;
         vm.MontoTotal        = reserva.MontoTotal;

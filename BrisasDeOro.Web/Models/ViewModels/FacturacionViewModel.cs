@@ -38,6 +38,9 @@ public class MovimientoViewModel
     public MetodoPago MetodoPago        { get; set; }
     public decimal    Monto             { get; set; }
     public string?    Observaciones     { get; set; }
+
+    public bool                       EsGrupal  { get; set; }
+    public List<UnidadGrupalResumen>  Unidades  { get; set; } = new();
 }
 
 // ── Saldo pendiente (una reserva con deuda) ───────────────────────────────────
@@ -52,7 +55,18 @@ public class SaldoPendienteViewModel
     public decimal  MontoTotal        { get; set; }
     public decimal  TotalCobrado      { get; set; }
 
+    public bool                       EsGrupal  { get; set; }
+    public List<UnidadGrupalResumen>  Unidades  { get; set; } = new();
+
     public decimal SaldoPendiente  => MontoTotal - TotalCobrado;
     public string  EstadoPagoClase => TotalCobrado == 0 ? "pago-sin-sena" : "pago-senado";
     public string  EstadoPagoTexto => TotalCobrado == 0 ? "Sin seña"      : "Señado";
+}
+
+// ── Unidad de alojamiento en una reserva grupal ───────────────────────────────
+
+public class UnidadGrupalResumen
+{
+    public string Nombre   { get; set; } = string.Empty;
+    public int    Personas { get; set; }
 }

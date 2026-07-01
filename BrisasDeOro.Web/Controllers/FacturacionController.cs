@@ -69,7 +69,14 @@ public class FacturacionController : Controller
                 TipoPago          = p.TipoPago,
                 MetodoPago        = p.MetodoPago,
                 Monto             = p.Monto,
-                Observaciones     = p.Observaciones
+                Observaciones     = p.Observaciones,
+                EsGrupal          = p.Reserva.EsGrupal,
+                Unidades          = p.Reserva.UnidadesGrupales
+                    .Select(u => new UnidadGrupalResumen
+                    {
+                        Nombre   = u.Alojamiento.Nombre,
+                        Personas = u.CantidadHuespedes
+                    }).ToList()
             })
             .ToListAsync();
 
@@ -96,7 +103,14 @@ public class FacturacionController : Controller
                 FechaIngreso      = r.FechaIngreso,
                 FechaSalida       = r.FechaSalida,
                 MontoTotal        = r.MontoTotal,
-                TotalCobrado      = r.Pagos.Sum(p => p.Monto)
+                TotalCobrado      = r.Pagos.Sum(p => p.Monto),
+                EsGrupal          = r.EsGrupal,
+                Unidades          = r.UnidadesGrupales
+                    .Select(u => new UnidadGrupalResumen
+                    {
+                        Nombre   = u.Alojamiento.Nombre,
+                        Personas = u.CantidadHuespedes
+                    }).ToList()
             })
             .ToListAsync();
 
@@ -112,7 +126,7 @@ public class FacturacionController : Controller
             return Json(Array.Empty<string>());
 
         var titulares = await _context.Reservas
-            .Where(r => r.NombreHuesped.StartsWith(q))
+            .Where(r => r.NombreHuesped.ToLower().StartsWith(q.ToLower()))
             .Select(r => r.NombreHuesped)
             .Distinct()
             .OrderBy(n => n)

@@ -107,36 +107,79 @@
     <div class="card mb-3">
         <div class="card-header fw-semibold bg-light">Alojamiento</div>
         <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-5">
-                    <label asp-for="AlojamientoId" class="form-label">
-                        Alojamiento <span class="text-danger">*</span>
-                    </label>
-                    <select asp-for="AlojamientoId" class="form-select" id="AlojamientoId" disabled>
-                        <option value="">— Seleccioná las fechas primero —</option>
-                    </select>
-                    <div id="disponibilidad-msg" class="form-text"></div>
-                    <span asp-validation-for="AlojamientoId" class="text-danger small"></span>
+
+            <div class="border rounded p-3 mb-3" id="bloque-toggle-grupal">
+                <div class="form-check form-switch mb-0" id="bloque-toggle-grupal-switch">
+                    <input asp-for="EsGrupal" type="checkbox" class="form-check-input" id="EsGrupal" role="switch" />
                 </div>
-                <div class="col-md-3">
-                    <label asp-for="CantidadHuespedes" class="form-label">
-                        Cantidad de personas <span class="text-danger">*</span>
-                    </label>
-                    <input asp-for="CantidadHuespedes" type="number" class="form-control"
-                           id="CantidadHuespedes" min="1" disabled />
-                    <div id="capacidad-hint" class="form-text">Seleccioná un alojamiento primero</div>
-                    <span asp-validation-for="CantidadHuespedes" class="text-danger small"></span>
+                <div id="bloque-toggle-grupal-texto">
+                    <label for="EsGrupal" class="fw-bold mb-0" style="cursor:pointer;">¿Es reserva grupal?</label>
+                    <span class="d-block text-muted fw-normal small">
+                        Permite asignar varias unidades de alojamiento a la misma reserva.
+                    </span>
                 </div>
-                <div class="col-md-4 d-flex align-items-center">
-                    <div class="form-check">
-                        <input asp-for="IncluyeDesayuno" type="checkbox"
-                               class="form-check-input" id="IncluyeDesayuno" />
-                        <label asp-for="IncluyeDesayuno" class="form-check-label fw-normal">
-                            ¿Incluye desayuno?
+            </div>
+
+            <div id="seccion-individual">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label asp-for="AlojamientoId" class="form-label">
+                            Alojamiento <span class="text-danger">*</span>
                         </label>
+                        <div class="position-relative" id="AlojamientoId-wrapper">
+                            <button type="button" class="form-select text-start" id="AlojamientoId-btn" disabled>
+                                — Seleccioná las fechas primero —
+                            </button>
+                            <div class="custom-select-menu d-none" id="AlojamientoId-menu"></div>
+                            <select asp-for="AlojamientoId" class="d-none" id="AlojamientoId" disabled>
+                                <option value="">— Seleccioná las fechas primero —</option>
+                            </select>
+                        </div>
+                        <div id="disponibilidad-msg" class="form-text"></div>
+                        <span asp-validation-for="AlojamientoId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="CantidadHuespedes" class="form-label">
+                            Cantidad de personas <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="CantidadHuespedes" type="number" class="form-control"
+                               id="CantidadHuespedes" min="1" disabled />
+                        <div id="capacidad-hint" class="form-text">Seleccioná un alojamiento primero</div>
+                        <span asp-validation-for="CantidadHuespedes" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-center">
+                        <div class="form-check">
+                            <input asp-for="IncluyeDesayuno" type="checkbox"
+                                   class="form-check-input" id="IncluyeDesayuno" />
+                            <label asp-for="IncluyeDesayuno" class="form-check-label fw-normal">
+                                ¿Incluye desayuno?
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <div id="seccion-grupal" class="d-none">
+                <div class="alert alert-warning py-2 px-3 mb-3 small" id="alerta-grupal-info">
+                    <i class="bi bi-calendar-x me-1"></i>
+                    Seleccioná primero las fechas de ingreso y egreso para poder elegir las unidades de la reserva grupal.
+                </div>
+                <div id="disponibilidad-msg-grupal" class="form-text mb-2"></div>
+                <div id="lista-checkboxes-grupal"></div>
+                <div id="resumen-grupal" class="mt-3 d-none">
+                    <div class="d-flex gap-3 flex-wrap">
+                        <span class="text-muted small">
+                            Unidades seleccionadas: <strong id="grupal-cant-unidades">0</strong>
+                        </span>
+                        <span class="text-muted small">
+                            Total personas: <strong id="grupal-total-personas">0</strong>
+                        </span>
+                    </div>
+                </div>
+                @* Campos ocultos que el JS completa antes del submit *@
+                <div id="container-unidades-grupales"></div>
+            </div>
+
         </div>
     </div>
 
@@ -177,8 +220,7 @@
                 </div>
                 <div class="col-md-4 d-flex align-items-center">
                     <div class="alert alert-info py-2 px-3 mb-0 small w-100">
-                        <strong>Editable:</strong> podés ajustar precio o total para aplicar descuentos.
-                        Si editás el total manualmente, no se recalculará automáticamente.
+                        <strong>Bidireccional:</strong> ingresá el precio por día <em>o</em> el total directamente. El otro campo se recalcula automáticamente según las noches de estadía.
                     </div>
                 </div>
             </div>
@@ -203,7 +245,7 @@
                         <option value="WhatsApp">WhatsApp</option>
                         <option value="Página web">Página web</option>
                         <option value="Recomendación">Recomendación</option>
-                        <option value="Otro">Otro</option>
+                        <option value="De paso">De paso</option>
                     </select>
                 </div>
                 <div class="col-md-5">
@@ -217,7 +259,7 @@
 
     <div id="botones-crear" class="d-flex gap-2 mb-5">
         <button type="submit" class="btn btn-primary px-4">Guardar Reserva</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        <a asp-action="Index" class="btn btn-modal-cancelar">Cancelar</a>
     </div>
 </form>
 
@@ -225,6 +267,86 @@
     .campo-inactivo {
         background-color: #e9ecef !important;
         cursor: not-allowed;
+    }
+    #bloque-toggle-grupal {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: .75rem !important;
+        flex-wrap: nowrap !important;
+        overflow: hidden !important;
+        background-color: #f8f9fc;
+        border-color: #cdd6f4 !important;
+        transition: background-color .15s ease, border-color .15s ease;
+    }
+    #bloque-toggle-grupal:has(#EsGrupal:checked) {
+        background-color: #eaf0ff;
+        border-color: #6c8eef !important;
+    }
+    #bloque-toggle-grupal-texto {
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+    #bloque-toggle-grupal-switch {
+        flex: 0 0 auto !important;
+        padding-left: 2.5em !important;
+        margin: 0 !important;
+    }
+    #bloque-toggle-grupal-switch .form-check-input {
+        margin-left: -2.5em !important;
+        float: none !important;
+    }
+    #lista-checkboxes-grupal .grid-checkboxes-grupal {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+    @@media (min-width: 576px) {
+        #lista-checkboxes-grupal .grid-checkboxes-grupal { flex-direction: row; column-gap: 2rem; }
+        #lista-checkboxes-grupal .columna-grupal { flex: 1 1 0; min-width: 0; }
+    }
+    .columna-grupal-titulo {
+        font-size: .8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        color: #6c757d;
+        margin-bottom: .25rem;
+        margin-top: .5rem;
+    }
+    .columna-grupal-titulo:first-child { margin-top: 0; }
+    .grupal-item { border-bottom: 1px solid #e9ecef; }
+    #AlojamientoId-btn {
+        cursor: pointer;
+    }
+    #AlojamientoId-btn:disabled {
+        cursor: not-allowed;
+    }
+    .custom-select-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        max-height: 240px;
+        overflow-y: auto;
+        background: #fff;
+        border: 1px solid #ced4da;
+        border-radius: .375rem;
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+        margin-top: 2px;
+    }
+    .custom-select-menu .custom-select-item {
+        padding: .5rem .75rem;
+        cursor: pointer;
+        font-size: .95rem;
+    }
+    .custom-select-menu .custom-select-item:hover,
+    .custom-select-menu .custom-select-item.active {
+        background-color: #e9ecef;
+    }
+    .custom-select-menu .custom-select-item.placeholder {
+        color: #6c757d;
     }
     @@media (max-width: 767.98px) {
         /* Botón superior: contenido centrado */
@@ -241,9 +363,32 @@
     }
 </style>
 
+@* ── Modal personas por unidad (reserva grupal) ── *@
+<div class="modal fade" id="modal-personas-unidad" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title fw-semibold" id="modal-personas-titulo">Personas en la unidad</h6>
+                <button type="button" class="btn-close" id="btn-cerrar-modal-personas"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-2" id="modal-personas-capacidad"></p>
+                <label class="form-label fw-semibold">¿Cuántas personas se alojan acá?</label>
+                <input type="number" id="input-personas-modal" class="form-control form-control-lg"
+                       min="1" placeholder="0" />
+                <div id="modal-personas-error" class="text-danger small mt-1 d-none"></div>
+            </div>
+            <div class="modal-footer py-2 gap-2 justify-content-center">
+                <button type="button" class="btn btn-modal-cancelar btn-sm" id="btn-cancelar-personas">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm px-4" id="btn-confirmar-personas">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @* ── Modal de confirmación ── *@
 <div class="modal fade" id="modal-confirmar-reserva" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+    <div class="modal-dialog modal-dialog-centered" id="modal-confirmar-dialog" style="max-width:480px;">
         <div class="modal-content">
             <div class="modal-header py-2">
                 <h5 class="modal-title fw-semibold">
@@ -254,11 +399,11 @@
             <div class="modal-body pb-1">
                 <div id="modal-resumen-reserva"></div>
             </div>
-            <div class="modal-footer py-2 gap-2">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <div class="modal-footer py-2 gap-2 justify-content-center">
+                <button type="button" class="btn btn-modal-volver" data-bs-dismiss="modal">
                     <i class="bi bi-arrow-left me-1"></i>Volver y corregir
                 </button>
-                <button type="button" class="btn btn-success px-4" id="btn-confirmar-reserva">
+                <button type="button" class="btn btn-primary px-4" id="btn-confirmar-reserva">
                     <i class="bi bi-check-lg me-1"></i>Confirmar y guardar
                 </button>
             </div>
@@ -270,17 +415,70 @@
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 
     <script>
-    // ── Alojamiento pre-seleccionado (postback) ──────────────────────────────
+    // ── Constantes y estado ──────────────────────────────────────────────────
     const PREV_ALOJ_ID = '@prevAlojId';
+    let capacidades    = {};   // { "id": capacidad } de alojamientos disponibles
+    let totalFijo      = false;
+    let esGrupal       = false;
 
-    // ── Capacidades de los alojamientos disponibles (actualizado por AJAX) ──
-    let capacidades = {};
-
-    // ── Estado ───────────────────────────────────────────────────────────────
-    let totalFijo = false;
+    // Estado grupal: { id -> { nombre, capacidad, personas } }
+    let unidadesGrupales = {};
 
     // ── Helpers ──────────────────────────────────────────────────────────────
     function gid(id) { return document.getElementById(id); }
+
+    // ── Dropdown personalizado de Alojamiento (siempre abre hacia abajo) ─────
+    function sincronizarBotonAlojamiento() {
+        const select = gid('AlojamientoId');
+        const btn    = gid('AlojamientoId-btn');
+        const opt    = select.options[select.selectedIndex];
+        btn.textContent = opt ? opt.textContent : '— Seleccioná un alojamiento —';
+        btn.disabled = select.disabled;
+        if (select.disabled) cerrarMenuAlojamiento();
+    }
+
+    function poblarMenuAlojamiento() {
+        const select = gid('AlojamientoId');
+        const menu   = gid('AlojamientoId-menu');
+        menu.innerHTML = '';
+        Array.from(select.options).forEach(opt => {
+            const item = document.createElement('div');
+            item.className = 'custom-select-item' + (opt.value === select.value ? ' active' : '')
+                            + (opt.value === '' ? ' placeholder' : '');
+            item.textContent = opt.textContent;
+            item.addEventListener('click', function () {
+                select.value = opt.value;
+                select.dispatchEvent(new Event('change'));
+                sincronizarBotonAlojamiento();
+                cerrarMenuAlojamiento();
+            });
+            menu.appendChild(item);
+        });
+    }
+
+    function abrirMenuAlojamiento() {
+        if (gid('AlojamientoId-btn').disabled) return;
+        poblarMenuAlojamiento();
+        gid('AlojamientoId-menu').classList.remove('d-none');
+    }
+
+    function cerrarMenuAlojamiento() {
+        gid('AlojamientoId-menu').classList.add('d-none');
+    }
+
+    gid('AlojamientoId-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (gid('AlojamientoId-menu').classList.contains('d-none')) abrirMenuAlojamiento();
+        else cerrarMenuAlojamiento();
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('#AlojamientoId-wrapper')) cerrarMenuAlojamiento();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') cerrarMenuAlojamiento();
+    });
 
     function getCapacidad() {
         const id = gid('AlojamientoId').value;
@@ -309,6 +507,235 @@
         el.classList.add('campo-inactivo');
     }
 
+    // ── Modo grupal: toggle ───────────────────────────────────────────────────
+    function actualizarAlertaGrupal() {
+        const ingreso = gid('FechaIngreso').value;
+        const egreso  = gid('FechaSalida').value;
+        const alerta  = gid('alerta-grupal-info');
+        if (!ingreso || !egreso) {
+            alerta.className = 'alert alert-warning py-2 px-3 mb-3 small';
+            alerta.innerHTML = '<i class="bi bi-calendar-x me-1"></i>' +
+                'Seleccioná primero las fechas de ingreso y egreso para poder elegir las unidades de la reserva grupal.';
+        } else {
+            alerta.className = 'alert alert-info py-2 px-3 mb-3 small';
+            alerta.innerHTML = '<i class="bi bi-info-circle me-1"></i>' +
+                'Tildá todas las unidades que van a formar parte de esta reserva grupal.';
+        }
+    }
+
+    function toggleModoGrupal(activar) {
+        esGrupal = activar;
+        gid('seccion-individual').classList.toggle('d-none', activar);
+        gid('seccion-grupal').classList.toggle('d-none', !activar);
+
+        if (activar) {
+            actualizarAlertaGrupal();
+            // En modo grupal: precio por día queda bloqueado hasta tener fechas + unidades tildadas
+            totalFijo = false;
+            gid('MontoTotal').value = '';
+            gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
+            actualizarPrecioState();
+            // Renderizar checkboxes si ya hay disponibles cargados (con su "tipo" original)
+            if (_datosDisponibles.length > 0)
+                renderCheckboxesGrupales(_datosDisponibles);
+        } else {
+            // Reset completo a modo individual limpio
+            unidadesGrupales = {};
+            gid('container-unidades-grupales').innerHTML = '';
+            actualizarResumenGrupal();
+
+            gid('AlojamientoId').value = '';
+            sincronizarBotonAlojamiento();
+            gid('CantidadHuespedes').disabled = true;
+            gid('CantidadHuespedes').value    = '';
+            gid('capacidad-hint').textContent = 'Seleccioná un alojamiento primero';
+
+            totalFijo = false;
+            gid('PrecioPorDia').value = '';
+            gid('MontoTotal').value   = '';
+            gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
+            actualizarPrecioState();
+            actualizarNochesYTotal();
+        }
+    }
+
+    // Mapa auxiliar id → nombre para reconstruir checkboxes al togglear
+    let _nombresDisponibles = {};
+    let _datosDisponibles   = [];
+
+    // ── Modo grupal: renderizar checkboxes ────────────────────────────────────
+    function crearItemCheckboxGrupal(a) {
+        const checked  = unidadesGrupales[a.id] ? 'checked' : '';
+        const personas = unidadesGrupales[a.id]?.personas ?? 0;
+        const etiqueta = personas > 0
+            ? `<span class="badge bg-primary ms-2" id="badge-${a.id}">${personas} persona${personas !== 1 ? 's' : ''}</span>`
+            : `<span class="badge bg-secondary ms-2 d-none" id="badge-${a.id}"></span>`;
+
+        const div = document.createElement('div');
+        div.className = 'grupal-item d-flex align-items-center gap-2 py-2';
+        div.innerHTML = `
+            <div class="form-check mb-0 flex-grow-1">
+                <input class="form-check-input chk-aloj" type="checkbox"
+                       id="chk-aloj-${a.id}"
+                       data-id="${a.id}" data-nombre="${a.nombre}" data-cap="${a.capacidad}" data-tipo="${a.tipo}"
+                       ${checked}>
+                <label class="form-check-label" for="chk-aloj-${a.id}">
+                    ${a.nombre}
+                    <span class="text-muted small ms-1">(cap. ${a.capacidad})</span>
+                </label>
+                ${etiqueta}
+            </div>`;
+        return div;
+    }
+
+    function renderCheckboxesGrupales(data) {
+        _datosDisponibles = data;
+        const lista = gid('lista-checkboxes-grupal');
+        if (!data || data.length === 0) {
+            lista.innerHTML = '<p class="text-muted small">No hay unidades disponibles para las fechas seleccionadas.</p>';
+            return;
+        }
+        lista.innerHTML = '';
+
+        // Columna izquierda: Habitaciones + Aparts. Columna derecha: Cabañas.
+        // (mismo criterio de orden que el resto del sistema: Habitacion, Apart, Cabaña)
+        const izquierda = data.filter(a => a.tipo !== 'Cabaña');
+        const derecha   = data.filter(a => a.tipo === 'Cabaña');
+
+        const grid = document.createElement('div');
+        grid.className = 'grid-checkboxes-grupal';
+
+        const colIzq = document.createElement('div');
+        colIzq.className = 'columna-grupal';
+        if (izquierda.length > 0) {
+            const titIzq = document.createElement('div');
+            titIzq.className = 'columna-grupal-titulo';
+            titIzq.textContent = 'Habitaciones y Aparts';
+            colIzq.appendChild(titIzq);
+            izquierda.forEach(a => colIzq.appendChild(crearItemCheckboxGrupal(a)));
+        }
+
+        const colDer = document.createElement('div');
+        colDer.className = 'columna-grupal';
+        if (derecha.length > 0) {
+            const titDer = document.createElement('div');
+            titDer.className = 'columna-grupal-titulo';
+            titDer.textContent = 'Cabañas';
+            colDer.appendChild(titDer);
+            derecha.forEach(a => colDer.appendChild(crearItemCheckboxGrupal(a)));
+        }
+
+        if (izquierda.length > 0) grid.appendChild(colIzq);
+        if (derecha.length   > 0) grid.appendChild(colDer);
+        lista.appendChild(grid);
+
+        // Listeners en checkboxes
+        lista.querySelectorAll('.chk-aloj').forEach(chk => {
+            chk.addEventListener('change', function () {
+                if (this.checked) {
+                    abrirModalPersonas(
+                        parseInt(this.dataset.id),
+                        this.dataset.nombre,
+                        parseInt(this.dataset.cap),
+                        this.dataset.tipo
+                    );
+                } else {
+                    delete unidadesGrupales[parseInt(this.dataset.id)];
+                    const badge = gid(`badge-${this.dataset.id}`);
+                    if (badge) { badge.textContent = ''; badge.classList.add('d-none'); }
+                    actualizarResumenGrupal();
+                }
+            });
+        });
+
+        gid('disponibilidad-msg-grupal').className = 'form-text text-success mb-2';
+        const cantUnidades = data.filter(a => !a.nombre.startsWith('Apart')).length;
+        gid('disponibilidad-msg-grupal').textContent = `${cantUnidades} de 16 unidades disponibles.`;
+    }
+
+    // ── Modal personas por unidad ─────────────────────────────────────────────
+    let _modalPersonasAlojId   = null;
+    let _modalPersonasAlojNombre = '';
+    let _modalPersonasCap      = 0;
+    let _modalPersonasTipo     = '';
+
+    function abrirModalPersonas(alojId, nombre, cap, tipo) {
+        _modalPersonasAlojId     = alojId;
+        _modalPersonasAlojNombre = nombre;
+        _modalPersonasCap        = cap;
+        _modalPersonasTipo       = tipo;
+
+        gid('modal-personas-titulo').textContent  = `Personas en ${nombre}`;
+        gid('modal-personas-capacidad').textContent = `Capacidad máxima: ${cap} personas`;
+        gid('input-personas-modal').max   = cap;
+        gid('input-personas-modal').value = unidadesGrupales[alojId]?.personas ?? '';
+        gid('modal-personas-error').classList.add('d-none');
+
+        bootstrap.Modal.getOrCreateInstance(gid('modal-personas-unidad')).show();
+        setTimeout(() => gid('input-personas-modal').focus(), 300);
+    }
+
+    function cerrarModalPersonasSinConfirmar() {
+        // Si el checkbox no tenía valor previo, desmarcarlo
+        if (_modalPersonasAlojId !== null && !unidadesGrupales[_modalPersonasAlojId]) {
+            const chk = gid(`chk-aloj-${_modalPersonasAlojId}`);
+            if (chk) chk.checked = false;
+        }
+        bootstrap.Modal.getInstance(gid('modal-personas-unidad'))?.hide();
+    }
+
+    gid('btn-cerrar-modal-personas').addEventListener('click', cerrarModalPersonasSinConfirmar);
+    gid('btn-cancelar-personas').addEventListener('click',     cerrarModalPersonasSinConfirmar);
+
+    gid('btn-confirmar-personas').addEventListener('click', function () {
+        const val = parseInt(gid('input-personas-modal').value);
+        const errEl = gid('modal-personas-error');
+
+        if (!val || val < 1) {
+            errEl.textContent = 'Ingresá al menos 1 persona.';
+            errEl.classList.remove('d-none');
+            return;
+        }
+        if (val > _modalPersonasCap) {
+            errEl.textContent = `Supera la capacidad máxima de ${_modalPersonasCap} personas.`;
+            errEl.classList.remove('d-none');
+            return;
+        }
+
+        unidadesGrupales[_modalPersonasAlojId] = {
+            nombre: _modalPersonasAlojNombre,
+            capacidad: _modalPersonasCap,
+            personas: val,
+            tipo: _modalPersonasTipo
+        };
+
+        const badge = gid(`badge-${_modalPersonasAlojId}`);
+        if (badge) {
+            badge.textContent = `${val} persona${val !== 1 ? 's' : ''}`;
+            badge.classList.remove('d-none');
+        }
+
+        bootstrap.Modal.getInstance(gid('modal-personas-unidad'))?.hide();
+        actualizarResumenGrupal();
+    });
+
+    // Confirmar con Enter
+    gid('input-personas-modal').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); gid('btn-confirmar-personas').click(); }
+    });
+
+    function actualizarResumenGrupal() {
+        const ids = Object.keys(unidadesGrupales);
+        const cantUnidades = ids.length;
+        const totalPersonas = ids.reduce((s, id) => s + (unidadesGrupales[id]?.personas ?? 0), 0);
+
+        gid('grupal-cant-unidades').textContent  = cantUnidades;
+        gid('grupal-total-personas').textContent = totalPersonas;
+        gid('resumen-grupal').classList.toggle('d-none', cantUnidades === 0);
+
+        actualizarPrecioState();
+    }
+
     // ── Disponibilidad (AJAX) ────────────────────────────────────────────────
     async function buscarDisponibles() {
         const ingreso = gid('FechaIngreso').value;
@@ -318,10 +745,18 @@
         const select = gid('AlojamientoId');
         const msg    = gid('disponibilidad-msg');
 
-        select.disabled = true;
+        select.disabled  = true;
         select.innerHTML = '<option value="">Verificando disponibilidad…</option>';
         msg.className    = 'form-text text-muted';
         msg.textContent  = '';
+        sincronizarBotonAlojamiento();
+
+        if (esGrupal) {
+            actualizarAlertaGrupal();
+            gid('lista-checkboxes-grupal').innerHTML =
+                '<p class="text-muted small">Verificando disponibilidad…</p>';
+            gid('disponibilidad-msg-grupal').textContent = '';
+        }
 
         resetDownstreamDeAlojamiento();
 
@@ -336,6 +771,12 @@
                 select.innerHTML = '<option value="">— Sin disponibilidad —</option>';
                 msg.className    = 'form-text text-danger fw-semibold';
                 msg.textContent  = 'No hay alojamientos disponibles para las fechas seleccionadas.';
+                _datosDisponibles = [];
+                sincronizarBotonAlojamiento();
+                if (esGrupal) {
+                    gid('lista-checkboxes-grupal').innerHTML =
+                        '<p class="text-muted small text-danger">Sin unidades disponibles para esas fechas.</p>';
+                }
             } else {
                 const opt0 = document.createElement('option');
                 opt0.value       = '';
@@ -350,25 +791,36 @@
                 });
 
                 capacidades = Object.fromEntries(data.map(a => [String(a.id), a.capacidad]));
+                _nombresDisponibles = Object.fromEntries(data.map(a => [String(a.id), a.nombre]));
+                _datosDisponibles = data;
                 select.disabled = false;
 
-                // Contar solo habitaciones y cabañas (sin Apart) para el indicador de 16 unidades
                 const cantUnidades = data.filter(a => !a.nombre.startsWith('Apart')).length;
                 msg.className   = 'form-text text-success';
                 msg.textContent = `${cantUnidades} de 16 unidades disponibles.`;
 
-                // Restaurar selección tras postback
-                if (PREV_ALOJ_ID && select.querySelector(`option[value="${PREV_ALOJ_ID}"]`)) {
-                    select.value = PREV_ALOJ_ID;
-                    actualizarCantidadState();
-                    actualizarPrecioState();
+                if (esGrupal) {
+                    // Limpiar selecciones que ya no están disponibles
+                    Object.keys(unidadesGrupales).forEach(id => {
+                        if (!capacidades[id]) delete unidadesGrupales[id];
+                    });
+                    renderCheckboxesGrupales(data);
+                } else {
+                    // Restaurar selección tras postback
+                    if (PREV_ALOJ_ID && select.querySelector(`option[value="${PREV_ALOJ_ID}"]`)) {
+                        select.value = PREV_ALOJ_ID;
+                        actualizarCantidadState();
+                        actualizarPrecioState();
+                    }
                 }
+                sincronizarBotonAlojamiento();
             }
         } catch {
             select.innerHTML = '<option value="">— Error al verificar —</option>';
             select.disabled  = false;
             msg.className    = 'form-text text-danger';
             msg.textContent  = 'Error al verificar disponibilidad. Intentá de nuevo.';
+            sincronizarBotonAlojamiento();
         }
     }
 
@@ -377,12 +829,18 @@
         cantidad.disabled = true;
         cantidad.value    = '';
         gid('capacidad-hint').textContent = 'Seleccioná un alojamiento primero';
+
         bloquearCampo('PrecioPorDia');
         bloquearCampo('MontoTotal');
         gid('PrecioPorDia').value = '';
         gid('MontoTotal').value   = '';
         gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
         totalFijo = false;
+
+        if (esGrupal) {
+            unidadesGrupales = {};
+            actualizarResumenGrupal(); // re-evalúa Precio/Total según fechas + unidades
+        }
     }
 
     // ── Invitación ────────────────────────────────────────────────────────────
@@ -410,13 +868,13 @@
         const input = gid('CantidadHuespedes');
         const hint  = gid('capacidad-hint');
         if (cap) {
-            input.disabled = false;
-            input.max      = cap;
+            input.disabled   = false;
+            input.max        = cap;
             hint.textContent = `Capacidad máxima: ${cap} personas`;
             if (parseInt(input.value) > cap) input.value = cap;
         } else {
-            input.disabled = true;
-            input.value    = '';
+            input.disabled   = true;
+            input.value      = '';
             hint.textContent = 'Seleccioná un alojamiento primero';
         }
     }
@@ -424,18 +882,40 @@
     // ── Estado del precio ─────────────────────────────────────────────────────
     function actualizarPrecioState() {
         if (gid('EsInvitacion').checked) return;
+        if (esGrupal) {
+            const fechasOk   = !!gid('FechaIngreso').value && !!gid('FechaSalida').value;
+            const unidadesOk = Object.keys(unidadesGrupales).length > 0;
+
+            if (fechasOk && unidadesOk) {
+                habilitarCampo('PrecioPorDia');
+                habilitarCampo('MontoTotal');
+                gid('precio-hint').textContent = 'Sin sugerencia de tarifa — ingresá el precio por día manualmente';
+            } else {
+                bloquearCampo('PrecioPorDia');
+                gid('PrecioPorDia').value = '';
+                gid('precio-hint').textContent = !fechasOk
+                    ? 'Completá las fechas de ingreso y egreso para habilitar'
+                    : 'Tildá al menos una unidad con personas asignadas para habilitar';
+                bloquearCampo('MontoTotal');
+                gid('MontoTotal').value = '';
+                gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
+                totalFijo = false;
+            }
+            return;
+        }
         const alojOk     = !!gid('AlojamientoId').value;
         const personasOk = parseInt(gid('CantidadHuespedes').value) > 0;
 
         if (alojOk && personasOk) {
             habilitarCampo('PrecioPorDia');
+            habilitarCampo('MontoTotal');
             gid('precio-hint').textContent = 'Ingresá el precio o aplicá un descuento sobre la tarifa';
         } else {
             bloquearCampo('PrecioPorDia');
             gid('PrecioPorDia').value = '';
             gid('precio-hint').textContent = 'Completá alojamiento y personas para habilitar';
             bloquearCampo('MontoTotal');
-            gid('MontoTotal').value  = '';
+            gid('MontoTotal').value     = '';
             gid('noches-display').value = '';
             gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
             totalFijo = false;
@@ -449,30 +929,36 @@
         gid('noches-display').value = noches != null
             ? `${noches} noche${noches !== 1 ? 's' : ''}` : '';
 
-        const precio = parseFloat(gid('PrecioPorDia').value);
-        if (noches != null && precio > 0) {
-            habilitarCampo('MontoTotal');
-            if (!totalFijo) {
+        if (totalFijo) {
+            const total = parseFloat(gid('MontoTotal').value);
+            if (noches != null && noches > 0 && total > 0) {
+                gid('PrecioPorDia').value = (total / noches).toFixed(2);
+                gid('precio-hint').textContent = 'Calculado automáticamente (total ÷ noches)';
+            }
+        } else {
+            const precio = parseFloat(gid('PrecioPorDia').value);
+            if (noches != null && precio > 0) {
                 gid('MontoTotal').value = (precio * noches).toFixed(2);
                 gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
+            } else {
+                gid('MontoTotal').value = '';
             }
-        } else if (!totalFijo) {
-            bloquearCampo('MontoTotal');
-            gid('MontoTotal').value = '';
         }
     }
 
     // ── Precio sugerido por temporada (AJAX) ─────────────────────────────────
     let _debPrecio;
     async function consultarPrecioSugerido() {
-        if (gid('EsInvitacion').checked) return;
+        if (gid('EsInvitacion').checked || esGrupal) return;
         const alojId   = gid('AlojamientoId').value;
         const personas = parseInt(gid('CantidadHuespedes').value);
         if (!alojId || !personas || personas < 1) return;
 
         const fecha = gid('FechaIngreso').value ?? '';
         try {
-            const res  = await fetch(`/Reservas/ObtenerPrecioSugerido?alojamientoId=${alojId}&personas=${personas}&fechaIngreso=${fecha}`);
+            const res  = await fetch(
+                `/Reservas/ObtenerPrecioSugerido?alojamientoId=${alojId}&personas=${personas}&fechaIngreso=${fecha}`
+            );
             const data = await res.json();
             const incluyeDesayuno = gid('IncluyeDesayuno').checked;
             const precio = incluyeDesayuno ? data.precioConDesayuno : data.precioSinDesayuno;
@@ -494,6 +980,10 @@
 
     // ── Event listeners ───────────────────────────────────────────────────────
 
+    gid('EsGrupal').addEventListener('change', function () {
+        toggleModoGrupal(this.checked);
+    });
+
     gid('EsInvitacion').addEventListener('change', function () {
         aplicarModoInvitacion(this.checked);
     });
@@ -513,15 +1003,20 @@
             egresoInput.value    = '';
             gid('egreso-hint').textContent = 'Seleccioná la fecha de ingreso primero';
         }
-        // Resetear alojamiento al cambiar ingreso
         const select = gid('AlojamientoId');
         select.disabled  = true;
         select.innerHTML = '<option value="">— Seleccioná las fechas primero —</option>';
         gid('disponibilidad-msg').textContent = '';
-        capacidades = {};
+        capacidades         = {};
+        _nombresDisponibles = {};
+        _datosDisponibles   = [];
+        sincronizarBotonAlojamiento();
         resetDownstreamDeAlojamiento();
         actualizarNochesYTotal();
-        // Refrescar precio si ya hay alojamiento y personas seleccionados
+        if (esGrupal) {
+            actualizarAlertaGrupal();
+            gid('lista-checkboxes-grupal').innerHTML = '';
+        }
         if (gid('AlojamientoId').value && gid('CantidadHuespedes').value)
             consultarPrecioSugerido();
     });
@@ -555,16 +1050,63 @@
     });
 
     gid('PrecioPorDia').addEventListener('input', function () {
-        if (!totalFijo) actualizarNochesYTotal();
+        // El precio por día siempre tiene prioridad: resetear cualquier edición
+        // manual del total y recalcular automáticamente.
+        totalFijo = false;
+        gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
+        actualizarNochesYTotal();
     });
 
     gid('MontoTotal').addEventListener('input', function () {
-        if (!totalFijo) {
-            totalFijo = true;
-            gid('total-hint').textContent =
-                'Total editado manualmente — el precio por día no lo actualizará.';
+        totalFijo = true;
+        const noches = calcularNoches();
+        const total  = parseFloat(this.value);
+        if (noches != null && noches > 0 && total > 0) {
+            gid('PrecioPorDia').value = (total / noches).toFixed(2);
+            gid('precio-hint').textContent = 'Calculado automáticamente (total ÷ noches)';
+            gid('total-hint').textContent  = 'Total ingresado manualmente';
+        } else {
+            gid('PrecioPorDia').value = '';
+            gid('total-hint').textContent = 'Total ingresado manualmente';
         }
     });
+
+    // ── Poblar hidden inputs grupal antes del submit ──────────────────────────
+    function prepararCamposGrupal() {
+        const container = gid('container-unidades-grupales');
+        container.innerHTML = '';
+
+        // Campo EsGrupal ya lo manda el checkbox nativo
+        const ids = Object.keys(unidadesGrupales);
+        ids.forEach((id, i) => {
+            const u = unidadesGrupales[id];
+            const mkInput = (name, value) => {
+                const inp = document.createElement('input');
+                inp.type  = 'hidden';
+                inp.name  = name;
+                inp.value = value;
+                container.appendChild(inp);
+            };
+            mkInput(`UnidadesGrupales[${i}].AlojamientoId`,     id);
+            mkInput(`UnidadesGrupales[${i}].CantidadHuespedes`, u.personas);
+        });
+
+        // Setear AlojamientoId (primer item) y CantidadHuespedes (suma)
+        if (ids.length > 0) {
+            const firstId   = ids[0];
+            const totalPers = ids.reduce((s, id) => s + (unidadesGrupales[id]?.personas ?? 0), 0);
+            // Inyectar en el select (siempre está en el DOM aunque oculto)
+            let opt = gid('AlojamientoId').querySelector(`option[value="${firstId}"]`);
+            if (!opt) {
+                opt = document.createElement('option');
+                opt.value = firstId;
+                gid('AlojamientoId').appendChild(opt);
+            }
+            gid('AlojamientoId').value           = firstId;
+            gid('CantidadHuespedes').disabled    = false;
+            gid('CantidadHuespedes').value        = totalPers;
+        }
+    }
 
     // ── Modal de confirmación ─────────────────────────────────────────────────
     function formatFecha(val) {
@@ -574,33 +1116,76 @@
     }
 
     function poblarModalResumen() {
-        const ingreso    = gid('FechaIngreso').value;
-        const egreso     = gid('FechaSalida').value;
-        const noches     = calcularNoches();
-        const alojSelect = gid('AlojamientoId');
-        const alojNombre = alojSelect.selectedIndex >= 0
-            ? alojSelect.options[alojSelect.selectedIndex].text : '—';
-        const esInv      = gid('EsInvitacion').checked;
-        const personas   = parseInt(gid('CantidadHuespedes').value) || 0;
-        const precio     = parseFloat(gid('PrecioPorDia').value) || 0;
-        const total      = parseFloat(gid('MontoTotal').value) || 0;
-        const telefono   = gid('Telefono').value.trim();
-        const canal      = gid('CanalOrigen').value;
-        const obs        = gid('Observaciones').value.trim();
+        gid('modal-confirmar-dialog').style.maxWidth = esGrupal ? '620px' : '480px';
 
-        const fmtNum = n => n.toLocaleString('es-AR');
+        const ingreso  = gid('FechaIngreso').value;
+        const egreso   = gid('FechaSalida').value;
+        const noches   = calcularNoches();
+        const esInv    = gid('EsInvitacion').checked;
+        const total    = parseFloat(gid('MontoTotal').value) || 0;
+        const telefono = gid('Telefono').value.trim();
+        const canal    = gid('CanalOrigen').value;
+        const obs      = gid('Observaciones').value.trim();
+        const fmtNum   = n => n.toLocaleString('es-AR');
+
+        let alojInfo, personasInfo, precioPorDiaInfo, totalInfo;
+
+        if (esGrupal) {
+            const ids = Object.keys(unidadesGrupales);
+
+            // Mismo criterio que la lista de checkboxes: Habitaciones+Aparts a la
+            // izquierda, Cabañas a la derecha.
+            const idsIzq = ids.filter(id => unidadesGrupales[id].tipo !== 'Cabaña');
+            const idsDer = ids.filter(id => unidadesGrupales[id].tipo === 'Cabaña');
+
+            const fmtUnidad = id =>
+                `<div><strong>${unidadesGrupales[id].nombre}</strong> <span class="fw-normal text-muted">(${unidadesGrupales[id].personas} pers.)</span></div>`;
+
+            const fmtColumna = (titulo, idsCol) => idsCol.length === 0 ? '' : `
+                <div class="flex-fill">
+                    <div class="text-muted small mb-1">${titulo}</div>
+                    ${idsCol.map(fmtUnidad).join('')}
+                </div>`;
+
+            const lineaSeparadora = `<div style="border-top:1px solid #dee2e6; width:100%; margin:.4rem 0;"></div>`;
+
+            alojInfo = lineaSeparadora +
+                `<div class="d-flex flex-column flex-sm-row gap-3 py-1">` +
+                fmtColumna('Habitaciones y Aparts', idsIzq) +
+                fmtColumna('Cabañas', idsDer) +
+                `</div>` +
+                lineaSeparadora;
+
+            const totalPersonas = ids.reduce((s, id) => s + unidadesGrupales[id].personas, 0);
+            personasInfo = `<strong>${totalPersonas} persona${totalPersonas !== 1 ? 's' : ''} en total</strong> ` +
+                `<span class="fw-normal text-muted">(${ids.length} unidad${ids.length !== 1 ? 'es' : ''})</span>`;
+
+            const precioPorDia = parseFloat(gid('PrecioPorDia').value) || 0;
+            precioPorDiaInfo = `$${fmtNum(precioPorDia)} por día`;
+            totalInfo = `<strong>$${fmtNum(total)}</strong> <span class="fw-normal text-muted">(total grupal)</span>`;
+        } else {
+            const alojSelect = gid('AlojamientoId');
+            alojInfo    = alojSelect.selectedIndex >= 0
+                ? `<strong>${alojSelect.options[alojSelect.selectedIndex].text}</strong>` : '—';
+            const personas  = parseInt(gid('CantidadHuespedes').value) || 0;
+            const precio    = parseFloat(gid('PrecioPorDia').value) || 0;
+            personasInfo = personas > 0 ? `${personas} persona${personas !== 1 ? 's' : ''}` : '—';
+            precioPorDiaInfo = esInv ? 'Invitación (sin costo)' : `$${fmtNum(precio)} por día`;
+            totalInfo = `<strong>$${fmtNum(total)}</strong>${esInv ? ' <span class="text-muted">(Invitación)</span>' : ''}`;
+        }
 
         const rows = [
-            ['Titular',              gid('NombreHuesped').value.trim()],
+            ['Titular',              `<strong>${gid('NombreHuesped').value.trim()}</strong>`],
             ['¿Es invitación?',      esInv ? 'Sí' : 'No'],
-            ['Fecha de ingreso',     formatFecha(ingreso)],
-            ['Fecha de egreso',      formatFecha(egreso)],
+            ['¿Es grupal?',          esGrupal ? 'Sí' : 'No'],
+            ['Fecha de ingreso',     `<strong>${formatFecha(ingreso)}</strong>`],
+            ['Fecha de egreso',      `<strong>${formatFecha(egreso)}</strong>`],
             ['Cantidad de noches',   noches != null ? `${noches} noche${noches !== 1 ? 's' : ''}` : '—'],
-            ['Alojamiento',          alojNombre],
-            ['Cantidad de personas', personas > 0 ? `${personas} persona${personas !== 1 ? 's' : ''}` : '—'],
+            ['Alojamiento',          alojInfo],
+            ['Cantidad de personas', personasInfo],
             ['Incluye desayuno',     gid('IncluyeDesayuno').checked ? 'Sí' : 'No'],
-            ['Precio por día',       esInv ? 'Invitación (sin costo)' : `$${fmtNum(precio)}`],
-            ['Total de estadía',     `$${fmtNum(total)}${esInv ? ' (Invitación)' : ''}`],
+            ['Precio por día',       precioPorDiaInfo],
+            ['Total de estadía',     totalInfo],
             ['Teléfono de contacto', telefono || 'Sin especificar'],
             ['Canal de origen',      canal    || 'Sin especificar'],
             ['Observaciones',        obs      || 'Sin observaciones'],
@@ -608,10 +1193,10 @@
 
         gid('modal-resumen-reserva').innerHTML =
             `<table class="table table-sm table-borderless mb-0">` +
-            rows.filter(([, v]) => v !== null).map(([label, value]) =>
+            rows.map(([label, value]) =>
                 `<tr>
                     <td class="text-muted pe-3" style="white-space:nowrap;width:1%;font-size:.85rem;">${label}</td>
-                    <td class="fw-semibold" style="font-size:.9rem;">${value}</td>
+                    <td style="font-size:.9rem;">${value}</td>
                 </tr>`
             ).join('') +
             `</table>`;
@@ -620,40 +1205,45 @@
     // ── Validación al enviar ──────────────────────────────────────────────────
     gid('form-reserva').addEventListener('submit', function (e) {
         const errores      = [];
-        const today        = new Date().toISOString().split('T')[0];
         const esInvitacion = gid('EsInvitacion').checked;
-
-        const ingreso = gid('FechaIngreso').value;
-        const egreso  = gid('FechaSalida').value;
+        const ingreso      = gid('FechaIngreso').value;
+        const egreso       = gid('FechaSalida').value;
 
         if (!gid('NombreHuesped').value.trim())
             errores.push('Nombre y apellido del titular — Obligatorio');
 
         if (!ingreso)
             errores.push('Fecha de ingreso — Obligatorio');
-        // TEMPORAL: validación "no anterior a hoy" removida para poder cargar reservas
-        // históricas. Restaurar este bloque una vez finalizada la carga histórica.
-        // else if (ingreso < today)
-        //     errores.push('Fecha de ingreso — No puede ser anterior a hoy');
 
         if (!egreso)
             errores.push('Fecha de egreso — Obligatorio');
         else if (ingreso && egreso <= ingreso)
             errores.push('Fecha de egreso — Debe ser posterior a la fecha de ingreso');
 
-        if (!gid('AlojamientoId').value)
-            errores.push('Alojamiento — Obligatorio');
+        if (esGrupal) {
+            const ids = Object.keys(unidadesGrupales);
+            if (ids.length < 2)
+                errores.push('Reserva grupal — Seleccioná al menos 2 unidades');
+            else if (ids.some(id => !unidadesGrupales[id]?.personas))
+                errores.push('Reserva grupal — Todas las unidades deben tener personas asignadas');
+        } else {
+            if (!gid('AlojamientoId').value)
+                errores.push('Alojamiento — Obligatorio');
 
-        const personas = parseInt(gid('CantidadHuespedes').value);
-        const cap      = getCapacidad();
-        if (!gid('CantidadHuespedes').value || personas < 1)
-            errores.push('Cantidad de personas — Obligatorio');
-        else if (cap && personas > cap)
-            errores.push(`Cantidad de personas — Supera la capacidad máxima (${cap} personas)`);
+            const personas = parseInt(gid('CantidadHuespedes').value);
+            const cap      = getCapacidad();
+            if (!gid('CantidadHuespedes').value || personas < 1)
+                errores.push('Cantidad de personas — Obligatorio');
+            else if (cap && personas > cap)
+                errores.push(`Cantidad de personas — Supera la capacidad máxima (${cap} personas)`);
+
+            if (!esInvitacion) {
+                if (!gid('PrecioPorDia').value || parseFloat(gid('PrecioPorDia').value) <= 0)
+                    errores.push('Precio por día — Obligatorio');
+            }
+        }
 
         if (!esInvitacion) {
-            if (!gid('PrecioPorDia').value || parseFloat(gid('PrecioPorDia').value) <= 0)
-                errores.push('Precio por día — Obligatorio');
             if (!gid('MontoTotal').value || parseFloat(gid('MontoTotal').value) <= 0)
                 errores.push('Total de la estadía — Obligatorio');
         }
@@ -665,6 +1255,9 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
+
+        // Preparar campos ocultos grupal antes del modal
+        if (esGrupal) prepararCamposGrupal();
 
         e.preventDefault();
         poblarModalResumen();
@@ -680,11 +1273,8 @@
 
     // ── Inicialización ────────────────────────────────────────────────────────
     (function init() {
-        // TEMPORAL: atributo "min" removido para permitir seleccionar fechas pasadas
-        // y poder cargar reservas históricas. Restaurar esta línea después.
-        // gid('FechaIngreso').min = new Date().toISOString().split('T')[0];
-
         if (gid('EsInvitacion').checked) aplicarModoInvitacion(true);
+        if (gid('EsGrupal').checked)     toggleModoGrupal(true);
 
         const ingreso = gid('FechaIngreso').value;
         const egreso  = gid('FechaSalida').value;
@@ -698,10 +1288,7 @@
             egresoInput.min = minDate.toISOString().split('T')[0];
         }
 
-        // Postback: si ya hay fechas, re-cargar disponibilidad (restaura selección via PREV_ALOJ_ID)
-        if (ingreso && egreso) {
-            buscarDisponibles();
-        }
+        if (ingreso && egreso) buscarDisponibles();
 
         const noches = calcularNoches();
         if (noches != null)
@@ -710,8 +1297,7 @@
         if (gid('MontoTotal').value) {
             habilitarCampo('MontoTotal');
             totalFijo = true;
-            gid('total-hint').textContent =
-                'Total editado manualmente — el precio por día no lo actualizará.';
+            gid('total-hint').textContent = 'Total ingresado manualmente';
         }
     })();
     </script>

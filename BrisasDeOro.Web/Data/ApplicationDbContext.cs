@@ -23,6 +23,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Pago>        Pagos         => Set<Pago>();
     public DbSet<Tarifa>      Tarifas       => Set<Tarifa>();
     public DbSet<Temporada>   Temporadas    => Set<Temporada>();
+    public DbSet<ReservaAlojamiento> ReservaAlojamientos => Set<ReservaAlojamiento>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -46,6 +47,19 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Pago>(e =>
         {
             e.Property(p => p.Monto).HasPrecision(18, 2);
+        });
+
+        builder.Entity<ReservaAlojamiento>(e =>
+        {
+            e.HasOne(ra => ra.Reserva)
+             .WithMany(r => r.UnidadesGrupales)
+             .HasForeignKey(ra => ra.ReservaId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(ra => ra.Alojamiento)
+             .WithMany()
+             .HasForeignKey(ra => ra.AlojamientoId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<ApartDetalle>(e =>

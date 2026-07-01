@@ -50,8 +50,20 @@ public class ReservaViewModel
     [Display(Name = "Observaciones")]
     public string? Observaciones { get; set; }
 
+    [Display(Name = "¿Es reserva grupal?")]
+    public bool EsGrupal { get; set; } = false;
+
+    // Unidades seleccionadas en modo grupal (populadas por JS antes del submit)
+    public List<UnidadGrupalViewModel> UnidadesGrupales { get; set; } = new();
+
     // Solo para poblar el dropdown en la vista
     public List<SelectListItem> Alojamientos { get; set; } = new();
+}
+
+public class UnidadGrupalViewModel
+{
+    public int AlojamientoId { get; set; }
+    public int CantidadHuespedes { get; set; }
 }
 
 public class EditarReservaViewModel : ReservaViewModel
