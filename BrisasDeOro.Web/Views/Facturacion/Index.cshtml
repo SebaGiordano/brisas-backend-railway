@@ -27,6 +27,13 @@
     .pago-senado     { background-color: #FFF3CC; color: #7A5F00; }
     .pago-pagado     { background-color: #CCFFCC; color: #1A5C1A; }
     .pago-invitacion { background-color: #E0E0E0; color: #333333; }
+    /* Encabezados de columna (Movimientos y Saldos pendientes): nunca partir el texto en
+       dos líneas (ej. "Saldo pendiente", "Estado pago", "Total estadía"), en ningún ancho. */
+    .tabla-fact-responsive th { white-space: nowrap; }
+    /* Saldos pendientes: columna Titular con ancho mínimo suficiente para que el nombre
+       completo entre en una sola línea. La tabla ya tiene overflow-x:auto, así que el
+       ancho extra se absorbe con scroll horizontal sin afectar las demás columnas. */
+    .col-titular-saldos { white-space: nowrap; min-width: 160px; }
     @@media (max-width: 767.98px) {
         /* Scroll horizontal en tablas */
         .tabla-fact-responsive { overflow-x: auto; overflow-y: auto; max-height: 400px; -webkit-overflow-scrolling: touch; }
@@ -60,8 +67,7 @@
         }
         .col-titular-sticky {
             position: sticky; left: 52px; z-index: 2;
-            width: 90px !important; min-width: 90px !important; max-width: 90px !important;
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            white-space: nowrap;
             background-color: #fff !important;
             border-right: 2px solid #9db5c7 !important;
             box-shadow: 3px 0 6px -2px rgba(0,0,0,.15);
@@ -81,15 +87,17 @@
         #pane-saldos form .row > div:nth-child(3) { flex: 1 !important; }
         #pane-saldos form .row > div:nth-child(2) .btn,
         #pane-saldos form .row > div:nth-child(3) .btn { width: 100% !important; display: flex !important; }
-        /* Formulario Movimientos: fila 1 = Titular, fila 2 = Método, fila 3 = Filtrar + Limpiar al 50% */
-        #pane-movimientos form .row > div:first-child { flex: 0 0 100% !important; width: 100% !important; max-width: 100% !important; }
-        #input-titular-mov { font-size: 16px !important; }
-        #pane-movimientos form select[name="metodoPago"] { font-size: 16px !important; }
-        #pane-movimientos form .row > div:nth-child(5) { flex: 0 0 100% !important; width: 100% !important; max-width: 100% !important; order: 2 !important; }
-        #pane-movimientos form .row > div:nth-child(9),
-        #pane-movimientos form .row > div:nth-child(10) { flex: 1 !important; order: 3 !important; }
-        #pane-movimientos form .row > div:nth-child(9) .btn,
-        #pane-movimientos form .row > div:nth-child(10) .btn { width: 100% !important; display: flex !important; }
+        /* Formulario Movimientos: 2 filas de 3 filtros + botones al 50% */
+        #pane-movimientos form input, #pane-movimientos form select { font-size: 13px !important; }
+        #pane-movimientos form .row > div:not(.col-auto):not(.filtro-break-fact) { flex: 0 0 33.33% !important; max-width: 33.33% !important; }
+        #pane-movimientos form .row > div:nth-last-child(-n+2) { flex: 1 !important; }
+        #pane-movimientos form .row > div:nth-last-child(-n+2) .btn { width: 100% !important; display: flex !important; }
+        /* Campos de fecha: centrar horizontal y vertical */
+        #pane-movimientos input[type="date"],
+        #pane-movimientos input[type="text"][placeholder="dd/mm/aaaa"] { text-align: center; }
+        #pane-movimientos input[type="date"] { display: flex !important; align-items: center !important; }
+        #pane-movimientos input[type="date"]::-webkit-datetime-edit,
+        #pane-movimientos input[type="date"]::-webkit-datetime-edit-fields-wrapper { padding: 0 !important; }
         /* Autocompletado: scroll suave en iOS */
         .ac-dropdown { -webkit-overflow-scrolling: touch !important; }
         /* Prevenir zoom automático en iOS (ocurre cuando font-size < 16px) */
@@ -98,6 +106,11 @@
     @@media (min-width: 768px) {
         /* Filtros Movimientos: campos proporcionales (aplica a ambos sub-rangos: md y lg+) */
         #pane-movimientos form .row > div:not(.col-auto) { flex: 1 !important; min-width: 0 !important; }
+        /* Filtro Saldos: Titular con ancho fijo en px (no porcentual), para que no se
+           siga ensanchando al crecer la pantalla más allá de 768px. 369px es el ancho
+           exacto (medido) que el campo tenía a 768px con el 55% anterior — se fija ese
+           mismo valor para todos los breakpoints superiores. */
+        #pane-saldos form .row > div:first-child { flex: 0 0 369px !important; max-width: 369px !important; }
     }
     @@media (min-width: 992px) {
         /* A partir de "lg": una sola fila */
@@ -194,24 +207,24 @@
         <form method="get" class="mb-3">
             <input type="hidden" name="tab" value="movimientos" />
             <div class="row g-2 align-items-end">
-                <div class="col-12 col-sm-6 col-md-auto">
+                <div class="col-4 col-md-auto">
                     <label class="form-label small fw-semibold mb-1">Titular</label>
                     <input type="text" id="input-titular-mov" name="titular" value="@Model.FiltroTitular"
                            class="form-control form-control-sm" placeholder="Nombre del titular..."
                            autocomplete="off" />
                 </div>
-                <div class="col-12 col-sm-6 col-md-auto d-mobile-none">
+                <div class="col-4 col-md-auto">
                     <label class="form-label small fw-semibold mb-1">Desde</label>
                     <input type="date" name="desde" value="@Model.FiltroDesde"
-                           class="form-control form-control-sm" />
+                           class="form-control form-control-sm" placeholder="dd/mm/aaaa" />
                 </div>
-                <div class="col-12 col-sm-6 col-md-auto d-mobile-none">
+                <div class="col-4 col-md-auto">
                     <label class="form-label small fw-semibold mb-1">Hasta</label>
                     <input type="date" name="hasta" value="@Model.FiltroHasta"
-                           class="form-control form-control-sm" />
+                           class="form-control form-control-sm" placeholder="dd/mm/aaaa" />
                 </div>
                 <div class="w-100 filtro-break-fact d-none"></div>
-                <div class="col-12 col-sm-6 col-md-auto">
+                <div class="col-4 col-md-auto">
                     <label class="form-label small fw-semibold mb-1">Método de pago</label>
                     <select name="metodoPago" class="form-select form-select-sm">
                         <option value="">Todos</option>
@@ -228,7 +241,7 @@
                         }
                     </select>
                 </div>
-                <div class="col-12 col-sm-6 col-md-auto d-mobile-none">
+                <div class="col-4 col-md-auto">
                     <label class="form-label small fw-semibold mb-1">Concepto</label>
                     <select name="concepto" class="form-select form-select-sm">
                         <option value="">Todos</option>
@@ -245,7 +258,7 @@
                         }
                     </select>
                 </div>
-                <div class="col-12 col-sm-6 col-md-auto d-mobile-none">
+                <div class="col-4 col-md-auto">
                     <label class="form-label small fw-semibold mb-1">Ordenar por</label>
                     <select name="orden" class="form-select form-select-sm">
                         @if (Model.FiltroOrden == "asc")
@@ -310,13 +323,13 @@
                                     {
                                         <a asp-controller="Reservas" asp-action="Details"
                                            asp-route-id="@mov.ReservaId"
-                                           class="text-decoration-none fw-semibold">
+                                           class="text-decoration-none fw-bold">
                                             @mov.NombreHuesped
                                         </a>
                                     }
                                     else
                                     {
-                                        <span class="fw-semibold text-dark">@mov.NombreHuesped</span>
+                                        <span class="fw-bold text-dark">@mov.NombreHuesped</span>
                                     }
                                 </td>
                                 <td>
@@ -377,7 +390,7 @@
         <form method="get" class="mb-3">
             <input type="hidden" name="tab" value="saldos" />
             <div class="row g-2 align-items-end">
-                <div class="col-auto">
+                <div class="col">
                     <label class="form-label small fw-semibold mb-1">Titular</label>
                     <input type="text" id="input-titular-saldos" name="titularSaldos" value="@Model.FiltroTitularSaldos"
                            class="form-control form-control-sm" placeholder="Nombre del titular..."
@@ -420,7 +433,7 @@
                 <table class="table table-sm table-hover table-bordered align-middle mb-0">
                     <thead class="table-dark">
                         <tr>
-                            <th>Titular</th>
+                            <th class="col-titular-saldos">Titular</th>
                             <th>Alojamiento</th>
                             <th class="text-center d-mobile-none">Ingreso</th>
                             <th class="text-center d-mobile-none">Egreso</th>
@@ -435,7 +448,7 @@
                         @foreach (var s in Model.SaldosPendientes)
                         {
                             <tr>
-                                <td class="fw-semibold">@s.NombreHuesped</td>
+                                <td class="fw-bold col-titular-saldos">@s.NombreHuesped</td>
                                 <td>
                                     @if (s.EsGrupal)
                                     {
@@ -479,7 +492,7 @@
                                         <a asp-controller="Pagos" asp-action="AgregarPago"
                                            asp-route-reservaId="@s.ReservaId"
                                            asp-route-from="saldos-pendientes"
-                                           class="btn btn-outline-success btn-sm">
+                                           class="btn btn-outline-success btn-sm text-nowrap">
                                             <i class="bi bi-plus-circle me-1"></i>Agregar Pago
                                         </a>
                                     }
@@ -662,6 +675,27 @@
 
     initAutocomplete('input-titular-mov');
     initAutocomplete('input-titular-saldos');
+
+    // Mobile: placeholder en campos de fecha + prevenir fecha preseleccionada al cerrar calendario
+    (function() {
+        if (window.innerWidth >= 768) return;
+        ['desde', 'hasta'].forEach(function(name) {
+            var input = document.querySelector('#pane-movimientos input[name="' + name + '"]');
+            if (!input) return;
+            if (!input.value) input.type = 'text';
+            var prevValue = '', changed = false;
+            input.addEventListener('focus', function() {
+                prevValue = this.value;
+                changed = false;
+                this.type = 'date';
+            });
+            input.addEventListener('change', function() { changed = true; });
+            input.addEventListener('blur', function() {
+                if (!changed) this.value = prevValue;
+                if (!this.value) this.type = 'text';
+            });
+        });
+    })();
 
     // ── Modal de unidades de reserva grupal ──────────────────────────────────
     // Delegado en document para cubrir ambas tablas (Movimientos y Saldos).

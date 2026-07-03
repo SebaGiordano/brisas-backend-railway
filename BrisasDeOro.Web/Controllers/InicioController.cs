@@ -176,7 +176,7 @@ public class InicioController : Controller
             var activa   = activasHoy.FirstOrDefault(r => PerteneceAReserva(r, aloj.Id));
 
             if (checkOut != null)
-                tareas.Add("Limpieza profunda + cambio total de blancos (ropa de cama y baño) — Checkout");
+                tareas.Add("Limpieza profunda + cambio total de blancos — Checkout");
 
             if (checkIn != null && checkOut == null)
                 tareas.Add("Preparación para ingreso (check-in)");

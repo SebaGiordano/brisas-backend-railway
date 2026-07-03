@@ -357,6 +357,14 @@
         /* Modal de confirmación: altura adaptada al contenido */
         #modal-confirmar-reserva .modal-content { height: auto !important; min-height: unset !important; }
         #modal-confirmar-reserva .modal-footer { padding-bottom: 1rem !important; }
+        /* Modal de personas por unidad: altura adaptada al contenido */
+        #modal-personas-unidad .modal-content { height: auto !important; min-height: unset !important; max-height: 90vh !important; }
+        /* Campos de fecha de estadía: centrar verticalmente */
+        #FechaIngreso, #FechaSalida { display: flex !important; align-items: center !important; }
+        #FechaIngreso::-webkit-datetime-edit, #FechaSalida::-webkit-datetime-edit,
+        #FechaIngreso::-webkit-datetime-edit-fields-wrapper, #FechaSalida::-webkit-datetime-edit-fields-wrapper { padding: 0 !important; }
+        /* Columna Cabañas: separación superior en mobile (modo apilado) */
+        #lista-checkboxes-grupal .columna-grupal + .columna-grupal { margin-top: 1rem !important; }
     }
     @@media (min-width: 769px) {
         #botones-crear { justify-content: center !important; }

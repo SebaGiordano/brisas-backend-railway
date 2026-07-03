@@ -26,6 +26,7 @@
     @if (Model.Temporadas.Any())
     {
         <div class="d-flex flex-column gap-1 px-4 temporadas-tarifas">
+            <span class="text-muted small fw-semibold temporada-titulo d-none">Filtrar por temporada:</span>
             @foreach (var t in Model.Temporadas.OrderBy(t => t.FechaInicio))
             {
                 var esActiva = t.Id == Model.TemporadaActivaId;
@@ -40,7 +41,7 @@
     }
 
     @* Gestión de precios — derecha (oculto en mobile) *@
-    <div class="d-mobile-none">
+    <div class="d-mobile-none gestion-precios-tarifas">
         <div class="card border-secondary">
             <div class="card-header fw-semibold bg-light py-2">
                 <i class="bi bi-percent me-1"></i>Gestión de precios
@@ -48,7 +49,7 @@
             <div class="card-body py-2 px-3">
                 <div class="d-flex align-items-end gap-2 flex-wrap">
                     <div>
-                        <label for="aj-pct" class="form-label small mb-1">Porcentaje</label>
+                        <label for="aj-pct" class="form-label small mb-1">Valor</label>
                         <div class="input-group input-group-sm">
                             <input type="number" id="aj-pct" class="form-control" style="width:60px"
                                    placeholder="10" step="1" min="-99" max="1000" />
@@ -92,6 +93,311 @@
     </div>
 
 </div>
+
+@* ── Estilos de la barra superior. Colocado como <style> plano en el body (no
+     dentro de @section Scripts) porque los @@media anidados dentro del <style>
+     de la sección provocaban que Razor filtrara parte del CSS como texto visible
+     en la página (bug detectado: bloque de texto entre los filtros y la tabla). ── *@
+<style>
+    .filtro-tipo { transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
+    .gestion-precios-tarifas .card-header { font-weight: 700 !important; }
+    .gestion-precios-tarifas .card-header {
+        background-color: #e7f1ff !important;
+    }
+    @@media (min-width: 992px) {
+        .gestion-precios-tarifas .card-body > .d-flex > div.pb-1 {
+            padding-bottom: 0 !important;
+        }
+    }
+    /* Azul activo uniforme para ambas filas de filtros — desktop y mobile */
+    .temporadas-tarifas .btn-primary {
+        background-color: #0d6efd !important;
+        border-color: #0d6efd !important;
+    }
+    .filtros-tipo-tarifas .filtro-tipo.active {
+        background-color: #0d6efd !important;
+        border-color: #0d6efd !important;
+    }
+    /* Hover gris claro y sutil en filtros y pestañas de temporada no seleccionados */
+    .filtro-tipo:not(.active):hover,
+    .temporadas-tarifas a.btn-outline-secondary:hover {
+        background-color: #e9ecef !important;
+        border-color: #ced4da !important;
+        color: #495057 !important;
+    }
+    @@media (min-width: 769px) {
+        .barra-superior-tarifas { align-items: stretch !important; }
+        .barra-superior-tarifas .temporadas-tarifas { justify-content: space-between !important; }
+    }
+    @@media (max-width: 767.98px) {
+        /* Filtro por tipo: ancho completo, botones distribuidos */
+        .filtros-tipo-tarifas {
+            width: 100% !important; flex-wrap: wrap !important; gap: 4px !important; padding-top: 0 !important;
+        }
+        .filtros-tipo-tarifas > span { width: 100%; margin-bottom: 2px; }
+        .filtros-tipo-tarifas .filtro-tipo {
+            flex: 1 !important; font-size: 12px !important; padding: 5px 4px !important;
+            display: flex !important; align-items: center !important; justify-content: center !important;
+        }
+        /* Temporadas + Configurar: título arriba, botones distribuidos abajo */
+        .temporadas-tarifas {
+            flex-direction: row !important; flex-wrap: wrap !important;
+            width: 100% !important; gap: 4px !important; padding: 0 !important;
+        }
+        .temporadas-tarifas .temporada-titulo {
+            display: block !important;
+            width: 100% !important;
+            margin-bottom: 2px !important;
+        }
+        .temporadas-tarifas .btn {
+            flex: 1 !important; font-size: 12px !important; padding: 5px 4px !important;
+            white-space: nowrap; display: flex !important; align-items: center !important; justify-content: center !important;
+        }
+        /* Negrita adicional en temporada activa solo en mobile */
+        .temporadas-tarifas .btn-primary { font-weight: 700 !important; }
+        /* Gestión de precios: visible en mobile, ancho completo, debajo de temporadas */
+        .gestion-precios-tarifas {
+            display: block !important;
+            width: 100% !important;
+            margin: .5rem 0 0 !important;
+        }
+        /* Modal de temporadas: altura adaptada al contenido */
+        #modal-temporadas .modal-content { min-height: unset !important; height: auto !important; }
+        #modal-temporadas .modal-body .row { align-items: center; }
+        #modal-temporadas .form-control { display: flex; align-items: center; }
+        /* Modal edición de grupo: altura adaptada al contenido */
+        #modal-editar-grupo .modal-dialog  { min-height: unset !important; }
+        #modal-editar-grupo .modal-content { height: auto !important; min-height: unset !important; max-height: 90vh !important; }
+        #modal-editar-grupo .modal-footer  { padding-bottom: .5rem !important; }
+        /* Modal edición de grupo: tabla compacta */
+        #modal-editar-grupo .modal-body { padding: .5rem; }
+        #modal-editar-grupo .table th,
+        #modal-editar-grupo .table td { padding: .25rem .3rem; font-size: .75rem; }
+        #modal-editar-grupo .input-group-text { padding: .2rem .3rem; font-size: .75rem; }
+        #modal-editar-grupo .form-control  { font-size: .75rem; }
+        /* Gestión de precios en mobile: los 4 campos siempre en una sola fila, misma altura forzada */
+        .gestion-precios-tarifas .card-body > .d-flex {
+            flex-wrap: nowrap !important;
+            align-items: end !important;
+            gap: 6px !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(1) {
+            flex: 0 0 auto !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(1) label {
+            white-space: nowrap !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(1) .input-group {
+            flex-wrap: nowrap !important;
+            height: 38px !important;
+            min-height: 38px !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(1) #aj-pct {
+            flex: 0 0 34px !important;
+            width: 34px !important;
+            min-width: 34px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            padding-left: .3rem !important;
+            padding-right: .1rem !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            font-size: 12px !important;
+            box-sizing: border-box !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(1) .input-group-text {
+            padding-left: .25rem !important;
+            padding-right: .25rem !important;
+            font-size: 11px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            display: flex !important;
+            align-items: center !important;
+            box-sizing: border-box !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div.pb-1 {
+            padding-bottom: 0 !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(2),
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(3) {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(2) #aj-tipo,
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(3) #aj-servicio {
+            width: 100% !important;
+            min-width: 0 !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            font-size: 12px !important;
+            padding-left: .6rem !important;
+            padding-right: .9rem !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(4) {
+            flex: 0 0 auto !important;
+            margin-top: 0 !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex #btn-aj-aplicar {
+            height: 38px !important;
+            min-height: 38px !important;
+            padding: 0 8px !important;
+            font-size: 12px !important;
+            white-space: nowrap !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        @@media (max-width: 400px) {
+            .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(2) #aj-tipo,
+            .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(3) #aj-servicio {
+                font-size: 11px !important;
+                padding-left: .3rem !important;
+                padding-right: 1.1rem !important;
+            }
+            .gestion-precios-tarifas .card-body > .d-flex #btn-aj-aplicar {
+                padding: 5px 6px !important;
+                font-size: 11px !important;
+            }
+        }
+    }
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .barra-superior-tarifas {
+            display: grid !important;
+            grid-template-columns: auto 1fr;
+            grid-template-rows: auto auto;
+            column-gap: 1rem;
+            row-gap: .5rem;
+            align-items: start !important;
+        }
+        .filtros-tipo-tarifas {
+            grid-column: 1;
+            grid-row: 1;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            align-items: center !important;
+            gap: 4px !important;
+            padding-top: 0 !important;
+            width: auto !important;
+        }
+        .filtros-tipo-tarifas > span {
+            width: 100%;
+            margin-bottom: 2px;
+        }
+        .filtros-tipo-tarifas .filtro-tipo {
+            flex: 0 0 auto !important;
+            width: auto !important;
+            font-size: 11px !important;
+            padding: 4px 10px !important;
+            white-space: nowrap !important;
+        }
+        .temporadas-tarifas {
+            grid-column: 1;
+            grid-row: 2;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            align-items: center !important;
+            width: auto !important;
+            gap: 4px !important;
+            padding: 0 !important;
+            justify-content: flex-start !important;
+        }
+        .temporadas-tarifas .temporada-titulo {
+            display: block !important;
+            width: 100%;
+            margin-bottom: 2px;
+        }
+        .temporadas-tarifas .btn {
+            flex: 0 0 auto !important;
+            width: auto !important;
+            font-size: 11px !important;
+            padding: 4px 10px !important;
+            white-space: nowrap !important;
+        }
+        .gestion-precios-tarifas {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+            width: auto !important;
+            justify-self: start !important;
+        }
+        .barra-superior-tarifas .temporadas-tarifas {
+            justify-content: flex-start !important;
+        }
+    }
+    @@media (min-width: 992px) and (max-width: 1199.98px) {
+        .barra-superior-tarifas {
+            grid-template-columns: auto 1fr !important;
+            row-gap: .35rem !important;
+        }
+        .filtros-tipo-tarifas,
+        .temporadas-tarifas {
+            width: 100% !important;
+        }
+        .filtros-tipo-tarifas {
+            margin-top: -8px !important;
+            padding-top: 0 !important;
+        }
+        .filtros-tipo-tarifas > span,
+        .temporadas-tarifas .temporada-titulo {
+            margin-top: 0 !important;
+        }
+        .filtros-tipo-tarifas .filtro-tipo,
+        .temporadas-tarifas .btn {
+            flex: 1 1 0 !important;
+            width: auto !important;
+            text-align: center !important;
+            justify-content: center !important;
+            padding: 6px 8px !important;
+        }
+        .gestion-precios-tarifas {
+            justify-self: end !important;
+            width: auto !important;
+        }
+    }
+    @@media (min-width: 768px) and (max-width: 991.98px) {
+        .barra-superior-tarifas {
+            flex-wrap: wrap !important;
+        }
+        .gestion-precios-tarifas {
+            flex: 0 0 auto !important;
+        }
+        .gestion-precios-tarifas .card {
+            min-width: 380px !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex {
+            flex-wrap: wrap !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(1) {
+            flex: 0 0 auto !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(2),
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(3) {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(1) #aj-pct {
+            width: 55px !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(2) #aj-tipo,
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(3) #aj-servicio {
+            width: 100% !important;
+        }
+        .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(4) {
+            flex: 0 0 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            margin-top: .5rem !important;
+        }
+        .filtros-tipo-tarifas .filtro-tipo,
+        .temporadas-tarifas .btn {
+            flex: 1 1 0 !important;
+            padding: 7px 10px !important;
+        }
+        .temporadas-tarifas {
+            margin-top: .5rem !important;
+            padding-top: .75rem !important;
+            border-top: 1px solid #dee2e6 !important;
+        }
+    }
+</style>
 
 @* ── Mensajes TempData ── *@
 @if (TempData["Mensaje"] != null)
@@ -208,67 +514,36 @@
 </div>
 
 @section Scripts {
-<style>
-    .filtro-tipo { transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
-    /* Azul activo uniforme para ambas filas de filtros — desktop y mobile */
-    .temporadas-tarifas .btn-primary {
-        background-color: #0d6efd !important;
-        border-color: #0d6efd !important;
-    }
-    .filtros-tipo-tarifas .filtro-tipo.active {
-        background-color: #0d6efd !important;
-        border-color: #0d6efd !important;
-    }
-    /* Hover gris claro y sutil en filtros y pestañas de temporada no seleccionados */
-    .filtro-tipo:not(.active):hover,
-    .temporadas-tarifas a.btn-outline-secondary:hover {
-        background-color: #e9ecef !important;
-        border-color: #ced4da !important;
-        color: #495057 !important;
-    }
-    @@media (min-width: 769px) {
-        .barra-superior-tarifas { align-items: stretch !important; }
-        .barra-superior-tarifas .temporadas-tarifas { justify-content: space-between !important; }
-    }
-    @@media (max-width: 767.98px) {
-        /* Filtro por tipo: ancho completo, botones distribuidos */
-        .filtros-tipo-tarifas {
-            width: 100% !important; flex-wrap: wrap !important; gap: 4px !important; padding-top: 0 !important;
-        }
-        .filtros-tipo-tarifas > span { width: 100%; margin-bottom: 2px; }
-        .filtros-tipo-tarifas .filtro-tipo {
-            flex: 1 !important; font-size: 12px !important; padding: 5px 4px !important;
-            display: flex !important; align-items: center !important; justify-content: center !important;
-        }
-        /* Temporadas + Configurar: ancho completo, botones distribuidos */
-        .temporadas-tarifas {
-            flex-direction: row !important; flex-wrap: nowrap !important;
-            width: 100% !important; gap: 4px !important; padding: 0 !important;
-        }
-        .temporadas-tarifas .btn {
-            flex: 1 !important; font-size: 12px !important; padding: 5px 4px !important;
-            white-space: nowrap; display: flex !important; align-items: center !important; justify-content: center !important;
-        }
-        /* Negrita adicional en temporada activa solo en mobile */
-        .temporadas-tarifas .btn-primary { font-weight: 700 !important; }
-        /* Modal de temporadas: altura adaptada al contenido */
-        #modal-temporadas .modal-content { min-height: unset !important; height: auto !important; }
-        #modal-temporadas .modal-body .row { align-items: center; }
-        #modal-temporadas .form-control { display: flex; align-items: center; }
-        /* Modal edición de grupo: altura adaptada al contenido */
-        #modal-editar-grupo .modal-dialog  { min-height: unset !important; }
-        #modal-editar-grupo .modal-content { height: auto !important; min-height: unset !important; max-height: 90vh !important; }
-        #modal-editar-grupo .modal-footer  { padding-bottom: .5rem !important; }
-        /* Modal edición de grupo: tabla compacta */
-        #modal-editar-grupo .modal-body { padding: .5rem; }
-        #modal-editar-grupo .table th,
-        #modal-editar-grupo .table td { padding: .25rem .3rem; font-size: .75rem; }
-        #modal-editar-grupo .input-group-text { padding: .2rem .3rem; font-size: .75rem; }
-        #modal-editar-grupo .form-control  { font-size: .75rem; }
-    }
-</style>
 <script>
 (function () {
+    // ── Abreviar opciones de Servicio en mobile (≤450px) ────────────────────
+    (function () {
+        const select = document.getElementById('aj-servicio');
+        if (!select) return;
+
+        const opciones = Array.from(select.options);
+        const textoCompleto = {};
+        opciones.forEach(opt => { textoCompleto[opt.value] = opt.textContent; });
+
+        const abreviaturas = {
+            'con-desayuno': 'C/D',
+            'sin-desayuno': 'S/D'
+        };
+
+        const mq = window.matchMedia('(max-width: 450px)');
+
+        function actualizarTextos() {
+            const esMobile = mq.matches;
+            opciones.forEach(opt => {
+                if (abreviaturas[opt.value]) {
+                    opt.textContent = esMobile ? abreviaturas[opt.value] : textoCompleto[opt.value];
+                }
+            });
+        }
+
+        actualizarTextos();
+        mq.addEventListener('change', actualizarTextos);
+    })();
     // ── Modal edición de grupo ────────────────────────────────────────────────
     const abreviarNombre = n => n
         .replace(/^Habitación\s+/, 'Hab. ')

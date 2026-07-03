@@ -38,9 +38,10 @@
         #tabla-ingresos-wrap th:first-child { width: 180px !important; min-width: 180px !important; }
         /* Celda Variante: una sola línea en mobile */
         #tabla-ingresos-wrap td:first-child { white-space: nowrap !important; }
-        /* Placeholder de fechas: centrado */
-        #form-filtro input[name="desde"],
-        #form-filtro input[name="hasta"] { text-align: center !important; }
+        /* Campos de fecha: centrar horizontal y vertical */
+        #form-filtro input[type="date"] { text-align: center !important; display: flex !important; align-items: center !important; }
+        #form-filtro input[type="date"]::-webkit-datetime-edit,
+        #form-filtro input[type="date"]::-webkit-datetime-edit-fields-wrapper { padding: 0 !important; }
         /* Tabla ocupación de unidades: scroll horizontal, sin quiebre */
         #tabla-ocu-un-wrap table { min-width: 400px !important; }
         #tabla-ocu-un-wrap td, #tabla-ocu-un-wrap th { white-space: nowrap !important; }
@@ -72,7 +73,11 @@
         .btn-grafico-container .btn {
             transition: background-color .15s ease, color .15s ease, border-color .15s ease;
         }
-        .modal-grafico .modal-footer .btn-outline-primary:active,
+        .modal-grafico .modal-footer .btn-outline-primary:active {
+            background-color: #0b5ed7 !important;
+            color: #fff !important;
+            border-color: #0b5ed7 !important;
+        }
         .btn-grafico-container .btn:active {
             background-color: #e9ecef !important;
             color: #0d6efd !important;
@@ -82,19 +87,35 @@
            lo que tapa visualmente el :active. Esta clase la aplica el JS de abajo
            un instante antes de cerrar, para que el cambio de color sí se llegue a ver. */
         .modal-grafico .modal-footer .btn-outline-primary.btn-cerrando {
-            background-color: #e9ecef !important;
-            color: #0d6efd !important;
-            border-color: #0d6efd !important;
+            background-color: #0b5ed7 !important;
+            color: #fff !important;
+            border-color: #0b5ed7 !important;
         }
     }
     @@media (max-width: 767.98px) and (hover: hover) {
         /* En dispositivos con mouse real (tablet/notebook con puntero) sí existe :hover */
-        .modal-grafico .modal-footer .btn-outline-primary:hover,
+        .modal-grafico .modal-footer .btn-outline-primary:hover {
+            background-color: #0b5ed7 !important;
+            color: #fff !important;
+            border-color: #0b5ed7 !important;
+        }
         .btn-grafico-container .btn:hover {
             background-color: #e9ecef !important;
             color: #0d6efd !important;
             border-color: #0d6efd !important;
         }
+    }
+    /* Botón "Cerrar" del modal de gráfico: hover azul oscuro con texto blanco en
+       todo ancho de pantalla (es un botón de cerrar un modal informativo, no una
+       acción destructiva, por eso azul y no rojo). En mobile con mouse real ya
+       queda cubierto arriba con los mismos valores; esta regla cubre además
+       desktop (>=768px), donde antes no había ningún override y se usaba el
+       hover celeste por defecto de Bootstrap para .btn-outline-primary. */
+    .modal-grafico .modal-footer .btn-outline-primary:hover,
+    .modal-grafico .modal-footer .btn-outline-primary:focus {
+        background-color: #0b5ed7 !important;
+        border-color: #0b5ed7 !important;
+        color: #fff !important;
     }
     @@media (min-width: 769px) {
         /* Hint text: línea propia debajo de los filtros, alineada a la izquierda */

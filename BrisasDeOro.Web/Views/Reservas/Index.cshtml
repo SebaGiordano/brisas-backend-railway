@@ -22,6 +22,9 @@
     .col-titular-res .fw-semibold { font-weight: bold !important; }
     .col-saldo-res { font-weight: bold !important; color: #dc3545 !important; }
     .col-saldo-negativo { background-color: #fde8e8 !important; }
+    /* Encabezados de columna: nunca partir el texto en dos líneas (ej. "Saldo pendiente",
+       "Estado de pago"), en ningún ancho de pantalla. */
+    .tabla-reservas-responsive th { white-space: nowrap; }
     @@media (max-width: 767.98px) {
         .tabla-reservas-responsive { overflow-x: auto; overflow-y: auto; max-height: 400px; -webkit-overflow-scrolling: touch; }
         .tabla-reservas-responsive table { min-width: 900px; }
@@ -34,6 +37,16 @@
         /* Botones Filtrar + Limpiar: cada uno al 50% del ancho */
         #filtros-reservas-row > div:nth-last-child(-n+2) { flex: 1 !important; }
         #filtros-reservas-row > div:nth-last-child(-n+2) .btn { width: 100% !important; display: flex !important; }
+        /* Campos de filtro: texto más compacto en mobile */
+        #filtros-reservas-row input, #filtros-reservas-row select { font-size: 13px !important; }
+        /* Campo de búsqueda: 16px para evitar zoom automático en iOS */
+        #filtros-reservas-row #input-busqueda-reservas { font-size: 16px !important; }
+        /* Campos de fecha: centrar horizontal y vertical */
+        #filtros-reservas-row input[type="date"],
+        #filtros-reservas-row input[type="text"][placeholder="dd/mm/aaaa"] { text-align: center; }
+        #filtros-reservas-row input[type="date"] { display: flex !important; align-items: center !important; }
+        #filtros-reservas-row input[type="date"]::-webkit-datetime-edit,
+        #filtros-reservas-row input[type="date"]::-webkit-datetime-edit-fields-wrapper { padding: 0 !important; }
         /* Modal de cancelación: altura adaptada al contenido */
         #modal-cancelar-reserva .modal-dialog  { min-height: unset !important; }
         #modal-cancelar-reserva .modal-content { height: auto !important; min-height: unset !important; max-height: 90vh !important; }
@@ -62,15 +75,23 @@
         #filtros-reservas-row { flex-wrap: nowrap !important; }
         #filtros-reservas-row > div:not(.col-auto) { flex: 1 !important; min-width: 0 !important; }
     }
-    @@media (min-width: 992px) {
-        /* Buscar por nombre más ancho en desktop para que los nombres entren en una línea */
+    @@media (min-width: 1400px) {
+        /* Buscar por nombre más ancho en desktop (fila única de 6 campos) para que los
+           nombres entren en una línea. Restringido a >=1400px: por debajo de eso los
+           filtros usan el layout de 2 filas de 3 campos iguales (ver regla siguiente),
+           donde los 6 campos deben tener el mismo ancho para que ambas filas alineen. */
         #filtros-reservas-row > div:nth-child(1) { flex: 1.5 !important; }
     }
-    @@media (min-width: 768px) and (max-width: 991.98px) {
-        /* Rango intermedio (contenedor "md" de Bootstrap, más angosto): los 6 campos
-           se reorganizan en 2 filas de 3 (Buscar/Ingreso desde/Ingreso hasta |
-           Estado de reserva/Estado de pago/Ordenar por), cada una ocupando el mismo
-           ancho total, y los botones Filtrar/Limpiar centrados en una 3ra fila. */
+    @@media (min-width: 768px) and (max-width: 1399.98px) {
+        /* Rango intermedio (contenedores "md", "lg" y "xl" de Bootstrap, más angostos que
+           "xxl"): los 6 campos se reorganizan en 2 filas de 3 (Buscar/Ingreso desde/Ingreso
+           hasta | Estado de reserva/Estado de pago/Ordenar por), todos con flex:1 (mismo
+           ancho, un tercio de la fila cada uno) para que ambas filas midan exactamente lo
+           mismo, y los botones Filtrar/Limpiar centrados en una 3ra fila.
+           Se extiende hasta 1399.98px (antes 1199.98px) porque en el layout de una sola
+           fila (992-1199px) el selector "Estado de reserva" no tenía suficiente ancho y su
+           texto se partía en dos líneas; y porque por encima de 1199px hasta 1399px el
+           campo "Buscar" (flex:1.5 en desktop) desalineaba el ancho de ambas filas. */
         #filtros-reservas-row {
             flex-wrap: wrap !important;
             justify-content: center !important;
@@ -82,6 +103,20 @@
             margin: 0 !important;
             padding: 0 !important;
         }
+    }
+    @@media (min-width: 768px) and (max-width: 1399.98px) {
+        /* Tabla intermedia: scroll horizontal con columna Titular anclada a la izquierda */
+        .tabla-reservas-responsive { overflow-x: auto; }
+        .tabla-reservas-responsive table { min-width: 1100px; }
+        .col-titular-res {
+            position: sticky; left: 0; z-index: 2;
+            white-space: nowrap;
+            background-color: #fff !important;
+            box-shadow: 3px 0 6px -2px rgba(0,0,0,.15);
+            border-bottom: 1px solid #dee2e6 !important;
+        }
+        thead .col-titular-res { z-index: 3; background-color: #212529 !important; }
+        .titular-saldo-negativo { background-color: #fde8e8 !important; }
     }
 </style>
 
@@ -141,11 +176,11 @@
             </div>
             <div class="col-4 col-md-2">
                 <label class="form-label small fw-semibold mb-1">Ingreso desde</label>
-                <input type="date" name="desde" value="@desde" class="form-control" />
+                <input type="date" name="desde" value="@desde" class="form-control" placeholder="dd/mm/aaaa" />
             </div>
             <div class="col-4 col-md-2">
                 <label class="form-label small fw-semibold mb-1">Ingreso hasta</label>
-                <input type="date" name="hasta" value="@hasta" class="form-control" />
+                <input type="date" name="hasta" value="@hasta" class="form-control" placeholder="dd/mm/aaaa" />
             </div>
             <div class="w-100 filtro-break d-none"></div>
             <div class="col-4 col-md-2">
@@ -323,6 +358,27 @@
         });
     })();
 
+    // Mobile: placeholder en campos de fecha + prevenir fecha preseleccionada al cerrar calendario
+    (function() {
+        if (window.innerWidth >= 768) return;
+        ['desde', 'hasta'].forEach(function(name) {
+            var input = document.querySelector('#filtros-reservas-row input[name="' + name + '"]');
+            if (!input) return;
+            if (!input.value) input.type = 'text';
+            var prevValue = '', changed = false;
+            input.addEventListener('focus', function() {
+                prevValue = this.value;
+                changed = false;
+                this.type = 'date';
+            });
+            input.addEventListener('change', function() { changed = true; });
+            input.addEventListener('blur', function() {
+                if (!changed) this.value = prevValue;
+                if (!this.value) this.type = 'text';
+            });
+        });
+    })();
+
     // ── Modal de cancelación ──────────────────────────────────────────────────
     let _formCancelar = null;
     document.querySelectorAll('.btn-abrir-cancelar').forEach(btn => {
@@ -398,7 +454,7 @@ else
                                 <br /><small class="text-muted"><i class="bi bi-gift me-1"></i>Invitación</small>
                             }
                         </td>
-                        <td>
+                        <td class="text-nowrap">
                             @if (item.EsGrupal)
                             {
                                 <span class="fw-semibold">Grupo (@item.CantUnidadesGrupales unidades)</span>
