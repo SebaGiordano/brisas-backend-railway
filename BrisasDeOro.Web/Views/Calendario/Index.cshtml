@@ -186,20 +186,44 @@
     const M_BG  = ['#d4e6f1', '#fde8c8'];   // normal
     const M_WE  = ['#b8d8ee', '#fbc78a'];   // fin de semana
 
-    const NUM_DAYS  = 366;
     const H1    = 22;   // alto fila encabezado mes (px)
     const H2    = 22;   // alto fila encabezado días (px)
     const ROW_H = 29;   // alto fijo por fila — 16 filas caben en pantalla 1080p
-    const TODAY_IDX = 183;
 
     const isMobile = window.innerWidth < 768;
     const COL_INST  = isMobile ? 48 : 140;
     const COL_CAP   = isMobile ? 28 : 52;
     let colWidth    = isMobile ? 40 : 70;
+
     const TODAY = new Date();
     TODAY.setHours(0, 0, 0, 0);
-    const startDate = new Date(TODAY);
-    startDate.setDate(startDate.getDate() - TODAY_IDX);
+
+    // ── Rango de fechas dinámico ──────────────────────────────────────────────
+    // En vez de un rango fijo de 366 días centrado en hoy (que cortaba
+    // reservas fuera de ese margen), el rango se calcula a partir de las
+    // reservas reales: cubre como mínimo 90 días atrás / 180 adelante desde
+    // hoy, y se extiende automáticamente si hay reservas más allá de eso.
+    const DIAS_ATRAS_MIN    = 90;
+    const DIAS_ADELANTE_MIN = 180;
+    const MARGEN_EXTRA      = 14; // aire visual antes/después de la reserva más lejana
+
+    let minFecha = new Date(TODAY); minFecha.setDate(minFecha.getDate() - DIAS_ATRAS_MIN);
+    let maxFecha = new Date(TODAY); maxFecha.setDate(maxFecha.getDate() + DIAS_ADELANTE_MIN);
+
+    RESERVAS.forEach(r => {
+        const ing = new Date(r.fechaIngreso + 'T00:00:00');
+        const sal = new Date(r.fechaSalida  + 'T00:00:00');
+        if (ing < minFecha) minFecha = ing;
+        if (sal > maxFecha) maxFecha = sal;
+    });
+
+    minFecha.setDate(minFecha.getDate() - MARGEN_EXTRA);
+    maxFecha.setDate(maxFecha.getDate() + MARGEN_EXTRA);
+
+    const startDate = new Date(minFecha);
+    startDate.setHours(0, 0, 0, 0);
+    const NUM_DAYS  = Math.round((maxFecha - minFecha) / 86400000) + 1;
+    const TODAY_IDX = Math.round((TODAY - startDate) / 86400000);
 
     const calWrapper = document.getElementById('cal-wrapper');
 
