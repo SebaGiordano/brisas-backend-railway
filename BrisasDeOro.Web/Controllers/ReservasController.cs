@@ -48,9 +48,64 @@ public class ReservasController : Controller
             _            => query.Where(r => r.Estado != EstadoReserva.Cancelada)
         };
 
-        // ── Filtro por nombre ─────────────────────────────────────────────────
+        // ── Filtro por nombre (expandido a Reservas Vinculadas) ───────────────
+        // Si el texto buscado coincide con el nombre de una reserva, o con la
+        // etiqueta de un grupo vinculado, se incluyen también todas las demás
+        // reservas de ese mismo grupo — aunque su nombre no coincida.
+        Dictionary<int, string> vinculacionPorReservaId = new();
+
         if (!string.IsNullOrWhiteSpace(busqueda))
-            query = query.Where(r => r.NombreHuesped.Contains(busqueda));
+        {
+            var coincidenNombre = await _context.Reservas
+                .Where(r => r.NombreHuesped.Contains(busqueda))
+                .Select(r => new { r.Id, r.NombreHuesped, r.GrupoVinculadoId })
+                .ToListAsync();
+
+            var idsCoincidenNombre = coincidenNombre.Select(x => x.Id).ToHashSet();
+
+            // Nombre REAL (no el texto buscado) de las reservas que matchearon
+            // directamente por nombre, agrupado por GrupoVinculadoId — evita
+            // etiquetas ambiguas como "Vinculada con: L" cuando la búsqueda es corta.
+            var nombresDirectosPorGrupo = coincidenNombre
+                .Where(x => x.GrupoVinculadoId.HasValue)
+                .GroupBy(x => x.GrupoVinculadoId!.Value)
+                .ToDictionary(g => g.Key, g => string.Join(", ", g.Select(x => x.NombreHuesped).Distinct()));
+
+            var gruposCoincidenEtiqueta = await _context.GruposVinculados
+                .Where(g => g.Etiqueta != null && g.Etiqueta.Contains(busqueda))
+                .Select(g => new { g.Id, g.Etiqueta })
+                .ToListAsync();
+            var etiquetaPorGrupo = gruposCoincidenEtiqueta.ToDictionary(g => g.Id, g => g.Etiqueta!);
+
+            var todosLosGrupos = etiquetaPorGrupo.Keys.Union(nombresDirectosPorGrupo.Keys).Distinct().ToList();
+
+            var idsFinal = idsCoincidenNombre;
+
+            if (todosLosGrupos.Any())
+            {
+                var reservasDeGrupos = await _context.Reservas
+                    .Where(r => r.GrupoVinculadoId.HasValue && todosLosGrupos.Contains(r.GrupoVinculadoId.Value))
+                    .Select(r => new { r.Id, r.NombreHuesped, r.GrupoVinculadoId })
+                    .ToListAsync();
+
+                foreach (var r in reservasDeGrupos)
+                {
+                    if (!idsFinal.Contains(r.Id))
+                    {
+                        idsFinal.Add(r.Id);
+                        // Prioridad: 1) nombre real de quien matcheó en su grupo,
+                        // 2) etiqueta del grupo si matcheó por ahí, 3) texto buscado
+                        // (solo si ninguna de las dos anteriores aplica).
+                        vinculacionPorReservaId[r.Id] =
+                            nombresDirectosPorGrupo.TryGetValue(r.GrupoVinculadoId!.Value, out var nombresReales) ? nombresReales
+                            : etiquetaPorGrupo.TryGetValue(r.GrupoVinculadoId!.Value, out var etiq) ? etiq
+                            : busqueda;
+                    }
+                }
+            }
+
+            query = query.Where(r => idsFinal.Contains(r.Id));
+        }
 
         // ── Filtro por rango de fechas de ingreso ─────────────────────────────
         if (desde.HasValue)
@@ -101,6 +156,10 @@ public class ReservasController : Controller
             })
             .ToListAsync();
 
+        foreach (var item in reservas)
+            if (vinculacionPorReservaId.TryGetValue(item.Id, out var motivo))
+                item.VinculadaConNombre = motivo;
+
         ViewBag.Busqueda     = busqueda    ?? string.Empty;
         ViewBag.Estado       = estado;
         ViewBag.EstadoPago   = estadoPago  ?? string.Empty;
@@ -123,6 +182,15 @@ public class ReservasController : Controller
             .Include(r => r.Pagos.OrderBy(p => p.Fecha))
             .Include(r => r.UnidadesGrupales)
                 .ThenInclude(u => u.Alojamiento)
+            .Include(r => r.GrupoVinculado)
+                .ThenInclude(g => g!.Reservas)
+                    .ThenInclude(r => r.Alojamiento)
+            .Include(r => r.GrupoVinculado)
+                .ThenInclude(g => g!.Reservas)
+                    .ThenInclude(r => r.UnidadesGrupales)
+            .Include(r => r.GrupoVinculado)
+                .ThenInclude(g => g!.Reservas)
+                    .ThenInclude(r => r.Pagos)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (reserva == null) return NotFound();
@@ -146,6 +214,33 @@ public class ReservasController : Controller
             );
         }
 
+        if (reserva.PrecioAireDiario.HasValue)
+        {
+            var diasPorCabana = await _context.ReservaAireDias
+                .Where(a => a.ReservaId == id)
+                .GroupBy(a => a.AlojamientoId)
+                .Select(g => new { alojamientoId = g.Key, cantidad = g.Count() })
+                .ToListAsync();
+
+            ViewBag.DiasAirePorCabana = diasPorCabana.ToDictionary(d => d.alojamientoId, d => d.cantidad);
+        }
+
+        if (reserva.GrupoVinculado != null)
+        {
+            ViewBag.ReservasVinculadas = reserva.GrupoVinculado.Reservas
+                .Where(r => r.Id != reserva.Id)
+                .Select(r => new
+                {
+                    id = r.Id,
+                    nombreHuesped = r.NombreHuesped,
+                    esGrupal = r.EsGrupal,
+                    cantUnidades = r.UnidadesGrupales.Count,
+                    nombreAlojamiento = r.Alojamiento.Nombre,
+                    saldoPendiente = r.MontoTotal - r.Pagos.Sum(p => p.Monto)
+                })
+                .ToList();
+        }
+
         return View(reserva);
     }
 
@@ -159,26 +254,47 @@ public class ReservasController : Controller
             .Include(r => r.Alojamiento)
             .Include(r => r.UnidadesGrupales)
                 .ThenInclude(u => u.Alojamiento)
+            .Include(r => r.GrupoVinculado)
+                .ThenInclude(g => g!.Reservas)
+                    .ThenInclude(r => r.Alojamiento)
+            .Include(r => r.GrupoVinculado)
+                .ThenInclude(g => g!.Reservas)
+                    .ThenInclude(r => r.UnidadesGrupales)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (reserva == null) return NotFound();
 
-        int     noches       = (reserva.FechaSalida - reserva.FechaIngreso).Days;
+        int noches = (reserva.FechaSalida - reserva.FechaIngreso).Days;
+
+        // El aire ya guardado se descuenta del MontoTotal real para obtener el
+        // subtotal puro de alojamiento — el formulario edita ese valor puro,
+        // nunca el total final con aire incluido.
+        decimal subtotalAireGuardado = 0;
+        if (reserva.PrecioAireDiario.HasValue)
+        {
+            int diasAireGuardados = await _context.ReservaAireDias
+                .CountAsync(a => a.ReservaId == id);
+            subtotalAireGuardado = diasAireGuardados * reserva.PrecioAireDiario.Value;
+        }
+        decimal montoAlojamiento = reserva.MontoTotal - subtotalAireGuardado;
+
         decimal precioPorDia = (noches > 0 && !reserva.EsInvitacion)
-                                ? Math.Round(reserva.MontoTotal / noches, 2)
+                                ? Math.Round(montoAlojamiento / noches, 2)
                                 : 0;
 
         var vm = new EditarReservaViewModel
         {
-            Id                = reserva.Id,
-            NombreHuesped     = reserva.NombreHuesped,
-            AlojamientoId     = reserva.AlojamientoId,
-            CantidadHuespedes = reserva.CantidadHuespedes,
-            IncluyeDesayuno   = reserva.IncluyeDesayuno,
-            FechaIngreso      = reserva.FechaIngreso,
-            FechaSalida       = reserva.FechaSalida,
-            PrecioPorDia      = precioPorDia,
-            MontoTotal        = reserva.MontoTotal,
+            Id                     = reserva.Id,
+            NombreHuesped          = reserva.NombreHuesped,
+            AlojamientoId          = reserva.AlojamientoId,
+            CantidadHuespedes      = reserva.CantidadHuespedes,
+            IncluyeDesayuno        = reserva.IncluyeDesayuno,
+            FechaIngreso           = reserva.FechaIngreso,
+            FechaSalida            = reserva.FechaSalida,
+            PrecioPorDia           = precioPorDia,
+            MontoTotal             = montoAlojamiento,
+            UsaAireAcondicionado   = reserva.PrecioAireDiario.HasValue,
+            PrecioAireDiario       = reserva.PrecioAireDiario,
             EsInvitacion      = reserva.EsInvitacion,
             Telefono          = reserva.Telefono,
             CanalOrigen       = reserva.CanalOrigen,
@@ -189,7 +305,8 @@ public class ReservasController : Controller
                 {
                     AlojamientoId     = u.AlojamientoId,
                     CantidadHuespedes = u.CantidadHuespedes
-                }).ToList()
+                }).ToList(),
+            EtiquetaGrupoVinculado = reserva.GrupoVinculado?.Etiqueta,
         };
 
         ViewBag.UnidadesGrupalesJson = System.Text.Json.JsonSerializer.Serialize(
@@ -201,6 +318,29 @@ public class ReservasController : Controller
                 personas  = u.CantidadHuespedes,
                 tipo      = u.Alojamiento.Tipo.ToString()
             }));
+
+        var aireDiasGuardados = await _context.ReservaAireDias
+            .Where(a => a.ReservaId == id)
+            .Select(a => new { alojamientoId = a.AlojamientoId, fecha = a.Fecha.ToString("yyyy-MM-dd") })
+            .ToListAsync();
+        ViewBag.AireDiasJson = System.Text.Json.JsonSerializer.Serialize(aireDiasGuardados);
+
+        if (reserva.GrupoVinculado != null)
+        {
+            var vinculadas = reserva.GrupoVinculado.Reservas
+                .Where(r => r.Id != reserva.Id && r.Estado != EstadoReserva.Cancelada)
+                .Select(r => new
+                {
+                    id = r.Id,
+                    nombreHuesped = r.NombreHuesped,
+                    esGrupal = r.EsGrupal,
+                    cantUnidades = r.UnidadesGrupales.Count,
+                    nombreAlojamiento = r.Alojamiento.Nombre
+                })
+                .ToList();
+
+            ViewBag.ReservasVinculadasJson = System.Text.Json.JsonSerializer.Serialize(vinculadas);
+        }
 
         await PopularViewModel(vm);
         return View(vm);
@@ -319,6 +459,9 @@ public class ReservasController : Controller
                 });
         }
 
+        await SincronizarAireAcondicionado(reserva, model);
+        await SincronizarVinculacion(reserva, model);
+
         await _context.SaveChangesAsync();
 
         TempData["Mensaje"]     = $"Reserva de {reserva.NombreHuesped} actualizada correctamente.";
@@ -343,6 +486,41 @@ public class ReservasController : Controller
             .ToListAsync();
 
         return Json(titulares);
+    }
+
+    // ── BuscarReservasParaVincular (AJAX) ───────────────────────────────────────
+
+    [HttpGet]
+    public async Task<IActionResult> BuscarReservasParaVincular(string q, int? excludeId = null)
+    {
+        if (string.IsNullOrWhiteSpace(q))
+            return Json(Array.Empty<object>());
+
+        var query = _context.Reservas
+            .Include(r => r.Alojamiento)
+            .Include(r => r.UnidadesGrupales)
+            .Where(r => r.Estado != EstadoReserva.Cancelada
+                     && r.NombreHuesped.ToLower().Contains(q.ToLower()));
+
+        if (excludeId.HasValue)
+            query = query.Where(r => r.Id != excludeId.Value);
+
+        var resultados = await query
+            .OrderBy(r => r.NombreHuesped)
+            .Take(10)
+            .Select(r => new
+            {
+                id = r.Id,
+                nombreHuesped = r.NombreHuesped,
+                esGrupal = r.EsGrupal,
+                cantUnidades = r.UnidadesGrupales.Count,
+                nombreAlojamiento = r.Alojamiento.Nombre,
+                fechaIngreso = r.FechaIngreso.ToString("dd/MM/yyyy"),
+                fechaSalida = r.FechaSalida.ToString("dd/MM/yyyy")
+            })
+            .ToListAsync();
+
+        return Json(resultados);
     }
 
     // ── AlojamientosDisponibles (AJAX) ───────────────────────────────────────
@@ -598,6 +776,8 @@ public class ReservasController : Controller
         }
 
         _context.Reservas.Add(reserva);
+        await SincronizarAireAcondicionado(reserva, model);
+        await SincronizarVinculacion(reserva, model);
         await _context.SaveChangesAsync();
 
         TempData["Mensaje"]     = $"Reserva de {reserva.NombreHuesped} guardada correctamente.";
@@ -606,6 +786,139 @@ public class ReservasController : Controller
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    // Reemplaza por completo las filas de ReservaAireDias de la reserva según lo
+    // que vino del formulario: borra las existentes (si las hubiera) y crea una
+    // fila por cada día tildado dentro del rango vigente de la reserva (fechas
+    // fuera de [FechaIngreso, FechaSalida) se ignoran como respaldo, aunque el
+    // frontend no debería permitir tildarlas).
+    private async Task SincronizarAireAcondicionado(Reserva reserva, ReservaViewModel model)
+    {
+        if (reserva.Id > 0)
+        {
+            var existentes = await _context.ReservaAireDias
+                .Where(a => a.ReservaId == reserva.Id)
+                .ToListAsync();
+            _context.ReservaAireDias.RemoveRange(existentes);
+        }
+
+        var totalFechas = model.AireCabanas.Sum(c => c.Fechas.Count);
+        if (!model.UsaAireAcondicionado || totalFechas == 0)
+        {
+            reserva.PrecioAireDiario = null;
+            return;
+        }
+
+        reserva.PrecioAireDiario = model.PrecioAireDiario;
+
+        var primerNoche = reserva.FechaIngreso.Date;
+        var ultimaNoche = reserva.FechaSalida.Date.AddDays(-1);
+
+        foreach (var cabana in model.AireCabanas)
+        {
+            foreach (var fecha in cabana.Fechas.Select(f => f.Date).Distinct())
+            {
+                if (fecha < primerNoche || fecha > ultimaNoche) continue;
+
+                _context.ReservaAireDias.Add(new ReservaAireDia
+                {
+                    Reserva       = reserva,
+                    AlojamientoId = cabana.AlojamientoId,
+                    Fecha         = fecha
+                });
+            }
+        }
+    }
+
+    private async Task SincronizarVinculacion(Reserva reserva, ReservaViewModel model)
+    {
+        // Caso 1: se pidió eliminar el vínculo explícitamente.
+        if (model.EliminarVinculo)
+        {
+            var grupoAnteriorId = reserva.GrupoVinculadoId;
+            reserva.GrupoVinculadoId = null;
+            await LimpiarGrupoSiQuedaSolo(grupoAnteriorId);
+            return;
+        }
+
+        // Caso 2: no se seleccionó ninguna reserva para vincular — no tocar nada
+        // del vínculo existente (puede que ya tuviera uno de antes).
+        if (!model.ReservasVinculadasIds.Any())
+            return;
+
+        // Reunir todas las reservas involucradas: la actual + las elegidas del buscador.
+        var idsInvolucrados = model.ReservasVinculadasIds.Append(reserva.Id).Distinct().ToList();
+        var reservasInvolucradas = await _context.Reservas
+            .Where(r => idsInvolucrados.Contains(r.Id))
+            .ToListAsync();
+
+        // Si reserva.Id todavía es 0 (Crear, antes de SaveChanges), no va a aparecer en
+        // la consulta de arriba — se agrega aparte más abajo mediante la navegación.
+        var idsExistentesConGrupo = reservasInvolucradas
+            .Where(r => r.GrupoVinculadoId.HasValue)
+            .Select(r => r.GrupoVinculadoId!.Value)
+            .Distinct()
+            .ToList();
+
+        GrupoVinculado grupo;
+
+        if (idsExistentesConGrupo.Count == 1)
+        {
+            // Ya hay un grupo entre las reservas seleccionadas: se reutiliza (permite
+            // ir agregando reservas a una cadena existente).
+            grupo = await _context.GruposVinculados.FirstAsync(g => g.Id == idsExistentesConGrupo[0]);
+        }
+        else if (idsExistentesConGrupo.Count > 1)
+        {
+            // Caso borde: se intentó vincular reservas que ya pertenecen a DOS grupos
+            // distintos entre sí. Fusionamos: todas las reservas de ambos grupos pasan
+            // al primero, y el segundo grupo (que queda vacío) se elimina.
+            grupo = await _context.GruposVinculados.FirstAsync(g => g.Id == idsExistentesConGrupo[0]);
+            var otrosGrupos = await _context.GruposVinculados
+                .Where(g => idsExistentesConGrupo.Skip(1).Contains(g.Id))
+                .ToListAsync();
+            var otrasReservas = await _context.Reservas
+                .Where(r => otrosGrupos.Select(g => g.Id).Contains(r.GrupoVinculadoId!.Value))
+                .ToListAsync();
+            foreach (var r in otrasReservas) r.GrupoVinculado = grupo;
+            _context.GruposVinculados.RemoveRange(otrosGrupos);
+        }
+        else
+        {
+            // Ninguna de las reservas seleccionadas tenía grupo todavía: se crea uno nuevo.
+            grupo = new GrupoVinculado();
+            _context.GruposVinculados.Add(grupo);
+        }
+
+        if (!string.IsNullOrWhiteSpace(model.EtiquetaGrupoVinculado))
+            grupo.Etiqueta = model.EtiquetaGrupoVinculado;
+
+        // Se asigna la navegación (no el Id) — si "grupo" es nuevo y todavía no tiene
+        // Id real (recién se asigna en SaveChangesAsync), EF Core propaga el Id
+        // correcto a todas las reservas que apunten a este mismo objeto, gracias al
+        // mecanismo de "fixup" de relaciones. Asignar r.GrupoVinculadoId = grupo.Id
+        // a mano en este punto sería incorrecto: grupo.Id todavía vale 0.
+        foreach (var r in reservasInvolucradas)
+            r.GrupoVinculado = grupo;
+
+        reserva.GrupoVinculado = grupo;
+    }
+
+    // Si tras quitar una reserva el grupo queda con 0 o 1 reservas, ya no tiene sentido
+    // como vínculo — se limpia automáticamente (según lo documentado: "un vínculo de 1
+    // no tiene sentido").
+    private async Task LimpiarGrupoSiQuedaSolo(int? grupoVinculadoId)
+    {
+        if (!grupoVinculadoId.HasValue) return;
+        var cantidadRestante = await _context.Reservas.CountAsync(r => r.GrupoVinculadoId == grupoVinculadoId.Value);
+        if (cantidadRestante <= 1)
+        {
+            var reservaSolitaria = await _context.Reservas.FirstOrDefaultAsync(r => r.GrupoVinculadoId == grupoVinculadoId.Value);
+            if (reservaSolitaria != null) reservaSolitaria.GrupoVinculadoId = null;
+            var grupo = await _context.GruposVinculados.FindAsync(grupoVinculadoId.Value);
+            if (grupo != null) _context.GruposVinculados.Remove(grupo);
+        }
+    }
 
     private async Task PopularViewModel(ReservaViewModel vm)
     {

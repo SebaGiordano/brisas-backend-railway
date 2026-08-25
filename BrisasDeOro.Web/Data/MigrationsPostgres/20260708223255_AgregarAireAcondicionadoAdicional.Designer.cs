@@ -3,6 +3,7 @@ using System;
 using BrisasDeOro.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BrisasDeOro.Web.Data.MigrationsPostgres
 {
     [DbContext(typeof(PostgresApplicationDbContext))]
-    partial class PostgresApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260708223255_AgregarAireAcondicionadoAdicional")]
+    partial class AgregarAireAcondicionadoAdicional
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -146,22 +149,6 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("BrisasDeOro.Web.Models.GrupoVinculado", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Etiqueta")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("GruposVinculados");
-                });
-
             modelBuilder.Entity("BrisasDeOro.Web.Models.Pago", b =>
                 {
                     b.Property<int>("Id")
@@ -231,9 +218,6 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
                     b.Property<DateTime>("FechaSalida")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("GrupoVinculadoId")
-                        .HasColumnType("integer");
-
                     b.Property<bool>("IncluyeDesayuno")
                         .HasColumnType("boolean");
 
@@ -261,8 +245,6 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
                     b.HasKey("Id");
 
                     b.HasIndex("AlojamientoId");
-
-                    b.HasIndex("GrupoVinculadoId");
 
                     b.ToTable("Reservas");
                 });
@@ -562,14 +544,7 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BrisasDeOro.Web.Models.GrupoVinculado", "GrupoVinculado")
-                        .WithMany("Reservas")
-                        .HasForeignKey("GrupoVinculadoId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Alojamiento");
-
-                    b.Navigation("GrupoVinculado");
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.ReservaAireDia", b =>
@@ -678,11 +653,6 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("BrisasDeOro.Web.Models.GrupoVinculado", b =>
-                {
-                    b.Navigation("Reservas");
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.Reserva", b =>

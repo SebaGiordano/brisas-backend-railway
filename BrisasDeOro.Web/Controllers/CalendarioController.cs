@@ -30,6 +30,7 @@ public class CalendarioController : Controller
             .Include(r => r.Alojamiento)
             .Include(r => r.UnidadesGrupales)
                 .ThenInclude(u => u.Alojamiento)
+            .Include(r => r.GrupoVinculado)
             .ToListAsync();
 
         var alojamientos = await _context.Alojamientos
@@ -56,6 +57,7 @@ public class CalendarioController : Controller
                                         : (decimal?)null,
                 esInvitacion      = r.EsInvitacion,
                 esGrupal          = r.EsGrupal,
+                grupoVinculadoId  = r.GrupoVinculadoId,
                 unidadesGrupales  = r.EsGrupal
                     ? r.UnidadesGrupales.Select(u => new
                       {

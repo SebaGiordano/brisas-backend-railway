@@ -449,6 +449,11 @@ else
                     <tr class="@(item.Estado == EstadoReserva.Cancelada && estado != "Cancelada" ? "table-secondary text-muted" : "")">
                         <td class="col-titular-res@(item.SaldoPendiente < 0 ? " titular-saldo-negativo" : "")">
                             <span class="fw-semibold">@item.NombreHuesped</span>
+                            @if (item.VinculadaConNombre != null)
+                            {
+                                <br /><small class="text-primary d-block"><i class="bi bi-link-45deg me-1"></i>Vinculada con:</small>
+                                <small class="text-primary fw-semibold">@item.VinculadaConNombre</small>
+                            }
                             @if (item.EsInvitacion)
                             {
                                 <br /><small class="text-muted"><i class="bi bi-gift me-1"></i>Invitación</small>

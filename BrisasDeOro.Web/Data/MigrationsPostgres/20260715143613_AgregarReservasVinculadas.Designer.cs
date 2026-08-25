@@ -3,6 +3,7 @@ using System;
 using BrisasDeOro.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BrisasDeOro.Web.Data.MigrationsPostgres
 {
     [DbContext(typeof(PostgresApplicationDbContext))]
-    partial class PostgresApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260715143613_AgregarReservasVinculadas")]
+    partial class AgregarReservasVinculadas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

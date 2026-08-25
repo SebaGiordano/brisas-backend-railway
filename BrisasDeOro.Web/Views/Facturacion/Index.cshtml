@@ -331,6 +331,11 @@
                                     {
                                         <span class="fw-bold text-dark">@mov.NombreHuesped</span>
                                     }
+                                    @if (mov.VinculadaConNombre != null)
+                                    {
+                                        <br /><small class="text-primary d-block"><i class="bi bi-link-45deg me-1"></i>Vinculada con:</small>
+                                        <small class="text-primary fw-semibold">@mov.VinculadaConNombre</small>
+                                    }
                                 </td>
                                 <td>
                                     @if (mov.EsGrupal)
@@ -390,12 +395,39 @@
         <form method="get" class="mb-3">
             <input type="hidden" name="tab" value="saldos" />
             <div class="row g-2 align-items-end">
-                <div class="col">
+                <div class="col-4 col-md-auto">
                     <label class="form-label small fw-semibold mb-1">Titular</label>
                     <input type="text" id="input-titular-saldos" name="titularSaldos" value="@Model.FiltroTitularSaldos"
                            class="form-control form-control-sm" placeholder="Nombre del titular..."
                            autocomplete="off" />
                 </div>
+                <div class="col-4 col-md-auto">
+                    <label class="form-label small fw-semibold mb-1">Desde</label>
+                    <input type="date" name="desdeSaldos" value="@Model.FiltroDesdeSaldos"
+                           class="form-control form-control-sm" placeholder="dd/mm/aaaa" />
+                </div>
+                <div class="col-4 col-md-auto">
+                    <label class="form-label small fw-semibold mb-1">Hasta</label>
+                    <input type="date" name="hastaSaldos" value="@Model.FiltroHastaSaldos"
+                           class="form-control form-control-sm" placeholder="dd/mm/aaaa" />
+                </div>
+                <div class="w-100 filtro-break-fact d-none"></div>
+                <div class="col-4 col-md-auto">
+                    <label class="form-label small fw-semibold mb-1">Ordenar por</label>
+                    <select name="ordenSaldos" class="form-select form-select-sm">
+                        @if (Model.FiltroOrdenSaldos == "desc")
+                        {
+                            <option value="desc" selected>Más recientes</option>
+                            <option value="asc">Más antiguas</option>
+                        }
+                        else
+                        {
+                            <option value="desc">Más recientes</option>
+                            <option value="asc" selected>Más antiguas</option>
+                        }
+                    </select>
+                </div>
+                <div class="w-100 filtro-break-fact d-none"></div>
                 <div class="col-auto">
                     <button type="submit" class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-funnel me-1"></i>Filtrar
@@ -448,7 +480,14 @@
                         @foreach (var s in Model.SaldosPendientes)
                         {
                             <tr>
-                                <td class="fw-bold col-titular-saldos">@s.NombreHuesped</td>
+                                <td class="fw-bold col-titular-saldos">
+                                    @s.NombreHuesped
+                                    @if (s.VinculadaConNombre != null)
+                                    {
+                                        <br /><small class="text-primary d-block fw-normal"><i class="bi bi-link-45deg me-1"></i>Vinculada con:</small>
+                                        <small class="text-primary fw-semibold">@s.VinculadaConNombre</small>
+                                    }
+                                </td>
                                 <td>
                                     @if (s.EsGrupal)
                                     {

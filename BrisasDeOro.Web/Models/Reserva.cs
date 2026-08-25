@@ -18,6 +18,7 @@ public class Reserva
     public DateTime FechaSalida { get; set; }
     public decimal MontoTotal { get; set; }
     public decimal MontoSena { get; set; }
+    public decimal? PrecioAireDiario { get; set; }
     public EstadoReserva Estado { get; set; } = EstadoReserva.Confirmada;
     public bool EsInvitacion { get; set; } = false;
     public bool IncluyeDesayuno { get; set; } = false;
@@ -31,6 +32,12 @@ public class Reserva
     // una sola unidad por reserva). El detalle completo vive en UnidadesGrupales.
     public bool EsGrupal { get; set; } = false;
     public List<ReservaAlojamiento> UnidadesGrupales { get; set; } = new();
+
+    // Reservas Vinculadas: distinto de EsGrupal — conecta reservas independientes
+    // (cada una con su propia facturación) bajo un mismo grupo, solo para
+    // navegación y visualización cruzada. Null = sin vínculo.
+    public int? GrupoVinculadoId { get; set; }
+    public GrupoVinculado? GrupoVinculado { get; set; }
 
     public List<Pago> Pagos { get; set; } = new();
 }

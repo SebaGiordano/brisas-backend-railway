@@ -15,6 +15,7 @@ public class InicioViewModel
     public List<string>             UnidadesOcupadasHoy    { get; init; } = new();
     public List<LimpiezaItem>       LimpiezaDelDia         { get; init; } = new();
     public List<PendienteCobroItem> PendientesCobro        { get; init; } = new();
+    public List<AireAcondicionadoHoyItem> AiresAcondicionadosHoy { get; init; } = new();
 
     // Mañana
     public List<MovimientoItem> CheckInsManana  { get; init; } = new();
@@ -66,4 +67,13 @@ public class PendienteCobroItem
     public DateOnly FechaSalida       { get; init; }
     public decimal  SaldoPendiente    { get; init; }
     public bool     EsHoy             { get; init; }
+}
+
+public class AireAcondicionadoHoyItem
+{
+    public string NombreCabana  { get; init; } = string.Empty;
+    public bool   Activo        { get; init; }
+    public bool   TieneReserva  { get; init; }
+    public string NombreHuesped { get; init; } = string.Empty;
+    public int    ReservaId     { get; init; }
 }

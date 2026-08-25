@@ -55,6 +55,13 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body py-2" id="modal-cuerpo" style="font-size:.88rem;"></div>
+            <div id="modal-vinculadas" class="px-3 pb-2 d-none" style="font-size:.85rem;">
+                <hr class="my-2" />
+                <div class="text-muted small fw-semibold mb-1">
+                    <i class="bi bi-link-45deg me-1"></i>Reservas vinculadas
+                </div>
+                <div id="modal-vinculadas-lista"></div>
+            </div>
             <div class="modal-footer py-2 gap-2">
                 <a id="modal-btn-detalle" href="#" class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-eye me-1"></i>Ver detalle
@@ -94,6 +101,7 @@
        grupo —incluida la directamente hovereada— usan el mismo brightness(.82),
        sin competencia con el pseudo-selector :hover. */
     .cal-res.cal-res-grupo-activo { filter: brightness(.82); }
+    .cal-res.cal-res-vinculo-activo { filter: brightness(.82); }
     /* Fila divisoria */
     .cal-divider td {
         padding: 0 !important;
@@ -448,6 +456,34 @@
         const btnPago = document.getElementById('modal-btn-pago');
         if (btnPago) btnPago.href = `${URLS.pago}?reservaId=${res.id}&from=calendario`;
 
+        // ── Reservas vinculadas ──────────────────────────────────────────────
+        const vinculadasBox  = document.getElementById('modal-vinculadas');
+        const vinculadasList = document.getElementById('modal-vinculadas-lista');
+
+        const vinculadas = res.grupoVinculadoId != null
+            ? RESERVAS.filter(r => r.grupoVinculadoId === res.grupoVinculadoId && r.id !== res.id)
+            : [];
+
+        if (vinculadas.length > 0) {
+            vinculadasList.innerHTML = vinculadas.map(r => {
+                const tipoTxt = r.esGrupal ? `Grupo (${r.unidadesGrupales?.length ?? 0} unidades)` : r.nombreAlojamiento;
+                const saldoTxt = r.saldoPendiente > .01
+                    ? `<span class="text-danger fw-bold">${fmtPeso(r.saldoPendiente)}</span>`
+                    : `<span class="text-success fw-bold">${fmtPeso(r.saldoPendiente)}</span>`;
+                return `
+                    <div class="d-flex justify-content-between align-items-center py-1">
+                        <span><strong>${r.nombreHuesped}</strong> <span class="text-muted">— ${tipoTxt}</span></span>
+                        <span class="d-flex align-items-center gap-2">
+                            ${saldoTxt}
+                            <a href="${URLS.detalle}/${r.id}?from=calendario" class="btn btn-outline-secondary btn-sm py-0">Ver</a>
+                        </span>
+                    </div>`;
+            }).join('');
+            vinculadasBox.classList.remove('d-none');
+        } else {
+            vinculadasBox.classList.add('d-none');
+        }
+
         bsModal.show();
     }
 
@@ -638,6 +674,7 @@
                     td.className        = 'cal-res';
                     td.dataset.nights   = span; // usado por ajustarFonts
                     if (resAptHoy.esGrupal) td.dataset.grupoId = resAptHoy.id;
+                    if (resAptHoy.grupoVinculadoId) td.dataset.vinculoId = resAptHoy.grupoVinculadoId;
 
                     const pApt = resAptHoy.esGrupal
                         ? resAptHoy.unidadesGrupales?.find(u => u.alojamientoId === infoH1.apartId)?.personas
@@ -682,6 +719,7 @@
                     td.className      = 'cal-res';
                     td.dataset.nights = span; // usado por ajustarFonts
                     if (res.esGrupal) td.dataset.grupoId = res.id;
+                    if (res.grupoVinculadoId) td.dataset.vinculoId = res.grupoVinculadoId;
 
                     const pDir = res.esGrupal
                         ? res.unidadesGrupales?.find(u => u.alojamientoId === aloj.id)?.personas
@@ -749,6 +787,26 @@
         const gid = td.dataset.grupoId;
         calTbody.querySelectorAll(`.cal-res[data-grupo-id="${gid}"]`)
             .forEach(el => el.classList.remove('cal-res-grupo-activo'));
+    });
+
+    // ── Hover vinculado de Reservas Vinculadas (independiente del grupal) ────
+    // Mismo mecanismo que el de arriba, pero sobre data-vinculo-id. Una celda
+    // puede tener ambos atributos a la vez (ej. una reserva grupal que además
+    // está vinculada a otra reserva independiente) — los dos hover conviven sin
+    // pisarse, porque usan clases CSS distintas.
+    calTbody.addEventListener('mouseover', (e) => {
+        const td = e.target.closest('.cal-res[data-vinculo-id]');
+        if (!td) return;
+        const vid = td.dataset.vinculoId;
+        calTbody.querySelectorAll(`.cal-res[data-vinculo-id="${vid}"]`)
+            .forEach(el => el.classList.add('cal-res-vinculo-activo'));
+    });
+    calTbody.addEventListener('mouseout', (e) => {
+        const td = e.target.closest('.cal-res[data-vinculo-id]');
+        if (!td) return;
+        const vid = td.dataset.vinculoId;
+        calTbody.querySelectorAll(`.cal-res[data-vinculo-id="${vid}"]`)
+            .forEach(el => el.classList.remove('cal-res-vinculo-activo'));
     });
 
     // ── Controles ─────────────────────────────────────────────────────────────

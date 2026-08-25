@@ -24,6 +24,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Tarifa>      Tarifas       => Set<Tarifa>();
     public DbSet<Temporada>   Temporadas    => Set<Temporada>();
     public DbSet<ReservaAlojamiento> ReservaAlojamientos => Set<ReservaAlojamiento>();
+    public DbSet<ReservaAireDia> ReservaAireDias => Set<ReservaAireDia>();
+    public DbSet<GrupoVinculado> GruposVinculados => Set<GrupoVinculado>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -40,13 +42,29 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             // fechas a la hora local del proceso al LEERLAS. En horario Argentina (UTC-3)
             // eso retrocede un día las fechas guardadas a medianoche UTC (ej. 31/12 → 30/12).
             // Este converter deshace esa conversión al leer, devolviendo la fecha original.
-            e.Property(r => r.FechaIngreso).HasConversion(FechaSinConversionLocal);
-            e.Property(r => r.FechaSalida).HasConversion(FechaSinConversionLocal);
+            // HasColumnType explícito evita que `dotnet ef migrations add` recalcule el tipo
+            // de columna con el mapeo por defecto de la versión actual de Npgsql (que no
+            // coincide con el tipo real ya creado en la base) y genere un ALTER COLUMN falso.
+            e.Property(r => r.FechaIngreso).HasColumnType("timestamp with time zone").HasConversion(FechaSinConversionLocal);
+            e.Property(r => r.FechaSalida).HasColumnType("timestamp with time zone").HasConversion(FechaSinConversionLocal);
+            e.Property(r => r.FechaCarga).HasColumnType("timestamp with time zone");
         });
 
         builder.Entity<Pago>(e =>
         {
             e.Property(p => p.Monto).HasPrecision(18, 2);
+            e.Property(p => p.Fecha).HasColumnType("timestamp with time zone");
+        });
+
+        builder.Entity<Temporada>(e =>
+        {
+            e.Property(t => t.FechaInicio).HasColumnType("timestamp with time zone");
+            e.Property(t => t.FechaFin).HasColumnType("timestamp with time zone");
+        });
+
+        builder.Entity<ApplicationUser>(e =>
+        {
+            e.Property(u => u.FechaCreacion).HasColumnType("timestamp with time zone");
         });
 
         builder.Entity<ReservaAlojamiento>(e =>
@@ -60,6 +78,37 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
              .WithMany()
              .HasForeignKey(ra => ra.AlojamientoId)
              .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<ReservaAireDia>(e =>
+        {
+            e.HasOne(a => a.Reserva)
+             .WithMany()
+             .HasForeignKey(a => a.ReservaId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(a => a.Alojamiento)
+             .WithMany()
+             .HasForeignKey(a => a.AlojamientoId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(a => new { a.ReservaId, a.AlojamientoId, a.Fecha }).IsUnique();
+
+            // Mismo problema y misma solución que Reserva.FechaIngreso/FechaSalida (ver
+            // comentario en ese bloque): con Npgsql en modo legacy timestamp, la lectura
+            // convierte automáticamente a hora local, corriendo la fecha un día hacia atrás
+            // en Argentina. Este converter deshace esa conversión al leer.
+            e.Property(a => a.Fecha)
+             .HasColumnType("timestamp with time zone")
+             .HasConversion(FechaSinConversionLocal);
+        });
+
+        builder.Entity<GrupoVinculado>(e =>
+        {
+            e.HasMany(g => g.Reservas)
+             .WithOne(r => r.GrupoVinculado)
+             .HasForeignKey(r => r.GrupoVinculadoId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<ApartDetalle>(e =>

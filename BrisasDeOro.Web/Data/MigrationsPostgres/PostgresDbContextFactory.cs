@@ -8,6 +8,12 @@ public class PostgresDbContextFactory : IDesignTimeDbContextFactory<PostgresAppl
 {
     public PostgresApplicationDbContext CreateDbContext(string[] args)
     {
+        // Mantiene paridad con el switch que Program.cs activa en runtime (ver comentario en
+        // ApplicationDbContext.OnModelCreating). No afecta el mapeo de tipos de columna que usa
+        // el scaffolding de EF (eso depende de la versión del paquete Npgsql), solo el
+        // comportamiento de comparación/conversión de DateTime.
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
         var config = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json")

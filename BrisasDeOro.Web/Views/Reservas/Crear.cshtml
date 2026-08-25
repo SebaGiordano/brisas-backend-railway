@@ -180,6 +180,75 @@
                 <div id="container-unidades-grupales"></div>
             </div>
 
+            <div class="border rounded p-3 mb-3 mt-4" id="bloque-toggle-aire">
+                <div class="form-check form-switch mb-0" id="bloque-toggle-aire-switch">
+                    <input asp-for="UsaAireAcondicionado" type="checkbox" class="form-check-input" id="UsaAireAcondicionado" role="switch" />
+                </div>
+                <div id="bloque-toggle-aire-texto">
+                    <label for="UsaAireAcondicionado" class="fw-bold mb-0" style="cursor:pointer;"><i class="bi bi-snow2 me-1"></i>¿Usa aire acondicionado adicional?</label>
+                    <span class="d-block text-muted fw-normal small">
+                        Permite cobrar un adicional diario por el uso extendido del aire acondicionado en cabañas.
+                    </span>
+                </div>
+            </div>
+
+            <div id="seccion-aire" class="d-none">
+                <div id="alerta-aire-sin-cabanas" class="alert alert-warning py-2 px-3 mb-3 small d-none">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    El costo adicional de aire acondicionado aplica únicamente a <strong>CABAÑAS</strong> — esta reserva no incluye ninguna.
+                </div>
+                <div id="contenido-aire" class="d-none">
+                    <div class="mb-3">
+                        <label asp-for="PrecioAireDiario" class="form-label">Valor diario del adicional</label>
+                        <div class="input-group" style="max-width:220px;">
+                            <span class="input-group-text">$</span>
+                            <input asp-for="PrecioAireDiario" type="number" step="0.01" min="0" class="form-control" id="PrecioAireDiario" placeholder="0,00" />
+                        </div>
+                    </div>
+                    <div id="calendarios-aire-por-cabana"></div>
+                    <div id="resumen-aire" class="mt-3 p-2 rounded" style="background-color:#f8f9fa; border-left:3px solid #6c757d; font-size:.85rem;"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    @* ── Card 3.5: Reservas vinculadas ── *@
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="border rounded p-3 mb-3" id="bloque-toggle-vinculo">
+                <div class="form-check form-switch mb-0" id="bloque-toggle-vinculo-switch">
+                    <input type="checkbox" class="form-check-input" id="UsarVinculo" role="switch" />
+                </div>
+                <div id="bloque-toggle-vinculo-texto">
+                    <label for="UsarVinculo" class="fw-bold mb-0" style="cursor:pointer;"><i class="bi bi-link-45deg me-1"></i>¿Vincular con otra reserva?</label>
+                    <span class="d-block text-muted fw-normal small">
+                        Conecta esta reserva con otras independientes (mismo huésped que se mudó de alojamiento, o parte de un mismo grupo/evento), sin fusionar su facturación.
+                    </span>
+                </div>
+            </div>
+
+            <div id="seccion-vinculo" class="d-none">
+                <div class="mb-3">
+                    <label for="buscar-reserva-vincular" class="form-label">Buscar reserva para vincular</label>
+                    <div class="position-relative">
+                        <input type="text" id="buscar-reserva-vincular" class="form-control"
+                               placeholder="Nombre del titular a buscar" autocomplete="off" />
+                    </div>
+                    <div class="form-text">Buscá por nombre y seleccioná la reserva a vincular.</div>
+                </div>
+
+                <div id="lista-vinculadas" class="mb-3"></div>
+
+                <div class="mb-2">
+                    <label for="EtiquetaGrupoVinculado" class="form-label">Etiqueta del grupo <span class="text-muted fw-normal">(opcional)</span></label>
+                    <input type="text" id="EtiquetaGrupoVinculado" name="EtiquetaGrupoVinculado"
+                           class="form-control" placeholder="Nombre descriptivo del grupo" maxlength="100" />
+                    <div class="form-text">Si dejás esto vacío, el sistema muestra automáticamente el alojamiento o el nombre del titular vinculado.</div>
+                </div>
+            </div>
+
+            <div id="container-vinculo"></div>
         </div>
     </div>
 
@@ -221,6 +290,22 @@
                 <div class="col-md-4 d-flex align-items-center">
                     <div class="alert alert-info py-2 px-3 mb-0 small w-100">
                         <strong>Bidireccional:</strong> ingresá el precio por día <em>o</em> el total directamente. El otro campo se recalcula automáticamente según las noches de estadía.
+                    </div>
+                </div>
+                <div id="desglose-aire" class="col-12">
+                    <div class="alert alert-light border py-2 px-3 mb-2 small">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-uppercase" style="letter-spacing:.03em;">
+                                Total aire acondicionado adicional (<span id="desglose-dias-aire">0</span> días)
+                            </span>
+                            <strong class="fs-6 fw-bold" id="desglose-monto-aire">$0</strong>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded text-white" style="background-color:#0d6efd;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-uppercase" style="letter-spacing:.04em;">Total final a cobrar</span>
+                            <span class="fw-bold fs-4" id="desglose-total-final">$0</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -293,6 +378,34 @@
         margin: 0 !important;
     }
     #bloque-toggle-grupal-switch .form-check-input {
+        margin-left: -2.5em !important;
+        float: none !important;
+    }
+    #bloque-toggle-aire {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: .75rem !important;
+        flex-wrap: nowrap !important;
+        overflow: hidden !important;
+        background-color: #f8f9fc;
+        border-color: #cdd6f4 !important;
+        transition: background-color .15s ease, border-color .15s ease;
+    }
+    #bloque-toggle-aire:has(#UsaAireAcondicionado:checked) {
+        background-color: #eaf0ff;
+        border-color: #6c8eef !important;
+    }
+    #bloque-toggle-aire-texto {
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+    #bloque-toggle-aire-switch {
+        flex: 0 0 auto !important;
+        padding-left: 2.5em !important;
+        margin: 0 !important;
+    }
+    #bloque-toggle-aire-switch .form-check-input {
         margin-left: -2.5em !important;
         float: none !important;
     }
@@ -369,6 +482,40 @@
     @@media (min-width: 769px) {
         #botones-crear { justify-content: center !important; }
     }
+    #bloque-toggle-vinculo {
+        display: flex !important; align-items: center !important;
+        justify-content: flex-start !important; gap: .75rem !important;
+        flex-wrap: nowrap !important; overflow: hidden !important;
+        background-color: #f8f9fc; border-color: #cdd6f4 !important;
+        transition: background-color .15s ease, border-color .15s ease;
+    }
+    #bloque-toggle-vinculo:has(#UsarVinculo:checked) { background-color: #eaf0ff; border-color: #6c8eef !important; }
+    #bloque-toggle-vinculo-texto { min-width: 0 !important; flex: 1 1 auto !important; }
+    #bloque-toggle-vinculo-switch { flex: 0 0 auto !important; padding-left: 2.5em !important; margin: 0 !important; }
+    #bloque-toggle-vinculo-switch .form-check-input { margin-left: -2.5em !important; float: none !important; }
+    .vinculo-ac-dropdown {
+        position: absolute; top: 100%; left: 0; right: 0; z-index: 1050;
+        background: #fff; border: 1px solid #ced4da; border-top: none;
+        border-radius: 0 0 .375rem .375rem; max-height: 280px; overflow-y: auto;
+        display: none; box-shadow: 0 4px 8px rgba(0,0,0,.08); padding: 0; margin: 0;
+    }
+    .vinculo-ac-dropdown li {
+        padding: .5rem .75rem; font-size: .875rem; cursor: pointer; list-style: none;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    .vinculo-ac-dropdown li:last-child { border-bottom: none; }
+    .vinculo-ac-dropdown li:hover,
+    .vinculo-ac-dropdown li.ac-active { background-color: #e9f0ff; }
+    .vinculo-ac-dropdown li .vinculo-tipo-badge {
+        font-size: .72rem; color: #6c757d; margin-left: .35rem;
+    }
+    .vinculada-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: .5rem .75rem; border: 1px solid #dee2e6; border-radius: .375rem;
+        margin-bottom: .4rem; background-color: #fff;
+    }
+    .vinculada-item .vinculada-info { font-size: .875rem; }
+    .vinculada-item .vinculada-info .text-muted { font-size: .8rem; }
 </style>
 
 @* ── Modal personas por unidad (reserva grupal) ── *@
@@ -503,6 +650,306 @@
         return diff > 0 ? diff : null;
     }
 
+    // ── Aire acondicionado: estado y helpers ─────────────────────────────────
+    let aireCabanasSeleccionadas = {}; // { alojamientoId: Set<'YYYY-MM-DD'> }
+
+    function obtenerCabanasParaAire() {
+        if (esGrupal) {
+            return Object.entries(unidadesGrupales)
+                .filter(([id, u]) => u.tipo === 'Cabaña')
+                .map(([id, u]) => ({ id: parseInt(id), nombre: u.nombre }));
+        }
+        const alojId = gid('AlojamientoId').value;
+        if (!alojId) return [];
+        const datos = _datosDisponibles.find(a => String(a.id) === String(alojId));
+        if (!datos || datos.tipo !== 'Cabaña') return [];
+        return [{ id: datos.id, nombre: datos.nombre }];
+    }
+
+    function generarNochesEstadia() {
+        const ingreso = gid('FechaIngreso').value;
+        const egreso  = gid('FechaSalida').value;
+        if (!ingreso || !egreso) return [];
+        const noches = [];
+        let d = new Date(ingreso + 'T00:00:00');
+        const fin = new Date(egreso + 'T00:00:00');
+        while (d < fin) {
+            noches.push(d.toISOString().slice(0, 10));
+            d.setDate(d.getDate() + 1);
+        }
+        return noches;
+    }
+
+    function calcularSubtotalAire() {
+        if (!gid('UsaAireAcondicionado').checked) return 0;
+        const precio = parseFloat(gid('PrecioAireDiario').value) || 0;
+        if (precio <= 0) return 0;
+        let totalDias = 0;
+        Object.values(aireCabanasSeleccionadas).forEach(set => { totalDias += set.size; });
+        return totalDias * precio;
+    }
+
+    function fmtMonedaAire(n) {
+        return '$' + Math.round(n).toLocaleString('es-AR');
+    }
+
+    function actualizarTotalFinalUI() {
+        const subtotalAire = calcularSubtotalAire();
+        const montoAlojamiento = parseFloat(gid('MontoTotal').value) || 0;
+
+        let totalDias = 0;
+        Object.values(aireCabanasSeleccionadas).forEach(s => { totalDias += s.size; });
+
+        gid('desglose-dias-aire').textContent = totalDias;
+        gid('desglose-monto-aire').textContent = fmtMonedaAire(subtotalAire);
+        gid('desglose-total-final').textContent = fmtMonedaAire(montoAlojamiento + subtotalAire);
+    }
+
+    function actualizarResumenAireTexto() {
+        const cabanas = obtenerCabanasParaAire();
+        const precio  = parseFloat(gid('PrecioAireDiario').value) || 0;
+        const resumenEl = gid('resumen-aire');
+
+        if (cabanas.length === 0) { resumenEl.innerHTML = ''; return; }
+
+        let totalDias = 0;
+        const lineas = cabanas.map(cab => {
+            const dias = aireCabanasSeleccionadas[cab.id]?.size || 0;
+            totalDias += dias;
+            const subtotalCabana = dias * precio;
+            return `<div style="font-weight:500;">${cab.nombre}: ${dias} día${dias !== 1 ? 's' : ''} × $${precio.toLocaleString('es-AR')} = $${subtotalCabana.toLocaleString('es-AR')}</div>`;
+        });
+
+        const totalGeneral = totalDias * precio;
+        resumenEl.innerHTML = lineas.join('') +
+            `<div class="fw-bold mt-2 pt-1" style="border-top:1px solid #dee2e6; font-size:.92rem;">Total aire: $${totalGeneral.toLocaleString('es-AR')}</div>`;
+    }
+
+    function renderCalendariosAire() {
+        const cabanas    = obtenerCabanasParaAire();
+        const alerta     = gid('alerta-aire-sin-cabanas');
+        const contenido  = gid('contenido-aire');
+        const cont       = gid('calendarios-aire-por-cabana');
+
+        if (!gid('UsaAireAcondicionado').checked) return;
+
+        if (cabanas.length === 0) {
+            alerta.classList.remove('d-none');
+            contenido.classList.add('d-none');
+            aireCabanasSeleccionadas = {};
+            actualizarTotalFinalUI();
+            return;
+        }
+
+        alerta.classList.add('d-none');
+        contenido.classList.remove('d-none');
+
+        const noches = generarNochesEstadia();
+        const idsCabanasActuales = new Set(cabanas.map(c => String(c.id)));
+
+        // Descartar selecciones de cabañas que ya no forman parte de la reserva
+        Object.keys(aireCabanasSeleccionadas).forEach(id => {
+            if (!idsCabanasActuales.has(String(id))) delete aireCabanasSeleccionadas[id];
+        });
+        // Descartar días que quedaron fuera del nuevo rango de noches (edición de fechas)
+        const setNoches = new Set(noches);
+        Object.keys(aireCabanasSeleccionadas).forEach(id => {
+            aireCabanasSeleccionadas[id] = new Set(
+                [...aireCabanasSeleccionadas[id]].filter(f => setNoches.has(f))
+            );
+        });
+
+        cont.innerHTML = '';
+        if (noches.length === 0) {
+            cont.innerHTML = '<p class="text-muted small mb-0">Seleccioná las fechas de ingreso y egreso primero.</p>';
+            actualizarTotalFinalUI();
+            return;
+        }
+
+        cabanas.forEach(cab => {
+            if (!aireCabanasSeleccionadas[cab.id]) aireCabanasSeleccionadas[cab.id] = new Set();
+            const seleccionadas = aireCabanasSeleccionadas[cab.id];
+
+            const wrap = document.createElement('div');
+            wrap.className = 'mb-3 pb-2 border-bottom';
+            wrap.innerHTML = `<div class="fw-semibold small mb-2"><i class="bi bi-snow2 me-1"></i>${cab.nombre}</div>`;
+
+            const grid = document.createElement('div');
+            grid.className = 'd-flex flex-wrap gap-2';
+
+            noches.forEach(fechaIso => {
+                const id = `aire-${cab.id}-${fechaIso}`;
+                const [y, m, d] = fechaIso.split('-');
+                const wrapperChk = document.createElement('div');
+                wrapperChk.innerHTML = `
+                    <input type="checkbox" class="btn-check chk-aire-dia" id="${id}"
+                           data-cabana-id="${cab.id}" data-fecha="${fechaIso}"
+                           ${seleccionadas.has(fechaIso) ? 'checked' : ''}>
+                    <label class="btn btn-outline-primary btn-sm" for="${id}">${d}/${m}</label>
+                `;
+                grid.appendChild(wrapperChk.firstElementChild);
+                grid.appendChild(wrapperChk.firstElementChild);
+            });
+
+            wrap.appendChild(grid);
+            cont.appendChild(wrap);
+        });
+
+        cont.querySelectorAll('.chk-aire-dia').forEach(chk => {
+            chk.addEventListener('change', function () {
+                const cabId = this.dataset.cabanaId;
+                const fecha = this.dataset.fecha;
+                if (!aireCabanasSeleccionadas[cabId]) aireCabanasSeleccionadas[cabId] = new Set();
+                if (this.checked) aireCabanasSeleccionadas[cabId].add(fecha);
+                else aireCabanasSeleccionadas[cabId].delete(fecha);
+                actualizarResumenAireTexto();
+                actualizarTotalFinalUI();
+            });
+        });
+
+        actualizarResumenAireTexto();
+        actualizarTotalFinalUI();
+    }
+
+    function prepararCamposAire() {
+        let cont = gid('container-aire-cabanas');
+        if (!cont) {
+            cont = document.createElement('div');
+            cont.id = 'container-aire-cabanas';
+            gid('form-reserva').appendChild(cont);
+        }
+        cont.innerHTML = '';
+        if (!gid('UsaAireAcondicionado').checked) return;
+
+        let i = 0;
+        Object.entries(aireCabanasSeleccionadas).forEach(([cabId, fechasSet]) => {
+            if (fechasSet.size === 0) return;
+            const mk = (name, value) => {
+                const inp = document.createElement('input');
+                inp.type = 'hidden'; inp.name = name; inp.value = value;
+                cont.appendChild(inp);
+            };
+            mk(`AireCabanas[${i}].AlojamientoId`, cabId);
+            [...fechasSet].forEach((f, j) => mk(`AireCabanas[${i}].Fechas[${j}]`, f));
+            i++;
+        });
+    }
+
+    // ── Reservas vinculadas ───────────────────────────────────────────────────
+    let reservasVinculadas = {}; // { id: { id, nombreHuesped, esGrupal, cantUnidades, nombreAlojamiento } }
+    let vinculoAEliminar   = false;
+
+    function renderListaVinculadas() {
+        const cont = gid('lista-vinculadas');
+        const ids  = Object.keys(reservasVinculadas);
+        if (ids.length === 0) {
+            cont.innerHTML = '<p class="text-muted small mb-0">Todavía no vinculaste ninguna reserva.</p>';
+            return;
+        }
+        cont.innerHTML = ids.map(id => {
+            const r = reservasVinculadas[id];
+            const tipoTxt = r.esGrupal ? `Grupo (${r.cantUnidades} unidades)` : r.nombreAlojamiento;
+            return `
+                <div class="vinculada-item" data-id="${id}">
+                    <div class="vinculada-info">
+                        <strong>${r.nombreHuesped}</strong>
+                        <span class="text-muted"> — ${tipoTxt}</span>
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm quitar-vinculada" data-id="${id}">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>`;
+        }).join('');
+
+        cont.querySelectorAll('.quitar-vinculada').forEach(btn => {
+            btn.addEventListener('click', function () {
+                delete reservasVinculadas[this.dataset.id];
+                renderListaVinculadas();
+            });
+        });
+    }
+
+    function inicializarBuscadorVinculo() {
+        const input = gid('buscar-reserva-vincular');
+        if (!input || input.dataset.inicializado) return;
+        input.dataset.inicializado = 'true';
+
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        input.parentNode.insertBefore(wrapper, input);
+        wrapper.appendChild(input);
+
+        const dropdown = document.createElement('ul');
+        dropdown.className = 'vinculo-ac-dropdown';
+        wrapper.appendChild(dropdown);
+
+        let debounceVinculo;
+        const excludeId = typeof RESERVA_ID !== 'undefined' ? RESERVA_ID : '';
+
+        input.addEventListener('input', () => {
+            clearTimeout(debounceVinculo);
+            const q = input.value.trim();
+            if (q.length < 1) { dropdown.style.display = 'none'; return; }
+            debounceVinculo = setTimeout(async () => {
+                try {
+                    const url = `/Reservas/BuscarReservasParaVincular?q=${encodeURIComponent(q)}${excludeId ? '&excludeId=' + excludeId : ''}`;
+                    const res = await fetch(url);
+                    const items = await res.json();
+                    renderDropdownVinculo(items);
+                } catch { dropdown.style.display = 'none'; }
+            }, 220);
+        });
+
+        function renderDropdownVinculo(items) {
+            dropdown.innerHTML = '';
+            const disponibles = items.filter(it => !reservasVinculadas[it.id]);
+            if (!disponibles.length) { dropdown.style.display = 'none'; return; }
+            disponibles.forEach(item => {
+                const li = document.createElement('li');
+                const tipoTxt = item.esGrupal ? `Grupo (${item.cantUnidades} unidades)` : `${item.nombreAlojamiento} (individual)`;
+                li.innerHTML = `${item.nombreHuesped}<span class="vinculo-tipo-badge">${tipoTxt} — ${item.fechaIngreso} al ${item.fechaSalida}</span>`;
+                li.addEventListener('mousedown', e => {
+                    e.preventDefault();
+                    reservasVinculadas[item.id] = item;
+                    renderListaVinculadas();
+                    input.value = '';
+                    dropdown.style.display = 'none';
+                });
+                dropdown.appendChild(li);
+            });
+            dropdown.style.display = 'block';
+        }
+
+        document.addEventListener('click', e => {
+            if (!wrapper.contains(e.target)) dropdown.style.display = 'none';
+        });
+    }
+
+    function prepararCamposVinculo() {
+        let cont = gid('container-vinculo');
+        cont.innerHTML = '';
+
+        if (!gid('UsarVinculo').checked) {
+            if (typeof RESERVA_ID !== 'undefined') {
+                const mk = document.createElement('input');
+                mk.type = 'hidden'; mk.name = 'EliminarVinculo'; mk.value = 'true';
+                cont.appendChild(mk);
+            }
+            return;
+        }
+
+        Object.keys(reservasVinculadas).forEach((id, i) => {
+            const mk = document.createElement('input');
+            mk.type = 'hidden'; mk.name = `ReservasVinculadasIds[${i}]`; mk.value = id;
+            cont.appendChild(mk);
+        });
+    }
+
+    gid('UsarVinculo')?.addEventListener('change', function () {
+        gid('seccion-vinculo').classList.toggle('d-none', !this.checked);
+        if (this.checked) inicializarBuscadorVinculo();
+    });
+
     function habilitarCampo(id) {
         const el = gid(id);
         el.readOnly = false;
@@ -565,6 +1012,7 @@
             actualizarPrecioState();
             actualizarNochesYTotal();
         }
+        renderCalendariosAire();
     }
 
     // Mapa auxiliar id → nombre para reconstruir checkboxes al togglear
@@ -652,6 +1100,7 @@
                     const badge = gid(`badge-${this.dataset.id}`);
                     if (badge) { badge.textContent = ''; badge.classList.add('d-none'); }
                     actualizarResumenGrupal();
+                    renderCalendariosAire();
                 }
             });
         });
@@ -659,6 +1108,7 @@
         gid('disponibilidad-msg-grupal').className = 'form-text text-success mb-2';
         const cantUnidades = data.filter(a => !a.nombre.startsWith('Apart')).length;
         gid('disponibilidad-msg-grupal').textContent = `${cantUnidades} de 16 unidades disponibles.`;
+        renderCalendariosAire();
     }
 
     // ── Modal personas por unidad ─────────────────────────────────────────────
@@ -725,6 +1175,7 @@
 
         bootstrap.Modal.getInstance(gid('modal-personas-unidad'))?.hide();
         actualizarResumenGrupal();
+        renderCalendariosAire();
     });
 
     // Confirmar con Enter
@@ -952,6 +1403,7 @@
                 gid('MontoTotal').value = '';
             }
         }
+        actualizarTotalFinalUI();
     }
 
     // ── Precio sugerido por temporada (AJAX) ─────────────────────────────────
@@ -996,6 +1448,21 @@
         aplicarModoInvitacion(this.checked);
     });
 
+    gid('UsaAireAcondicionado').addEventListener('change', function () {
+        gid('seccion-aire').classList.toggle('d-none', !this.checked);
+        if (this.checked) {
+            renderCalendariosAire();
+        } else {
+            aireCabanasSeleccionadas = {};
+            actualizarTotalFinalUI();
+        }
+    });
+
+    gid('PrecioAireDiario').addEventListener('input', function () {
+        actualizarResumenAireTexto();
+        actualizarTotalFinalUI();
+    });
+
     gid('FechaIngreso').addEventListener('change', function () {
         const egresoInput = gid('FechaSalida');
         if (this.value) {
@@ -1027,11 +1494,13 @@
         }
         if (gid('AlojamientoId').value && gid('CantidadHuespedes').value)
             consultarPrecioSugerido();
+        renderCalendariosAire();
     });
 
     gid('FechaSalida').addEventListener('change', function () {
         actualizarNochesYTotal();
         buscarDisponibles();
+        renderCalendariosAire();
     });
 
     gid('AlojamientoId').addEventListener('change', function () {
@@ -1039,6 +1508,7 @@
         actualizarPrecioState();
         gid('precio-hint').textContent = 'Buscando tarifa…';
         consultarPrecioSugerido();
+        renderCalendariosAire();
     });
 
     gid('IncluyeDesayuno').addEventListener('change', function () {
@@ -1077,6 +1547,7 @@
             gid('PrecioPorDia').value = '';
             gid('total-hint').textContent = 'Total ingresado manualmente';
         }
+        actualizarTotalFinalUI();
     });
 
     // ── Poblar hidden inputs grupal antes del submit ──────────────────────────
@@ -1130,7 +1601,8 @@
         const egreso   = gid('FechaSalida').value;
         const noches   = calcularNoches();
         const esInv    = gid('EsInvitacion').checked;
-        const total    = parseFloat(gid('MontoTotal').value) || 0;
+        const montoAlojamientoActual = parseFloat(gid('MontoTotal').value) || 0;
+        const total    = montoAlojamientoActual + calcularSubtotalAire();
         const telefono = gid('Telefono').value.trim();
         const canal    = gid('CanalOrigen').value;
         const obs      = gid('Observaciones').value.trim();
@@ -1266,6 +1738,8 @@
 
         // Preparar campos ocultos grupal antes del modal
         if (esGrupal) prepararCamposGrupal();
+        prepararCamposAire();
+        prepararCamposVinculo();
 
         e.preventDefault();
         poblarModalResumen();
@@ -1274,6 +1748,11 @@
 
     gid('btn-confirmar-reserva').addEventListener('click', function () {
         bootstrap.Modal.getInstance(gid('modal-confirmar-reserva'))?.hide();
+        const subtotalAire = calcularSubtotalAire();
+        if (subtotalAire > 0) {
+            const montoAlojamiento = parseFloat(gid('MontoTotal').value) || 0;
+            gid('MontoTotal').value = (montoAlojamiento + subtotalAire).toFixed(2);
+        }
         gid('PrecioPorDia').readOnly = false;
         gid('MontoTotal').readOnly   = false;
         gid('form-reserva').submit();

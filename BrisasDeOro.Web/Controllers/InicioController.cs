@@ -313,6 +313,46 @@ public class InicioController : Controller
                 EsHoy             = FS(x.r) == hoy
             }).ToList();
 
+        // ── Aires acondicionados — hoy ────────────────────────────────────────
+        // Una cabaña está Activa si:
+        //  (a) hoy tiene un día de aire tildado, o
+        //  (b) ayer tenía un día tildado y todavía no pasó el horario de corte de
+        //      hoy (10:00 si hoy es el checkout de la reserva que ocupa la cabaña,
+        //      12:00 en cualquier otro caso).
+        var ayer = hoy.AddDays(-1);
+        var ahora = DateTime.Now;
+
+        var diasAireHoyAyer = await _context.ReservaAireDias
+            .Where(a => a.Fecha == hoy.ToDateTime(TimeOnly.MinValue)
+                     || a.Fecha == ayer.ToDateTime(TimeOnly.MinValue))
+            .ToListAsync();
+
+        var cabanas = alojamientos.Where(a => a.Tipo == TipoAlojamiento.Cabaña).ToList();
+        var airesHoy = new List<AireAcondicionadoHoyItem>();
+
+        foreach (var cab in cabanas)
+        {
+            var reservaActiva = activasHoy.FirstOrDefault(r => PerteneceAReserva(r, cab.Id));
+
+            bool tildadoHoy  = diasAireHoyAyer.Any(a => a.AlojamientoId == cab.Id && a.Fecha == hoy.ToDateTime(TimeOnly.MinValue));
+            bool tildadoAyer = diasAireHoyAyer.Any(a => a.AlojamientoId == cab.Id && a.Fecha == ayer.ToDateTime(TimeOnly.MinValue));
+
+            bool esCheckoutHoy = reservaActiva != null && FS(reservaActiva) == hoy;
+            var horarioCorte   = esCheckoutHoy ? new TimeSpan(10, 0, 0) : new TimeSpan(12, 0, 0);
+            bool dentroVentanaAyer = tildadoAyer && ahora.TimeOfDay < horarioCorte;
+
+            bool activo = tildadoHoy || dentroVentanaAyer;
+
+            airesHoy.Add(new AireAcondicionadoHoyItem
+            {
+                NombreCabana  = cab.Nombre,
+                Activo        = activo,
+                TieneReserva  = reservaActiva != null,
+                NombreHuesped = reservaActiva?.NombreHuesped ?? string.Empty,
+                ReservaId     = reservaActiva?.Id ?? 0
+            });
+        }
+
         var vm = new InicioViewModel
         {
             Hoy                      = hoy,
@@ -328,6 +368,7 @@ public class InicioController : Controller
             PendientesCobro          = pendientes,
             CheckInsManana           = checkInsManana,
             CheckOutsManana          = checkOutsManana,
+            AiresAcondicionadosHoy   = airesHoy,
         };
 
         return View(vm);

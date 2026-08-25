@@ -21,6 +21,9 @@ public class FacturacionViewModel
 
     // Filtros activos (Tab 2)
     public string? FiltroTitularSaldos { get; set; }
+    public string? FiltroDesdeSaldos { get; set; }
+    public string? FiltroHastaSaldos { get; set; }
+    public string  FiltroOrdenSaldos { get; set; } = "asc";
 
     // Pestaña activa
     public string TabActiva { get; set; } = "movimientos";
@@ -41,6 +44,8 @@ public class MovimientoViewModel
 
     public bool                       EsGrupal  { get; set; }
     public List<UnidadGrupalResumen>  Unidades  { get; set; } = new();
+
+    public string? VinculadaConNombre { get; set; }
 }
 
 // ── Saldo pendiente (una reserva con deuda) ───────────────────────────────────
@@ -61,6 +66,8 @@ public class SaldoPendienteViewModel
     public decimal SaldoPendiente  => MontoTotal - TotalCobrado;
     public string  EstadoPagoClase => TotalCobrado == 0 ? "pago-sin-sena" : "pago-senado";
     public string  EstadoPagoTexto => TotalCobrado == 0 ? "Sin seña"      : "Señado";
+
+    public string? VinculadaConNombre { get; set; }
 }
 
 // ── Unidad de alojamiento en una reserva grupal ───────────────────────────────

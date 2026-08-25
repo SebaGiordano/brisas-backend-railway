@@ -90,6 +90,15 @@
         #fila-fecha-registro .detalle-label,
         #fila-fecha-registro .detalle-valor { margin-bottom: 0 !important; }
     }
+    @@media (min-width: 768px) and (max-width: 991.98px) {
+        #datos-titular-grupal .col-md-2 {
+            flex: 0 0 33.333% !important;
+            max-width: 33.333% !important;
+        }
+    }
+    .card-header.bg-light {
+        background-color: #e9ecef !important;
+    }
 </style>
 
 @* ── Barra de navegación superior mobile (solo cuando se viene del calendario) ── *@
@@ -133,14 +142,52 @@
 
 @* ── Datos de la reserva (layout condicional: grupal vs individual) ── *@
 @{
-    var noches    = (Model.FechaSalida - Model.FechaIngreso).Days;
+    var noches = (Model.FechaSalida - Model.FechaIngreso).Days;
+
+    var diasAirePorCabanaDict = ViewBag.DiasAirePorCabana as Dictionary<int, int>;
+    var diasAireTotalGlobal   = diasAirePorCabanaDict?.Values.Sum() ?? 0;
+    var subtotalAireGlobal    = Model.PrecioAireDiario.HasValue
+        ? diasAireTotalGlobal * Model.PrecioAireDiario.Value : 0;
+
     var tarifaDia = (!Model.EsInvitacion && noches > 0)
-        ? (decimal?)(Model.MontoTotal / noches) : null;
+        ? (decimal?)((Model.MontoTotal - subtotalAireGlobal) / noches) : null;
+
+    var colTotalesIndividual = diasAireTotalGlobal > 0 ? "col-sm-4" : "col-sm-6";
+    var colTotalesGrupal     = diasAireTotalGlobal > 0 ? "col-sm-4" : "col-sm-6 col-md-3";
 
     // Grupal: siempre evaluados (vacíos para reservas individuales, sin costo)
     var habsAparts     = Model.UnidadesGrupales.Where(u => u.Alojamiento.Tipo != TipoAlojamiento.Cabaña).ToList();
     var cabanas        = Model.UnidadesGrupales.Where(u => u.Alojamiento.Tipo == TipoAlojamiento.Cabaña).ToList();
     var capacidadTotal = Model.UnidadesGrupales.Sum(u => u.Alojamiento.Capacidad);
+}
+
+@if (ViewBag.ReservasVinculadas != null)
+{
+    var vinculadas = ViewBag.ReservasVinculadas as IEnumerable<dynamic>;
+    <div class="card mb-3">
+        <div class="card-header fw-semibold bg-light">
+            <i class="bi bi-link-45deg me-2"></i>Reservas vinculadas
+        </div>
+        <div class="card-body py-2">
+            @foreach (var r in vinculadas!)
+            {
+                var tipoTxt = r.esGrupal ? $"Grupo ({r.cantUnidades} unidades)" : (string)r.nombreAlojamiento;
+                decimal saldo = r.saldoPendiente;
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <span>
+                        <strong>@r.nombreHuesped</strong>
+                        <span class="text-muted"> — @tipoTxt</span>
+                    </span>
+                    <span class="d-flex align-items-center gap-3">
+                        <span class="fw-bold @(saldo > .01m ? "text-danger" : "text-success")">
+                            @(saldo.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("es-AR")))
+                        </span>
+                        <a asp-action="Details" asp-route-id="@r.id" class="btn btn-outline-secondary btn-sm">Ver</a>
+                    </span>
+                </div>
+            }
+        </div>
+    </div>
 }
 
 @if (Model.EsGrupal)
@@ -162,7 +209,7 @@
                     <div class="small fw-bold text-secondary text-uppercase mb-3" style="letter-spacing:.05em">
                         Datos del titular
                     </div>
-                    <div class="row g-2 mb-1">
+                    <div class="row g-2 mb-1" id="datos-titular-grupal">
                         <div class="col-12 col-md-2">
                             <div class="detalle-label">Nombre del titular</div>
                             <div class="detalle-valor fw-semibold">@Model.NombreHuesped</div>
@@ -259,6 +306,7 @@
                             }
                             @if (cabanas.Any())
                             {
+                                var diasAirePorCabana = ViewBag.DiasAirePorCabana as Dictionary<int, int>;
                                 <div class="col-sm-6">
                                     <div class="fw-semibold small text-muted mb-2">Cabañas</div>
                                     <div class="d-flex flex-column gap-2">
@@ -267,6 +315,13 @@
                                             <div class="ps-2" style="border-left:3px solid #6c8eef;">
                                                 <div><span class="fw-bold">@u.Alojamiento.Nombre</span> <span class="text-muted">(Cap. máx: @u.Alojamiento.Capacidad)</span></div>
                                                 <div class="small text-muted">Personas asignadas: @u.CantidadHuespedes</div>
+                                                @if (diasAirePorCabana != null && diasAirePorCabana.TryGetValue(u.AlojamientoId, out var diasAire) && diasAire > 0)
+                                                {
+                                                    var montoAireCabana = diasAire * Model.PrecioAireDiario!.Value;
+                                                    <div class="small mt-1" style="color:#0d6efd;">
+                                                        Aire acond. adicional: @diasAire día@(diasAire != 1 ? "s" : "") × $@Model.PrecioAireDiario.Value.ToString("N0") = <strong>$@montoAireCabana.ToString("N0")</strong>
+                                                    </div>
+                                                }
                                             </div>
                                         }
                                     </div>
@@ -317,28 +372,65 @@
                         {
                             <div class="col-md-3 fp-fecha">
                                 <div class="detalle-label">Tarifa por día</div>
-                                <div class="detalle-valor fw-semibold">$@Math.Round(tarifaDia.Value, 0).ToString("N0")</div>
+                                <div class="detalle-valor fw-bold">$@Math.Round(tarifaDia.Value, 0).ToString("N0")</div>
+                            </div>
+                        }
+                        @if (diasAireTotalGlobal > 0)
+                        {
+                            <div class="col-12 fp-fecha">
+                                <div class="detalle-label" style="color:#0d6efd;">Aire acondicionado adicional</div>
+                                <div class="detalle-valor" style="color:#0d6efd;">
+                                    @diasAireTotalGlobal día@(diasAireTotalGlobal != 1 ? "s" : "") × $@Model.PrecioAireDiario!.Value.ToString("N0") = <strong>$@subtotalAireGlobal.ToString("N0")</strong>
+                                </div>
                             </div>
                         }
                         <div class="col-12"><hr class="my-1" /></div>
-                        <div class="col-sm-6 col-md-3 fp-total">
-                            <div class="detalle-label">Total estadía</div>
-                            <div class="detalle-valor fw-semibold fs-5">$@Model.MontoTotal.ToString("N0")</div>
-                        </div>
-                        <div class="col-sm-6 col-md-3 fp-total">
+                        @if (diasAireTotalGlobal > 0)
+                        {
+                            <div class="col-12 fp-total">
+                                <div class="p-2 rounded" style="background-color:#f8f9fa;">
+                                    <div class="d-flex justify-content-between small">
+                                        <span class="text-muted">Subtotal alojamiento:</span>
+                                        <strong>$@((Model.MontoTotal - subtotalAireGlobal).ToString("N0"))</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between small">
+                                        <span class="text-muted">Subtotal aire acondicionado adicional:</span>
+                                        <strong>$@subtotalAireGlobal.ToString("N0")</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 fp-total">
+                                <div class="p-3 rounded text-white d-flex justify-content-between align-items-center" style="background-color:#0d6efd;">
+                                    <span class="fw-bold text-uppercase" style="letter-spacing:.04em;">Total final a cobrar</span>
+                                    <span class="fw-bold fs-5">$@Model.MontoTotal.ToString("N0")</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-sm-6 col-md-3 fp-total">
+                                <div class="detalle-label">Total estadía</div>
+                                <div class="detalle-valor fw-bold fs-5">$@Model.MontoTotal.ToString("N0")</div>
+                            </div>
+                        }
+                        <div class="@colTotalesGrupal fp-total">
                             <div class="detalle-label">Estado de pago</div>
                             <div class="detalle-valor"><span class="badge-pago @estadoPagoClase">@estadoPagoTexto</span></div>
                         </div>
-                        <div class="col-sm-6 col-md-3 fp-total">
+                        <div class="@colTotalesGrupal fp-total">
                             <div class="detalle-label" style="color:#198754;font-weight:bold;">Total cobrado</div>
-                            <div class="detalle-valor text-success fw-semibold">$@totalCobrado.ToString("N0")</div>
+                            <div class="p-2 rounded" style="background-color:#eafaf1; border-left:3px solid #198754;">
+                                <div class="detalle-valor text-success fw-bold fs-5">$@totalCobrado.ToString("N0")</div>
+                            </div>
                         </div>
-                        <div id="fp-saldo" class="col-sm-6 col-md-3 fp-total">
+                        <div id="fp-saldo" class="@colTotalesGrupal fp-total">
                             <div class="detalle-label" style="color:#dc3545;font-weight:bold;">Saldo pendiente</div>
-                            <div class="detalle-valor fw-bold @(saldoPendiente > 0 ? "text-danger" : "text-success")">
-                                $@saldoPendiente.ToString("N0")
-                                @if (saldoPendiente < 0)
-                                { <span class="d-block small fw-normal mt-1" style="color:#000000 !important;">(A devolver al cliente)</span> }
+                            <div class="p-2 rounded" style="background-color:#fdecea; border-left:3px solid #dc3545;">
+                                <div class="detalle-valor fw-bold fs-5 @(saldoPendiente > 0 ? "text-danger" : "text-success")">
+                                    $@saldoPendiente.ToString("N0")
+                                    @if (saldoPendiente < 0)
+                                    { <span class="d-block small fw-normal mt-1" style="color:#000000 !important;">(A devolver al cliente)</span> }
+                                </div>
                             </div>
                         </div>
                         <div id="fila-fecha-registro" class="col-sm-6 fp-total">
@@ -485,28 +577,65 @@ else
                         {
                             <div class="col-sm-4 fp-fecha">
                                 <div class="detalle-label">Tarifa por día</div>
-                                <div class="detalle-valor fw-semibold">$@Math.Round(tarifaDia.Value, 0).ToString("N0")</div>
+                                <div class="detalle-valor fw-bold">$@Math.Round(tarifaDia.Value, 0).ToString("N0")</div>
+                            </div>
+                        }
+                        @if (diasAireTotalGlobal > 0)
+                        {
+                            <div class="col-sm-8 fp-fecha">
+                                <div class="detalle-label" style="color:#0d6efd;">Aire acondicionado adicional</div>
+                                <div class="detalle-valor" style="color:#0d6efd;">
+                                    @diasAireTotalGlobal día@(diasAireTotalGlobal != 1 ? "s" : "") × $@Model.PrecioAireDiario!.Value.ToString("N0") = <strong>$@subtotalAireGlobal.ToString("N0")</strong>
+                                </div>
                             </div>
                         }
                         <div class="col-12"><hr class="my-1" /></div>
-                        <div class="col-sm-6 fp-total">
-                            <div class="detalle-label">Total estadía</div>
-                            <div class="detalle-valor fw-semibold fs-5">$@Model.MontoTotal.ToString("N0")</div>
-                        </div>
-                        <div class="col-sm-6 fp-total">
+                        @if (diasAireTotalGlobal > 0)
+                        {
+                            <div class="col-12 fp-total">
+                                <div class="p-2 rounded" style="background-color:#f8f9fa;">
+                                    <div class="d-flex justify-content-between small">
+                                        <span class="text-muted">Subtotal alojamiento:</span>
+                                        <strong>$@((Model.MontoTotal - subtotalAireGlobal).ToString("N0"))</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between small">
+                                        <span class="text-muted">Subtotal aire acondicionado adicional:</span>
+                                        <strong>$@subtotalAireGlobal.ToString("N0")</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 fp-total">
+                                <div class="p-3 rounded text-white d-flex justify-content-between align-items-center" style="background-color:#0d6efd;">
+                                    <span class="fw-bold text-uppercase" style="letter-spacing:.04em;">Total final a cobrar</span>
+                                    <span class="fw-bold fs-5">$@Model.MontoTotal.ToString("N0")</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-sm-6 fp-total">
+                                <div class="detalle-label">Total estadía</div>
+                                <div class="detalle-valor fw-bold fs-5">$@Model.MontoTotal.ToString("N0")</div>
+                            </div>
+                        }
+                        <div class="@colTotalesIndividual fp-total">
                             <div class="detalle-label">Estado de pago</div>
                             <div class="detalle-valor"><span class="badge-pago @estadoPagoClase">@estadoPagoTexto</span></div>
                         </div>
-                        <div class="col-sm-6 fp-total">
+                        <div class="@colTotalesIndividual fp-total">
                             <div class="detalle-label" style="color:#198754;font-weight:bold;">Total cobrado</div>
-                            <div class="detalle-valor text-success fw-semibold">$@totalCobrado.ToString("N0")</div>
+                            <div class="p-2 rounded" style="background-color:#eafaf1; border-left:3px solid #198754;">
+                                <div class="detalle-valor text-success fw-bold fs-5">$@totalCobrado.ToString("N0")</div>
+                            </div>
                         </div>
-                        <div id="fp-saldo" class="col-sm-6 fp-total">
+                        <div id="fp-saldo" class="@colTotalesIndividual fp-total">
                             <div class="detalle-label" style="color:#dc3545;font-weight:bold;">Saldo pendiente</div>
-                            <div class="detalle-valor fw-bold @(saldoPendiente > 0 ? "text-danger" : "text-success")">
-                                $@saldoPendiente.ToString("N0")
-                                @if (saldoPendiente < 0)
-                                { <span class="d-block small fw-normal mt-1" style="color:#000000 !important;">(A devolver al cliente)</span> }
+                            <div class="p-2 rounded" style="background-color:#fdecea; border-left:3px solid #dc3545;">
+                                <div class="detalle-valor fw-bold fs-5 @(saldoPendiente > 0 ? "text-danger" : "text-success")">
+                                    $@saldoPendiente.ToString("N0")
+                                    @if (saldoPendiente < 0)
+                                    { <span class="d-block small fw-normal mt-1" style="color:#000000 !important;">(A devolver al cliente)</span> }
+                                </div>
                             </div>
                         </div>
                         <div id="fila-fecha-registro" class="col-sm-6 fp-total">

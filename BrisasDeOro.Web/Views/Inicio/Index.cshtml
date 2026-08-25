@@ -177,6 +177,40 @@
         box-shadow: 0 .3rem .9rem rgba(195, 155, 45, .28);
         transform: translateY(-2px);
     }
+
+    @@media (max-width: 767.98px) {
+        #card-aires-acondicionados .lista-unidades-estado li {
+            align-items: flex-start;
+        }
+        #card-aires-acondicionados .lista-unidades-estado li > span:first-child {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        #card-aires-acondicionados .aire-huesped-txt {
+            display: block;
+            margin-left: 1.1rem;
+        }
+        #card-aires-acondicionados .aire-huesped-link {
+            color: #0d6efd !important;
+            text-decoration: underline;
+        }
+        #card-aires-acondicionados .aire-btn-ver {
+            display: none !important;
+        }
+    }
+    @@media (min-width: 768px) {
+        #card-aires-acondicionados .aire-huesped-link {
+            color: inherit !important;
+            text-decoration: none !important;
+            pointer-events: none;
+            cursor: default;
+        }
+    }
+    @@media (min-width: 392px) {
+        #header-aires-acondicionados .d-aire-fecha-inline {
+            display: inline !important;
+        }
+    }
 </style>
 
 @* ── Encabezado ── *@
@@ -568,6 +602,96 @@
                 </tbody>
             </table>
         }
+    </div>
+</div>
+
+@* ── Aires acondicionados — hoy ── *@
+<div class="card mb-4" id="card-aires-acondicionados">
+    <div class="card-header fw-semibold bg-light" id="header-aires-acondicionados">
+        <i class="bi bi-snow2 me-1"></i>Aires acondicionados <strong class="text-uppercase">CABAÑAS</strong>
+        <span class="d-block d-aire-fecha-inline"> — @FmtFecha(Model.Hoy) <span class="text-muted fw-normal">(hoy)</span></span>
+    </div>
+    <div class="card-body p-0">
+        @{
+            var airesActivos   = Model.AiresAcondicionadosHoy.Where(a => a.Activo).ToList();
+            var airesInactivos = Model.AiresAcondicionadosHoy.Where(a => !a.Activo).ToList();
+        }
+        <div class="row g-0 h-100">
+            @* Activos *@
+            <div class="col-6 border-end p-3">
+                <div class="fw-semibold text-success small text-uppercase mb-2" style="letter-spacing:.04em;">
+                    <i class="bi bi-check-circle-fill me-1"></i>Activos
+                    <span class="badge bg-success ms-1">@airesActivos.Count</span>
+                </div>
+                @if (!airesActivos.Any())
+                {
+                    <span class="text-muted fst-italic small">Ninguno activo.</span>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0 lista-unidades-estado">
+                        @foreach (var item in airesActivos)
+                        {
+                            <li class="py-1 small d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="bi bi-check-circle text-success me-1"></i>@item.NombreCabana
+                                    @if (item.TieneReserva)
+                                    {
+                                        <span class="text-muted aire-huesped-txt">
+                                            — <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
+                                                 class="aire-huesped-link">@item.NombreHuesped</a>
+                                        </span>
+                                    }
+                                </span>
+                                @if (item.TieneReserva)
+                                {
+                                    <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
+                                       class="btn btn-outline-secondary btn-sm py-0 aire-btn-ver">Ver</a>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+            @* Inactivos *@
+            <div class="col-6 p-3">
+                <div class="fw-semibold text-danger small text-uppercase mb-2" style="letter-spacing:.04em;">
+                    <i class="bi bi-x-circle-fill me-1"></i>Inactivos
+                    <span class="badge bg-danger ms-1">@airesInactivos.Count</span>
+                </div>
+                @if (!airesInactivos.Any())
+                {
+                    <span class="text-muted fst-italic small">Ninguno inactivo.</span>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0 lista-unidades-estado">
+                        @foreach (var item in airesInactivos)
+                        {
+                            <li class="py-1 small d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="bi bi-x-circle text-danger me-1"></i>@item.NombreCabana
+                                    @if (item.TieneReserva)
+                                    {
+                                        <span class="text-muted aire-huesped-txt">
+                                            — <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
+                                                 class="aire-huesped-link">@item.NombreHuesped</a>
+                                        </span>
+                                    }
+                                    else
+                                    { <span class="text-muted fst-italic aire-huesped-txt"> — (vacía)</span> }
+                                </span>
+                                @if (item.TieneReserva)
+                                {
+                                    <a asp-controller="Reservas" asp-action="Details" asp-route-id="@item.ReservaId"
+                                       class="btn btn-outline-secondary btn-sm py-0 aire-btn-ver">Ver</a>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
     </div>
 </div>
 

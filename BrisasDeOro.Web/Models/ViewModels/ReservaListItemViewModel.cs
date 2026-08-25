@@ -16,6 +16,11 @@ public class ReservaListItemViewModel
     public bool          EsGrupal          { get; set; }
     public int           CantUnidadesGrupales { get; set; }
 
+    // Null si esta reserva coincide directamente con la búsqueda; si no es null,
+    // significa que apareció en los resultados solo por estar vinculada a la
+    // reserva/nombre indicado (búsqueda expandida por Reservas Vinculadas).
+    public string? VinculadaConNombre { get; set; }
+
     // Calculados
     public decimal SaldoPendiente => MontoTotal - TotalCobrado;
     public int CantidadNoches    => (FechaSalida - FechaIngreso).Days;

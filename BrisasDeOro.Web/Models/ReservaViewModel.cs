@@ -37,6 +37,15 @@ public class ReservaViewModel
     [Display(Name = "Total de la estadía")]
     public decimal? MontoTotal { get; set; }
 
+    [Display(Name = "¿Usa aire acondicionado adicional?")]
+    public bool UsaAireAcondicionado { get; set; } = false;
+
+    [Display(Name = "Precio de aire por día")]
+    public decimal? PrecioAireDiario { get; set; }
+
+    // Días de aire tildados por cabaña, enviados desde el formulario.
+    public List<AireCabanaInputModel> AireCabanas { get; set; } = new();
+
     [Display(Name = "¿Es invitación?")]
     public bool EsInvitacion { get; set; } = false;
 
@@ -56,6 +65,18 @@ public class ReservaViewModel
     // Unidades seleccionadas en modo grupal (populadas por JS antes del submit)
     public List<UnidadGrupalViewModel> UnidadesGrupales { get; set; } = new();
 
+    // Reservas Vinculadas: IDs de las reservas que quedarán vinculadas a esta
+    // (populado por JS antes del submit). Si viene vacío, no se toca el vínculo
+    // existente salvo que EliminarVinculo sea true.
+    public List<int> ReservasVinculadasIds { get; set; } = new();
+
+    [Display(Name = "Etiqueta del grupo (opcional)")]
+    public string? EtiquetaGrupoVinculado { get; set; }
+
+    // Si es true, se elimina el vínculo actual de esta reserva (deja de pertenecer
+    // a su GrupoVinculado, sin afectar a las demás reservas del grupo).
+    public bool EliminarVinculo { get; set; } = false;
+
     // Solo para poblar el dropdown en la vista
     public List<SelectListItem> Alojamientos { get; set; } = new();
 }
@@ -64,6 +85,12 @@ public class UnidadGrupalViewModel
 {
     public int AlojamientoId { get; set; }
     public int CantidadHuespedes { get; set; }
+}
+
+public class AireCabanaInputModel
+{
+    public int AlojamientoId { get; set; }
+    public List<DateTime> Fechas { get; set; } = new();
 }
 
 public class EditarReservaViewModel : ReservaViewModel
