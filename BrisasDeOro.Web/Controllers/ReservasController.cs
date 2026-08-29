@@ -588,7 +588,8 @@ public class ReservasController : Controller
 
         var result = alojamientos
             .OrderBy(a => a.Tipo == TipoAlojamiento.Habitacion ? 0
-                        : a.Tipo == TipoAlojamiento.Apart      ? 1 : 2)
+                        : a.Tipo == TipoAlojamiento.Apart      ? 1
+                        : a.Tipo == TipoAlojamiento.Cabaña      ? 2 : 3)
             .ThenBy(a =>
             {
                 var p = a.Nombre.Split(' ');
@@ -955,5 +956,8 @@ public class ReservasController : Controller
 
         ViewBag.AlojamientosJson = System.Text.Json.JsonSerializer.Serialize(
             ordenados.Select(a => new { id = a.Id, capacidad = a.Capacidad }));
+
+        ViewBag.TotalUnidadesNoApart = alojamientos.Count(a => a.Tipo != TipoAlojamiento.Apart);
+        ViewBag.TotalUnidadesGrupal = alojamientos.Count(a => a.Tipo != TipoAlojamiento.Apart && a.Tipo != TipoAlojamiento.Casa);
     }
 }

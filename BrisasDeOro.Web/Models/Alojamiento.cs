@@ -4,7 +4,8 @@ public enum TipoAlojamiento
 {
     Cabaña,
     Habitacion,
-    Apart
+    Apart,
+    Casa
 }
 
 public class Alojamiento

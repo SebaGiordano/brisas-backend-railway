@@ -185,7 +185,7 @@ public class InicioController : Controller
             {
                 var dias = (hoy.ToDateTime(TimeOnly.MinValue) - activa.FechaIngreso.Date).Days;
 
-                if (dias == 6)
+                if (dias == 6 && aloj.Tipo != TipoAlojamiento.Casa)
                     tareas.Add("Cambio de sábanas (día 6)");
 
                 if (aloj.Tipo == TipoAlojamiento.Habitacion && checkOut == null && checkIn == null)

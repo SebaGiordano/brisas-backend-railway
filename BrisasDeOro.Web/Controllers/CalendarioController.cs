@@ -19,8 +19,25 @@ public class CalendarioController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var desde = DateTime.Today.AddMonths(-7);
-        var hasta = DateTime.Today.AddMonths(7);
+        // Rango dinámico: en vez de una ventana fija (que se corre sola con el paso
+        // del tiempo y termina excluyendo reservas viejas reales), se calcula a partir
+        // de las fechas mínima/máxima que existan realmente en la base — igual criterio
+        // que ya usa el JS del Calendario para dibujar el rango de columnas.
+        var hoy = DateTime.Today;
+        var pisoMinimo   = hoy.AddMonths(-7);
+        var pisoMaximo   = hoy.AddMonths(7);
+
+        var extremos = await _context.Reservas
+            .Where(r => r.Estado != EstadoReserva.Cancelada)
+            .Select(r => new { r.FechaIngreso, r.FechaSalida })
+            .ToListAsync();
+
+        var desde = extremos.Any()
+            ? new[] { pisoMinimo, extremos.Min(r => r.FechaIngreso) }.Min()
+            : pisoMinimo;
+        var hasta = extremos.Any()
+            ? new[] { pisoMaximo, extremos.Max(r => r.FechaSalida) }.Max()
+            : pisoMaximo;
 
         var reservas = await _context.Reservas
             .Where(r => r.Estado != EstadoReserva.Cancelada

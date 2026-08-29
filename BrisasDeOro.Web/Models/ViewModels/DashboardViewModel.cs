@@ -38,6 +38,7 @@ public class DashboardPeriodoViewModel
 
     // Ocupación
     public OcupacionDetalleViewModel   Ocupacion            { get; set; } = new();
+    public OcupacionCasaViewModel      OcupacionCasa        { get; set; } = new();
 
     // Canales de origen
     public List<CanalReservaViewModel> Canales              { get; set; } = new();
@@ -75,6 +76,17 @@ public class OcupacionDetalleViewModel
     public int     PlazasCabDisponibles   { get; set; }
     public int     PlazasTotalOcupadas    => PlazasHabOcupadas    + PlazasCabOcupadas;
     public int     PlazasTotalDisponibles => PlazasHabDisponibles + PlazasCabDisponibles;
+}
+
+public class OcupacionCasaViewModel
+{
+    public decimal PctDias           { get; set; }
+    public int     DiasOcupados      { get; set; }
+    public int     DiasTotal         { get; set; }
+
+    public decimal PctPlazas         { get; set; }
+    public int     PlazasOcupadas    { get; set; }
+    public int     PlazasDisponibles { get; set; }
 }
 
 public class CanalReservaViewModel

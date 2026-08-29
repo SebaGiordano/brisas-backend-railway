@@ -13,12 +13,25 @@
 @* ── Título + controles ── *@
 <div id="cal-topbar" class="mb-2 d-flex align-items-center justify-content-between gap-2 flex-wrap">
     <h2 class="mb-0">Calendario</h2>
-    <div class="d-flex align-items-center gap-2">
-        <div class="btn-group btn-group-sm">
-            <button id="btn-prev" class="btn btn-outline-secondary btn-hover-gris-claro" title="7 días atrás" style="min-height:38px;min-width:48px;"><i class="bi bi-chevron-left"></i></button>
-            <button id="btn-hoy" class="btn btn-primary" style="min-height:38px;min-width:48px;">Hoy</button>
-            <button id="btn-next" class="btn btn-outline-secondary btn-hover-gris-claro" title="7 días adelante" style="min-height:38px;min-width:48px;"><i class="bi bi-chevron-right"></i></button>
-        </div>
+    <div id="cal-topbar-botonera" class="btn-group btn-group-sm">
+        <button id="btn-prev" class="btn btn-outline-secondary btn-hover-gris-claro" title="7 días atrás" style="min-height:38px;min-width:48px;"><i class="bi bi-chevron-left"></i></button>
+        <button id="btn-hoy" class="btn btn-primary" style="min-height:38px;min-width:48px;">Hoy</button>
+        <button id="btn-next" class="btn btn-outline-secondary btn-hover-gris-claro" title="7 días adelante" style="min-height:38px;min-width:48px;"><i class="bi bi-chevron-right"></i></button>
+    </div>
+    @* ── Leyenda (escritorio — se oculta en mobile, ahí se muestra abajo del calendario) ── *@
+    <div id="cal-topbar-leyenda" class="d-mobile-none" style="display:flex;flex-wrap:nowrap;align-items:center;gap:8px;font-size:.78rem;color:#555;white-space:nowrap;">
+        <span style="display:flex;align-items:center;gap:3px;flex-shrink:0;">
+            <span style="display:inline-block;width:11px;height:11px;background:#FFCCCC;border:1px solid #f87171;border-radius:2px;flex-shrink:0;"></span>Sin seña
+        </span>
+        <span style="display:flex;align-items:center;gap:3px;flex-shrink:0;">
+            <span style="display:inline-block;width:11px;height:11px;background:#FFF3CC;border:1px solid #fbbf24;border-radius:2px;flex-shrink:0;"></span>Señado
+        </span>
+        <span style="display:flex;align-items:center;gap:3px;flex-shrink:0;">
+            <span style="display:inline-block;width:11px;height:11px;background:#CCFFCC;border:1px solid #4ade80;border-radius:2px;flex-shrink:0;"></span>Saldado
+        </span>
+        <span style="display:flex;align-items:center;gap:3px;flex-shrink:0;">
+            <span style="display:inline-block;width:11px;height:11px;background:#E8D5F5;border:1px solid #a855f7;border-radius:2px;flex-shrink:0;"></span>Invitación
+        </span>
     </div>
 </div>
 
@@ -30,8 +43,8 @@
     </table>
 </div>
 
-@* ── Leyenda ── *@
-<div style="display:flex;flex-wrap:nowrap;justify-content:center;align-items:center;gap:8px;margin-top:6px;font-size:clamp(10px,.75rem,13px);color:#555;white-space:nowrap;">
+@* ── Leyenda (mobile — se oculta en escritorio, ahí se muestra arriba) ── *@
+<div class="d-desktop-none" style="display:flex;flex-wrap:nowrap;justify-content:center;align-items:center;gap:8px;margin-top:6px;font-size:clamp(10px,.75rem,13px);color:#555;white-space:nowrap;">
     <span style="display:flex;align-items:center;gap:3px;flex-shrink:0;">
         <span style="display:inline-block;width:11px;height:11px;background:#FFCCCC;border:1px solid #f87171;border-radius:2px;flex-shrink:0;"></span>Sin seña
     </span>
@@ -112,15 +125,15 @@
     }
     /* ── Altura fija absoluta e irrompible ─────────────────────────────────── */
     #cal-tbody tr:not(.cal-divider) {
-        height: 29px !important;
-        max-height: 29px !important;
+        height: 27px !important;
+        max-height: 27px !important;
     }
     /* max-height no funciona en td de tabla; la combinación correcta es
        line-height = alto de fila + overflow:hidden + sin padding vertical.
        Esto impide que cualquier contenido estire la celda. */
     #cal-tbody tr:not(.cal-divider) td {
-        height: 29px !important;
-        line-height: 29px !important;
+        height: 27px !important;
+        line-height: 27px !important;
         overflow: hidden !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
@@ -129,7 +142,7 @@
     }
     /* Celdas de reserva: mismos invariantes + truncado visible */
     #cal-tbody .cal-res {
-        line-height: 29px !important;
+        line-height: 27px !important;
         overflow: hidden !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
@@ -144,9 +157,16 @@
         #modal-reserva .btn { display: flex !important; align-items: center !important; justify-content: center !important; }
     }
     @@media (min-width: 769px) {
-        /* Botones de navegación centrados en pantalla */
+        /* Botones de navegación centrados en pantalla; leyenda anclada a la derecha */
         #cal-topbar { display: grid !important; grid-template-columns: 1fr auto 1fr !important; align-items: center !important; }
-        #cal-topbar > div { grid-column: 2 !important; }
+        #cal-topbar-botonera { grid-column: 2 !important; justify-self: center !important; }
+        #cal-topbar-leyenda { grid-column: 3 !important; justify-self: end !important; }
+    }
+    @@media (min-width: 769px) {
+        #cal-wrapper { max-height: calc(100vh - 100px) !important; }
+    }
+    @@media (min-width: 769px) {
+        #cal-wrapper { margin-bottom: 4px !important; }
     }
 </style>
 <script>
@@ -185,6 +205,8 @@
         { divider: true },
         { nombre: 'Cabaña 7', bg: '#D6E4F0' },
         { nombre: 'Cabaña 8', bg: '#D6E4F0' },
+        { divider: true },
+        { nombre: 'Casa (Icho Cruz)', bg: '#FAD7B0' },
     ];
 
     const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -196,7 +218,7 @@
 
     const H1    = 22;   // alto fila encabezado mes (px)
     const H2    = 22;   // alto fila encabezado días (px)
-    const ROW_H = 29;   // alto fijo por fila — 16 filas caben en pantalla 1080p
+    const ROW_H = 27;   // alto fijo por fila (ajustado para que las 17 filas + Casa entren sin scroll vertical en escritorio)
 
     const isMobile = window.innerWidth < 768;
     const COL_INST  = isMobile ? 48 : 140;

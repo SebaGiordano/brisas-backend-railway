@@ -329,7 +329,7 @@
 @* ── Zona media: izquierda apilada (stats + limpieza) / derecha unidades libres ── *@
 @{
     var habitacionesLibres = Model.UnidadesLibresHoy.Where(n => n.StartsWith("Habitación")).ToList();
-    var cabañasLibres      = Model.UnidadesLibresHoy.Where(n => n.StartsWith("Cabaña")).ToList();
+    var cabañasLibres      = Model.UnidadesLibresHoy.Where(n => n.StartsWith("Cabaña") || n.StartsWith("Casa")).ToList();
 }
 <div class="row g-3 mb-3" style="align-items:stretch;">
 
@@ -464,7 +464,7 @@
     @* ── Columna derecha: Estado de unidades (libres + ocupadas) ── *@
     @{
         var habOcupadas  = Model.UnidadesOcupadasHoy.Where(n => n.StartsWith("Habitación")).ToList();
-        var cabOcupadas  = Model.UnidadesOcupadasHoy.Where(n => n.StartsWith("Cabaña")).ToList();
+        var cabOcupadas  = Model.UnidadesOcupadasHoy.Where(n => n.StartsWith("Cabaña") || n.StartsWith("Casa")).ToList();
     }
     <div class="col-lg-6">
         <div class="card h-100">

@@ -236,6 +236,37 @@ public class DashboardController : Controller
         ocupacion.PctPlazasTotal        = tplDisp > 0
             ? Math.Round((decimal)tplOcup / tplDisp * 100, 1) : 0;
 
+        // ── Ocupación de la Casa (estadística aparte, no participa de reservas
+        // grupales, así que no hace falta contemplar ese caso) ────────────────
+        var casas = alojamientos.Where(a => a.Tipo == TipoAlojamiento.Casa).ToList();
+
+        int diasCasaOcup   = casas.Sum(c => DiasOcupados(c.Id, null));
+        int totalDiasCasa  = casas.Count * periodDays;
+
+        int plazasCasaOcup = 0;
+        foreach (var r in reservas)
+        {
+            var os = r.FechaIngreso.Date > desde.Date ? r.FechaIngreso.Date : desde.Date;
+            var oe = r.FechaSalida.Date  < hastaExcl  ? r.FechaSalida.Date  : hastaExcl;
+            var od = (oe - os).Days;
+            if (od <= 0) continue;
+
+            if (!r.EsGrupal && alojMap.TryGetValue(r.AlojamientoId, out var aloj)
+                && aloj.Tipo == TipoAlojamiento.Casa)
+                plazasCasaOcup += r.CantidadHuespedes * od;
+        }
+        int plazasCasaDisp = casas.Sum(c => c.Capacidad) * periodDays;
+
+        var ocupacionCasa = new OcupacionCasaViewModel
+        {
+            DiasOcupados      = diasCasaOcup,
+            DiasTotal         = totalDiasCasa,
+            PctDias           = totalDiasCasa > 0 ? Math.Round((decimal)diasCasaOcup / totalDiasCasa * 100, 1) : 0,
+            PlazasOcupadas    = plazasCasaOcup,
+            PlazasDisponibles = plazasCasaDisp,
+            PctPlazas         = plazasCasaDisp > 0 ? Math.Round((decimal)plazasCasaOcup / plazasCasaDisp * 100, 1) : 0
+        };
+
         // ── Canales de origen ─────────────────────────────────────────────────
         var canales = enPeriodo
             .GroupBy(r => string.IsNullOrEmpty(r.CanalOrigen) ? "Sin especificar" : r.CanalOrigen)
@@ -271,6 +302,7 @@ public class DashboardController : Controller
             IngresosFechaIngreso = ingresosFI,
             IngresosProrrateo    = ingresosPro,
             Ocupacion            = ocupacion,
+            OcupacionCasa        = ocupacionCasa,
             Canales              = canales,
         };
     }

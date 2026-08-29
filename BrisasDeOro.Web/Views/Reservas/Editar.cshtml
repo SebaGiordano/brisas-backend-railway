@@ -108,6 +108,17 @@
         <div class="card-header fw-semibold bg-light">Alojamiento</div>
         <div class="card-body">
 
+            <div class="mb-3">
+                <div class="form-check">
+                    <input asp-for="IncluyeDesayuno" type="checkbox"
+                           class="form-check-input" id="IncluyeDesayuno" />
+                    <label asp-for="IncluyeDesayuno" class="form-check-label fw-semibold">
+                        ¿Incluye desayuno?
+                    </label>
+                </div>
+            </div>
+            <hr class="my-3" />
+
             <div class="border rounded p-3 mb-3" id="bloque-toggle-grupal">
                 <div class="form-check form-switch mb-0" id="bloque-toggle-grupal-switch">
                     <input asp-for="EsGrupal" type="checkbox" class="form-check-input" id="EsGrupal" role="switch" />
@@ -122,9 +133,9 @@
 
             <div id="seccion-individual">
                 <div class="row g-3">
-                    <div class="col-md-5">
+                    <div class="col-md-7">
                         <label class="form-label">
-                            Alojamiento <span class="text-danger">*</span>
+                            Alojamiento <span class="text-muted fw-normal small">(reserva individual)</span> <span class="text-danger">*</span>
                         </label>
                         <select asp-for="AlojamientoId" asp-items="Model.Alojamientos"
                                 class="form-select" id="AlojamientoId">
@@ -133,7 +144,7 @@
                         <div id="disponibilidad-msg" class="form-text"></div>
                         <span asp-validation-for="AlojamientoId" class="text-danger small"></span>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-5">
                         <label asp-for="CantidadHuespedes" class="form-label">
                             Cantidad de personas <span class="text-danger">*</span>
                         </label>
@@ -141,15 +152,6 @@
                                id="CantidadHuespedes" min="1" />
                         <div id="capacidad-hint" class="form-text">Cargando capacidad…</div>
                         <span asp-validation-for="CantidadHuespedes" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-4 d-flex align-items-center">
-                        <div class="form-check">
-                            <input asp-for="IncluyeDesayuno" type="checkbox"
-                                   class="form-check-input" id="IncluyeDesayuno" />
-                            <label asp-for="IncluyeDesayuno" class="form-check-label fw-normal">
-                                ¿Incluye desayuno?
-                            </label>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -504,6 +506,8 @@
     const allAlojamientos = @Html.Raw(ViewBag.AlojamientosJson ?? "[]");
     const preUnidades     = @Html.Raw(ViewBag.UnidadesGrupalesJson ?? "[]");
     const preVinculadas   = @Html.Raw(ViewBag.ReservasVinculadasJson ?? "[]");
+    const TOTAL_UNIDADES_NO_APART = @ViewBag.TotalUnidadesNoApart;
+    const TOTAL_UNIDADES_GRUPAL = @ViewBag.TotalUnidadesGrupal;
 
     // Capacidades iniciales — se actualizan tras AJAX
     let capacidades = Object.fromEntries(allAlojamientos.map(a => [String(a.id), a.capacidad]));
@@ -928,7 +932,8 @@
             return;
         }
         lista.innerHTML = '';
-        const izquierda = data.filter(a => a.tipo !== 'Cabaña');
+        // La Casa no participa de reservas grupales: se excluye de ambas columnas.
+        const izquierda = data.filter(a => a.tipo !== 'Cabaña' && a.tipo !== 'Casa');
         const derecha   = data.filter(a => a.tipo === 'Cabaña');
         const grid = document.createElement('div');
         grid.className = 'grid-checkboxes-grupal';
@@ -974,8 +979,8 @@
         });
 
         gid('disponibilidad-msg-grupal').className = 'form-text text-success mb-2';
-        const cantUnidades = data.filter(a => !a.nombre.startsWith('Apart')).length;
-        gid('disponibilidad-msg-grupal').textContent = `${cantUnidades} de 16 unidades disponibles.`;
+        const cantUnidades = data.filter(a => !a.nombre.startsWith('Apart') && !a.nombre.startsWith('Casa')).length;
+        gid('disponibilidad-msg-grupal').textContent = `${cantUnidades} de ${TOTAL_UNIDADES_GRUPAL} unidades disponibles.`;
         renderCalendariosAire();
     }
 
@@ -1150,7 +1155,7 @@
             } else {
                 const cantUnidades = data.filter(a => !a.nombre.startsWith('Apart')).length;
                 msg.className   = 'form-text text-success';
-                msg.textContent = `${cantUnidades} de 16 unidades disponibles.`;
+                msg.textContent = `${cantUnidades} de ${TOTAL_UNIDADES_NO_APART} unidades disponibles.`;
             }
 
             if (esGrupal) {

@@ -278,7 +278,7 @@
 <div class="card mb-4">
     <div class="card-header fw-semibold bg-light">
         <i class="bi bi-cash-stack me-1"></i>Ingresos por método de pago
-        <span class="text-muted fw-normal small ms-2">(excluye invitaciones)</span>
+        <span class="text-muted fw-normal small ms-2">(Hotel y Cabañas Brisas de Oro — excluye invitaciones)</span>
     </div>
     <div class="card-body">
         <div id="tabla-ingresos-wrap" class="table-responsive mb-3">
@@ -336,7 +336,7 @@
 <div class="card mb-4">
     <div class="card-header fw-semibold bg-light">
         <i class="bi bi-building me-1"></i>Porcentaje de ocupación
-        <span class="text-muted fw-normal small ms-2">(excluye invitaciones)</span>
+        <span class="text-muted fw-normal small ms-2">(Hotel y Cabañas Brisas de Oro — excluye invitaciones)</span>
     </div>
     <div class="card-body">
 
@@ -431,6 +431,39 @@
             </button>
         </div>
 
+    </div>
+</div>
+
+@* ══ Ocupación — Casa (Icho Cruz) ══════════════════════════════════════════ *@
+<div class="card mb-4">
+    <div class="card-header fw-semibold bg-light">
+        <i class="bi bi-house-door me-1"></i>Ocupación — Casa (Icho Cruz)
+        <span class="text-muted fw-normal small ms-2">(estadística exclusiva, no incluida en los totales de arriba)</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle mb-0" style="font-size:.85rem;">
+                <thead class="table-dark">
+                    <tr>
+                        <th></th>
+                        <th class="text-center">Días</th>
+                        <th class="text-center">Plazas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-muted">Ocupado / Disponible</td>
+                        <td class="text-center">@p.OcupacionCasa.DiasOcupados / @p.OcupacionCasa.DiasTotal</td>
+                        <td class="text-center">@p.OcupacionCasa.PlazasOcupadas / @p.OcupacionCasa.PlazasDisponibles</td>
+                    </tr>
+                    <tr class="table-light">
+                        <td class="text-muted">Porcentaje</td>
+                        <td class="text-center fw-semibold text-primary">@FmtPct(p.OcupacionCasa.PctDias)</td>
+                        <td class="text-center fw-semibold text-primary">@FmtPct(p.OcupacionCasa.PctPlazas)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 

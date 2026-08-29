@@ -20,6 +20,7 @@
         <button type="button" class="btn btn-outline-secondary btn-sm filtro-tipo" data-filtro="Habitacion">Habitación</button>
         <button type="button" class="btn btn-outline-secondary btn-sm filtro-tipo" data-filtro="Apart">Apart</button>
         <button type="button" class="btn btn-outline-secondary btn-sm filtro-tipo" data-filtro="Cabaña">Cabaña</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm filtro-tipo" data-filtro="Casa">Casa</button>
     </div>
 
     @* Pestañas de temporada — centro *@
@@ -63,6 +64,7 @@
                             <option value="habitacion">Habitaciones</option>
                             <option value="cabaña">Cabañas</option>
                             <option value="apart">Aparts</option>
+                            <option value="casa">Casa</option>
                         </select>
                     </div>
                     <div>
@@ -684,6 +686,7 @@
                                          && g.NombreAlojamiento != "Cabaña 8").ToList();
     var srcCGrand = Model.Grupos.Where(g => g.Tipo == TipoAlojamiento.Cabaña
                                          && g.NombreAlojamiento == "Cabaña 8").ToList();
+    var srcCasa   = Model.Grupos.Where(g => g.Tipo == TipoAlojamiento.Casa).ToList();
 
     // ── Tipo de fila precomputada ─────────────────────────────────────────────
     // (RowIndex, CantPersonas, RowSpan, CD promedio, SD promedio, FilasJson para modal)
@@ -731,6 +734,7 @@
         ("CABAÑA CHICA",   "Cabaña",     srcCChica.Any(), BuildRows(srcCChica, new[]{1,2,3})),
         ("CABAÑA MEDIANA", "Cabaña",     srcCMed.Any(),   BuildRows(srcCMed,   new[]{1,2,3,4,5,6})),
         ("CABAÑA GRANDE",  "Cabaña",     srcCGrand.Any(), BuildRows(srcCGrand, new[]{3,4,5,6,7,8})),
+        ("CASA",           "Casa",       srcCasa.Any(),   BuildRows(srcCasa,   new[]{4,5,6,7,8,9,10})),
     };
 }
 

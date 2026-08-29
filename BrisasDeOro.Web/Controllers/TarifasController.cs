@@ -134,6 +134,7 @@ public class TarifasController : Controller
                 "habitacion" => TipoAlojamiento.Habitacion,
                 "cabaña"     => TipoAlojamiento.Cabaña,
                 "apart"      => TipoAlojamiento.Apart,
+                "casa"       => TipoAlojamiento.Casa,
                 _            => (TipoAlojamiento?)null
             };
             if (tipoEnum.HasValue)
