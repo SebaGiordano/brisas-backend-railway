@@ -257,18 +257,7 @@ public class FacturacionController : Controller
         string? metodoPago, string? concepto,
         string orden = "desc")
     {
-        List<MovimientoViewModel> movimientos;
-        decimal totalPeriodo;
-        try
-        {
-            (movimientos, totalPeriodo) = await ObtenerMovimientosFiltrados(titular, desde, hasta, metodoPago, concepto, orden);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"[PDF-DIAG] Error en query: {ex}");
-            throw;
-        }
-        Console.Error.WriteLine($"[PDF-DIAG] movimientos count: {movimientos.Count}, total: {totalPeriodo}");
+        var (movimientos, totalPeriodo) = await ObtenerMovimientosFiltrados(titular, desde, hasta, metodoPago, concepto, orden);
 
         var filtros = new Dictionary<string, string>();
 
@@ -310,17 +299,7 @@ public class FacturacionController : Controller
         string? titularSaldos, string? desdeSaldos, string? hastaSaldos,
         string ordenSaldos = "asc")
     {
-        List<SaldoPendienteViewModel> saldos;
-        try
-        {
-            saldos = await ObtenerSaldosFiltrados(titularSaldos, desdeSaldos, hastaSaldos, ordenSaldos);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"[PDF-DIAG] Error en query: {ex}");
-            throw;
-        }
-        Console.Error.WriteLine($"[PDF-DIAG] saldos count: {saldos.Count}");
+        var saldos = await ObtenerSaldosFiltrados(titularSaldos, desdeSaldos, hastaSaldos, ordenSaldos);
 
         var filtros = new Dictionary<string, string>();
 
