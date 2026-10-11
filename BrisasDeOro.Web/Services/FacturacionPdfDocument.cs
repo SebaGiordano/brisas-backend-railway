@@ -139,11 +139,13 @@ public class FacturacionPdfDocument : IDocument
                         ? $"Grupo ({mov.Unidades.Count} unidades)"
                         : mov.NombreAlojamiento;
 
-                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                        .Text(mov.Fecha.ToString("dd/MM/yy | HH:mm"));
+                    var alturaFila = AlturaFila(mov.VinculadaConNombre, mov.NombreHuesped, alojamiento, mov.Observaciones ?? "—");
 
-                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                        .Column(c =>
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignMiddle().Text(mov.Fecha.ToString("dd/MM/yy | HH:mm"));
+
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignMiddle().Column(c =>
                     {
                         c.Item().Text(mov.NombreHuesped).SemiBold().ClampLines(2, "…");
                         if (mov.VinculadaConNombre != null)
@@ -151,20 +153,20 @@ public class FacturacionPdfDocument : IDocument
                                 .FontSize(7).FontColor(Colors.Blue.Darken1).ClampLines(1, "…");
                     });
 
-                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                        .Text(alojamiento).ClampLines(2, "…");
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignMiddle().Text(alojamiento).ClampLines(2, "…");
 
-                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                        .Text(EnumDisplayHelper.NombreTipoPago(mov.TipoPago));
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignMiddle().Text(EnumDisplayHelper.NombreTipoPago(mov.TipoPago));
 
-                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                        .Text(EnumDisplayHelper.NombreMetodoPago(mov.MetodoPago));
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignMiddle().Text(EnumDisplayHelper.NombreMetodoPago(mov.MetodoPago));
 
-                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                        .AlignRight().Text($"${mov.Monto:N0}").FontSize(8.5f).SemiBold();
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignRight().AlignMiddle().Text($"${mov.Monto:N0}").FontSize(8.5f).SemiBold();
 
-                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                        .Text(mov.Observaciones ?? "—").FontColor(Colors.Grey.Darken1).ClampLines(2, "…");
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignMiddle().Text(mov.Observaciones ?? "—").FontColor(Colors.Grey.Darken1).ClampLines(2, "…");
                 }
                 catch (Exception ex)
                 {
@@ -247,8 +249,10 @@ public class FacturacionPdfDocument : IDocument
 
                 var colorSaldo = s.SaldoPendiente > 0 ? Colors.Red.Medium : Colors.Green.Medium;
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                    .Column(c =>
+                var alturaFila = AlturaFila(s.VinculadaConNombre, s.NombreHuesped, alojamiento);
+
+                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                    .AlignMiddle().Column(c =>
                 {
                     c.Item().Text(s.NombreHuesped).SemiBold().ClampLines(2, "…");
                     if (s.VinculadaConNombre != null)
@@ -256,26 +260,26 @@ public class FacturacionPdfDocument : IDocument
                             .FontSize(7).FontColor(Colors.Blue.Darken1).ClampLines(1, "…");
                 });
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                    .Text(alojamiento).ClampLines(2, "…");
+                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                    .AlignMiddle().Text(alojamiento).ClampLines(2, "…");
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                    .Text(s.FechaIngreso.ToString("dd/MM/yy"));
+                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                    .AlignMiddle().Text(s.FechaIngreso.ToString("dd/MM/yy"));
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                    .Text(s.FechaSalida.ToString("dd/MM/yy"));
+                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                    .AlignMiddle().Text(s.FechaSalida.ToString("dd/MM/yy"));
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                    .AlignRight().Text($"${s.MontoTotal:N0}");
+                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                    .AlignRight().AlignMiddle().Text($"${s.MontoTotal:N0}");
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                    .AlignRight().Text($"${s.TotalCobrado:N0}").FontColor(Colors.Green.Darken1);
+                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                    .AlignRight().AlignMiddle().Text($"${s.TotalCobrado:N0}").FontColor(Colors.Green.Darken1);
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                    .AlignRight().Text($"${s.SaldoPendiente:N0}").SemiBold().FontColor(colorSaldo);
+                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                    .AlignRight().AlignMiddle().Text($"${s.SaldoPendiente:N0}").SemiBold().FontColor(colorSaldo);
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                    .AlignRight().Text(s.EstadoPagoTexto);
+                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                    .AlignRight().AlignMiddle().Text(s.EstadoPagoTexto);
             }
         });
 
