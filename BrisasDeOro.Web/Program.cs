@@ -17,6 +17,18 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 Environment.SetEnvironmentVariable("TZ", "America/Argentina/Buenos_Aires");
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
+// Fuente embebida (Open Sans, licencia OFL) para que QuestPDF/Skia pueda renderizar
+// texto en contenedores Linux (Railway) que no tienen fuentes del sistema instaladas.
+foreach (var recurso in new[] { "OpenSans-Regular.ttf", "OpenSans-Bold.ttf", "OpenSans-SemiBold.ttf" })
+{
+    var nombreRecurso = $"BrisasDeOro.Web.Resources.Fonts.{recurso}";
+    using var fontStream = typeof(Program).Assembly.GetManifestResourceStream(nombreRecurso);
+    if (fontStream != null)
+        QuestPDF.Drawing.FontManager.RegisterFont(fontStream);
+    else
+        Console.Error.WriteLine($"[FONT-DIAG] No se encontró el recurso embebido: {nombreRecurso}");
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");

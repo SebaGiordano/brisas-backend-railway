@@ -79,7 +79,7 @@ public class ComprobanteReservaPdfDocument : IDocument
         {
             page.Size(PageSizes.A4);
             page.Margin(0.7f, Unit.Centimetre);
-            page.DefaultTextStyle(x => x.FontSize(9));
+            page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Open Sans"));
 
             page.Content().Column(col =>
             {
