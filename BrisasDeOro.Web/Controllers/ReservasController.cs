@@ -293,7 +293,16 @@ public class ReservasController : Controller
         }
 
         var documento = ComprobanteReservaPdfDocument.Crear(reserva, apartComposicion, diasAirePorCabana);
-        var bytes = documento.GeneratePdf();
+        byte[] bytes;
+        try
+        {
+            bytes = documento.GeneratePdf();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex.ToString());
+            throw;
+        }
 
         return File(bytes, "application/pdf", $"comprobante_reserva_{reserva.Id}.pdf");
     }

@@ -62,7 +62,9 @@ public class FacturacionPdfDocument : IDocument
 
     public void Compose(IDocumentContainer container)
     {
-        var logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "logo.png");
+        var logoPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "images", "logo.png");
+        if (!File.Exists(logoPath))
+            logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "logo.png");
         var titulo = _modo == "Saldos" ? "INFORME DE SALDOS PENDIENTES" : "INFORME DE MOVIMIENTOS";
 
         container.Page(page =>

@@ -34,7 +34,9 @@ public class ComprobanteReservaPdfDocument : IDocument
 
     public void Compose(IDocumentContainer container)
     {
-        var logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "logo.png");
+        var logoPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "images", "logo.png");
+        if (!File.Exists(logoPath))
+            logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "logo.png");
 
         // ── Cálculos (misma lógica exacta que Views/Reservas/Details.cshtml) ──
         var noches = (_reserva.FechaSalida - _reserva.FechaIngreso).Days;

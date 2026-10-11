@@ -278,7 +278,16 @@ public class FacturacionController : Controller
             filtros["Concepto"] = EnumDisplayHelper.NombreTipoPago(tpEnum);
 
         var documento = FacturacionPdfDocument.ParaMovimientos(filtros, movimientos, totalPeriodo);
-        var bytes = documento.GeneratePdf();
+        byte[] bytes;
+        try
+        {
+            bytes = documento.GeneratePdf();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex.ToString());
+            throw;
+        }
 
         return File(bytes, "application/pdf", $"movimientos_{DateTime.Now:yyyy-MM-dd}.pdf");
     }
@@ -305,7 +314,16 @@ public class FacturacionController : Controller
             filtros["Hasta"] = FormatFechaFiltro(hastaSaldos);
 
         var documento = FacturacionPdfDocument.ParaSaldos(filtros, saldos);
-        var bytes = documento.GeneratePdf();
+        byte[] bytes;
+        try
+        {
+            bytes = documento.GeneratePdf();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex.ToString());
+            throw;
+        }
 
         return File(bytes, "application/pdf", $"saldos_pendientes_{DateTime.Now:yyyy-MM-dd}.pdf");
     }
