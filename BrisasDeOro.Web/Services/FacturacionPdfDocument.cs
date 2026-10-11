@@ -133,38 +133,47 @@ public class FacturacionPdfDocument : IDocument
 
             foreach (var mov in _movimientos!)
             {
-                var alojamiento = mov.EsGrupal
-                    ? $"Grupo ({mov.Unidades.Count} unidades)"
-                    : mov.NombreAlojamiento;
-
-                var alturaFila = AlturaFila(mov.VinculadaConNombre, mov.NombreHuesped, alojamiento, mov.Observaciones ?? "—");
-
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
-                    .AlignMiddle().Text(mov.Fecha.ToString("dd/MM/yy | HH:mm"));
-
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
-                    .AlignMiddle().Column(c =>
+                try
                 {
-                    c.Item().Text(mov.NombreHuesped).SemiBold().ClampLines(2, "…");
-                    if (mov.VinculadaConNombre != null)
-                        c.Item().Text($"Vinculada con: {mov.VinculadaConNombre}")
-                            .FontSize(7).FontColor(Colors.Blue.Darken1).ClampLines(1, "…");
-                });
+                    var alojamiento = mov.EsGrupal
+                        ? $"Grupo ({mov.Unidades.Count} unidades)"
+                        : mov.NombreAlojamiento;
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
-                    .AlignMiddle().Text(alojamiento).ClampLines(2, "…");
+                    var alturaFila = AlturaFila(mov.VinculadaConNombre, mov.NombreHuesped, alojamiento, mov.Observaciones ?? "—");
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
-                    .AlignMiddle().Text(EnumDisplayHelper.NombreTipoPago(mov.TipoPago));
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignMiddle().Text(mov.Fecha.ToString("dd/MM/yy | HH:mm"));
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
-                    .AlignMiddle().Text(EnumDisplayHelper.NombreMetodoPago(mov.MetodoPago));
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignMiddle().Column(c =>
+                    {
+                        c.Item().Text(mov.NombreHuesped).SemiBold().ClampLines(2, "…");
+                        if (mov.VinculadaConNombre != null)
+                            c.Item().Text($"Vinculada con: {mov.VinculadaConNombre}")
+                                .FontSize(7).FontColor(Colors.Blue.Darken1).ClampLines(1, "…");
+                    });
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
-                    .AlignRight().AlignMiddle().Text($"${mov.Monto:N0}").FontSize(8.5f).SemiBold();
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignMiddle().Text(alojamiento).ClampLines(2, "…");
 
-                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
-                    .AlignMiddle().Text(mov.Observaciones ?? "—").FontColor(Colors.Grey.Darken1).ClampLines(2, "…");
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignMiddle().Text(EnumDisplayHelper.NombreTipoPago(mov.TipoPago));
+
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignMiddle().Text(EnumDisplayHelper.NombreMetodoPago(mov.MetodoPago));
+
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignRight().AlignMiddle().Text($"${mov.Monto:N0}").FontSize(8.5f).SemiBold();
+
+                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
+                        .AlignMiddle().Text(mov.Observaciones ?? "—").FontColor(Colors.Grey.Darken1).ClampLines(2, "…");
+                }
+                catch (Exception ex)
+                {
+                    // Fila de error visible para diagnóstico
+                    table.Cell().ColumnSpan(7).Background(Colors.Red.Lighten3).Padding(4)
+                        .Text($"ERROR en fila: {ex.Message}").FontSize(8).FontColor(Colors.Red.Darken3);
+                }
             }
         });
 
