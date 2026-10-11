@@ -1,10 +1,12 @@
 using BrisasDeOro.Web.Data;
 using BrisasDeOro.Web.Models;
 using BrisasDeOro.Web.Models.ViewModels;
+using BrisasDeOro.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Fluent;
 
 namespace BrisasDeOro.Web.Controllers;
 
@@ -242,6 +244,58 @@ public class ReservasController : Controller
         }
 
         return View(reserva);
+    }
+
+    // ── Descargar comprobante PDF ────────────────────────────────────────────
+
+    [HttpGet]
+    public async Task<IActionResult> DescargarComprobantePdf(int id)
+    {
+        var reserva = await _context.Reservas
+            .Include(r => r.Alojamiento)
+            .Include(r => r.Pagos.OrderBy(p => p.Fecha))
+            .Include(r => r.UnidadesGrupales)
+                .ThenInclude(u => u.Alojamiento)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (reserva == null) return NotFound();
+
+        var apartIds = reserva.UnidadesGrupales
+            .Where(u => u.Alojamiento.Tipo == TipoAlojamiento.Apart)
+            .Select(u => u.AlojamientoId)
+            .ToList();
+
+        Dictionary<int, string>? apartComposicion = null;
+        if (apartIds.Any())
+        {
+            var detalles = await _context.ApartDetalles
+                .Include(d => d.AlojamientoHab1)
+                .Include(d => d.AlojamientoHab2)
+                .Where(d => apartIds.Contains(d.AlojamientoApartId))
+                .ToListAsync();
+
+            apartComposicion = detalles.ToDictionary(
+                d => d.AlojamientoApartId,
+                d => $"{d.AlojamientoHab1.Nombre.Replace("Habitación", "Hab.")} y {d.AlojamientoHab2.Nombre.Replace("Habitación", "Hab.")}"
+            );
+        }
+
+        Dictionary<int, int>? diasAirePorCabana = null;
+        if (reserva.PrecioAireDiario.HasValue)
+        {
+            var diasPorCabana = await _context.ReservaAireDias
+                .Where(a => a.ReservaId == id)
+                .GroupBy(a => a.AlojamientoId)
+                .Select(g => new { alojamientoId = g.Key, cantidad = g.Count() })
+                .ToListAsync();
+
+            diasAirePorCabana = diasPorCabana.ToDictionary(d => d.alojamientoId, d => d.cantidad);
+        }
+
+        var documento = ComprobanteReservaPdfDocument.Crear(reserva, apartComposicion, diasAirePorCabana);
+        var bytes = documento.GeneratePdf();
+
+        return File(bytes, "application/pdf", $"comprobante_reserva_{reserva.Id}.pdf");
     }
 
     // ── Editar GET ────────────────────────────────────────────────────────────

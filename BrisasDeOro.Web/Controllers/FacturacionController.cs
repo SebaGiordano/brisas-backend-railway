@@ -1,9 +1,12 @@
 using BrisasDeOro.Web.Data;
+using BrisasDeOro.Web.Helpers;
 using BrisasDeOro.Web.Models;
 using BrisasDeOro.Web.Models.ViewModels;
+using BrisasDeOro.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Fluent;
 
 namespace BrisasDeOro.Web.Controllers;
 
@@ -43,8 +46,20 @@ public class FacturacionController : Controller
             TabActiva           = tab
         };
 
-        // ── Tab 1: Movimientos ────────────────────────────────────────────────
+        var (movimientos, totalPeriodo) = await ObtenerMovimientosFiltrados(titular, desde, hasta, metodoPago, concepto, orden);
+        vm.Movimientos  = movimientos;
+        vm.TotalPeriodo = totalPeriodo;
 
+        vm.SaldosPendientes = await ObtenerSaldosFiltrados(titularSaldos, desdeSaldos, hastaSaldos, ordenSaldos);
+
+        return View(vm);
+    }
+
+    // ── Filtrado reutilizable: Movimientos ───────────────────────────────────
+
+    private async Task<(List<MovimientoViewModel> Movimientos, decimal TotalPeriodo)> ObtenerMovimientosFiltrados(
+        string? titular, string? desde, string? hasta, string? metodoPago, string? concepto, string orden)
+    {
         var queryPagos = _context.Pagos.AsQueryable();
 
         Dictionary<int, string> vinculacionMovimientos = new();
@@ -135,11 +150,14 @@ public class FacturacionController : Controller
             if (vinculacionMovimientos.TryGetValue(m.ReservaId, out var motivo))
                 m.VinculadaConNombre = motivo;
 
-        vm.Movimientos  = movimientos;
-        vm.TotalPeriodo = movimientos.Sum(p => p.Monto);
+        return (movimientos, movimientos.Sum(p => p.Monto));
+    }
 
-        // ── Tab 2: Saldos pendientes ──────────────────────────────────────────
+    // ── Filtrado reutilizable: Saldos pendientes ─────────────────────────────
 
+    private async Task<List<SaldoPendienteViewModel>> ObtenerSaldosFiltrados(
+        string? titularSaldos, string? desdeSaldos, string? hastaSaldos, string ordenSaldos)
+    {
         var querySaldos = _context.Reservas
             .Where(r => r.Estado != EstadoReserva.Cancelada
                      && !r.EsInvitacion
@@ -204,7 +222,7 @@ public class FacturacionController : Controller
             ? querySaldos.OrderByDescending(r => r.FechaIngreso)
             : querySaldos.OrderBy(r => r.FechaIngreso);
 
-        vm.SaldosPendientes = await querySaldosOrdenada
+        var saldos = await querySaldosOrdenada
             .Select(r => new SaldoPendienteViewModel
             {
                 ReservaId         = r.Id,
@@ -224,12 +242,76 @@ public class FacturacionController : Controller
             })
             .ToListAsync();
 
-        foreach (var s in vm.SaldosPendientes)
+        foreach (var s in saldos)
             if (vinculacionSaldos.TryGetValue(s.ReservaId, out var motivo))
                 s.VinculadaConNombre = motivo;
 
-        return View(vm);
+        return saldos;
     }
+
+    // ── Descargar PDF: Movimientos ───────────────────────────────────────────
+
+    [HttpGet]
+    public async Task<IActionResult> DescargarMovimientosPdf(
+        string? titular, string? desde, string? hasta,
+        string? metodoPago, string? concepto,
+        string orden = "desc")
+    {
+        var (movimientos, totalPeriodo) = await ObtenerMovimientosFiltrados(titular, desde, hasta, metodoPago, concepto, orden);
+
+        var filtros = new Dictionary<string, string>();
+
+        if (!string.IsNullOrWhiteSpace(titular))
+            filtros["Titular"] = titular;
+
+        if (!string.IsNullOrEmpty(desde) && !string.IsNullOrEmpty(hasta))
+            filtros["Período"] = $"{FormatFechaFiltro(desde)} al {FormatFechaFiltro(hasta)}";
+        else if (!string.IsNullOrEmpty(desde))
+            filtros["Desde"] = FormatFechaFiltro(desde);
+        else if (!string.IsNullOrEmpty(hasta))
+            filtros["Hasta"] = FormatFechaFiltro(hasta);
+
+        if (!string.IsNullOrEmpty(metodoPago) && Enum.TryParse<MetodoPago>(metodoPago, out var mpEnum))
+            filtros["Método de pago"] = EnumDisplayHelper.NombreMetodoPago(mpEnum);
+
+        if (!string.IsNullOrEmpty(concepto) && Enum.TryParse<TipoPago>(concepto, out var tpEnum))
+            filtros["Concepto"] = EnumDisplayHelper.NombreTipoPago(tpEnum);
+
+        var documento = FacturacionPdfDocument.ParaMovimientos(filtros, movimientos, totalPeriodo);
+        var bytes = documento.GeneratePdf();
+
+        return File(bytes, "application/pdf", $"movimientos_{DateTime.Now:yyyy-MM-dd}.pdf");
+    }
+
+    // ── Descargar PDF: Saldos pendientes ─────────────────────────────────────
+
+    [HttpGet]
+    public async Task<IActionResult> DescargarSaldosPdf(
+        string? titularSaldos, string? desdeSaldos, string? hastaSaldos,
+        string ordenSaldos = "asc")
+    {
+        var saldos = await ObtenerSaldosFiltrados(titularSaldos, desdeSaldos, hastaSaldos, ordenSaldos);
+
+        var filtros = new Dictionary<string, string>();
+
+        if (!string.IsNullOrWhiteSpace(titularSaldos))
+            filtros["Titular"] = titularSaldos;
+
+        if (!string.IsNullOrEmpty(desdeSaldos) && !string.IsNullOrEmpty(hastaSaldos))
+            filtros["Período"] = $"{FormatFechaFiltro(desdeSaldos)} al {FormatFechaFiltro(hastaSaldos)}";
+        else if (!string.IsNullOrEmpty(desdeSaldos))
+            filtros["Desde"] = FormatFechaFiltro(desdeSaldos);
+        else if (!string.IsNullOrEmpty(hastaSaldos))
+            filtros["Hasta"] = FormatFechaFiltro(hastaSaldos);
+
+        var documento = FacturacionPdfDocument.ParaSaldos(filtros, saldos);
+        var bytes = documento.GeneratePdf();
+
+        return File(bytes, "application/pdf", $"saldos_pendientes_{DateTime.Now:yyyy-MM-dd}.pdf");
+    }
+
+    private static string FormatFechaFiltro(string fecha) =>
+        DateTime.TryParse(fecha, out var d) ? d.ToString("dd/MM/yyyy") : fecha;
 
     // ── BuscarTitulares (AJAX autocomplete) ──────────────────────────────────
 

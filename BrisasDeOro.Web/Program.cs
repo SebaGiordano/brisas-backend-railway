@@ -15,6 +15,7 @@ using Microsoft.OpenApi.Models;
 // (ver Reserva.FechaIngreso/FechaSalida en ApplicationDbContext), en vez de removerlo.
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 Environment.SetEnvironmentVariable("TZ", "America/Argentina/Buenos_Aires");
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 

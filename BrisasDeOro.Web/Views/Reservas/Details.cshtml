@@ -697,13 +697,13 @@ else
                     </tbody>
                     <tfoot class="table-light fw-bold">
                         <tr>
-                            <td colspan="3" class="text-end fw-bold">Total estadía:</td>
-                            <td class="text-end fw-bold">$@Model.MontoTotal.ToString("N0")</td>
-                            <td></td>
-                        </tr>
-                        <tr>
                             <td colspan="3" class="text-end fw-bold">Total cobrado:</td>
                             <td class="text-end fw-bold text-success">$@totalCobrado.ToString("N0")</td>
+                            <td></td>
+                        </tr>
+                        <tr style="background-color:#f8f9fa;">
+                            <td colspan="3" class="text-end fw-bold">TOTAL ESTADÍA:</td>
+                            <td class="text-end fw-bold">$@Model.MontoTotal.ToString("N0")</td>
                             <td></td>
                         </tr>
                         <tr>
@@ -727,6 +727,9 @@ else
 
 @* ── Botones de acción ── *@
 <div id="detalle-acciones" class="d-flex flex-wrap gap-2">
+    <a asp-action="DescargarComprobantePdf" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+        <i class="bi bi-file-earmark-pdf me-1"></i>Descargar comprobante
+    </a>
     @if (User.IsInRole("Administrador"))
     {
         <a asp-action="Editar" asp-route-id="@Model.Id" class="btn btn-primary">
