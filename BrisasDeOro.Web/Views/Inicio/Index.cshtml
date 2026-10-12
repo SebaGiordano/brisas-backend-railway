@@ -329,7 +329,8 @@
 @* ── Zona media: izquierda apilada (stats + limpieza) / derecha unidades libres ── *@
 @{
     var habitacionesLibres = Model.UnidadesLibresHoy.Where(n => n.StartsWith("Habitación")).ToList();
-    var cabañasLibres      = Model.UnidadesLibresHoy.Where(n => n.StartsWith("Cabaña") || n.StartsWith("Casa")).ToList();
+    var casaLibre          = Model.UnidadesLibresHoy.Where(n => n.StartsWith("Casa")).ToList();
+    var cabañasLibres      = Model.UnidadesLibresHoy.Where(n => n.StartsWith("Cabaña")).ToList();
 }
 <div class="row g-3 mb-3" style="align-items:stretch;">
 
@@ -463,8 +464,9 @@
 
     @* ── Columna derecha: Estado de unidades (libres + ocupadas) ── *@
     @{
-        var habOcupadas  = Model.UnidadesOcupadasHoy.Where(n => n.StartsWith("Habitación")).ToList();
-        var cabOcupadas  = Model.UnidadesOcupadasHoy.Where(n => n.StartsWith("Cabaña") || n.StartsWith("Casa")).ToList();
+        var habOcupadas   = Model.UnidadesOcupadasHoy.Where(n => n.StartsWith("Habitación")).ToList();
+        var casaOcupada   = Model.UnidadesOcupadasHoy.Where(n => n.StartsWith("Casa")).ToList();
+        var cabOcupadas   = Model.UnidadesOcupadasHoy.Where(n => n.StartsWith("Cabaña")).ToList();
     }
     <div class="col-lg-6">
         <div class="card h-100">
@@ -493,9 +495,19 @@
                                         <i class="bi bi-check-circle text-success me-1"></i>@nombre
                                     </li>
                                 }
-                                @if (habitacionesLibres.Any() && cabañasLibres.Any())
+                                @if (habitacionesLibres.Any() && (casaLibre.Any() || cabañasLibres.Any()))
                                 {
-                                    <li class="py-1"><hr class="my-0" /></li>
+                                    <li class="py-1"><hr class="my-0 border-2 opacity-25" /></li>
+                                }
+                                @foreach (var nombre in casaLibre)
+                                {
+                                    <li class="py-1 small">
+                                        <i class="bi bi-check-circle text-success me-1"></i>@nombre
+                                    </li>
+                                }
+                                @if (casaLibre.Any() && cabañasLibres.Any())
+                                {
+                                    <li class="py-1"><hr class="my-0 border-2 opacity-25" /></li>
                                 }
                                 @foreach (var nombre in cabañasLibres)
                                 {
@@ -526,9 +538,19 @@
                                         <i class="bi bi-x-circle text-danger me-1"></i>@nombre
                                     </li>
                                 }
-                                @if (habOcupadas.Any() && cabOcupadas.Any())
+                                @if (habOcupadas.Any() && (casaOcupada.Any() || cabOcupadas.Any()))
                                 {
-                                    <li class="py-1"><hr class="my-0" /></li>
+                                    <li class="py-1"><hr class="my-0 border-2 opacity-25" /></li>
+                                }
+                                @foreach (var nombre in casaOcupada)
+                                {
+                                    <li class="py-1 small">
+                                        <i class="bi bi-x-circle text-danger me-1"></i>@nombre
+                                    </li>
+                                }
+                                @if (casaOcupada.Any() && cabOcupadas.Any())
+                                {
+                                    <li class="py-1"><hr class="my-0 border-2 opacity-25" /></li>
                                 }
                                 @foreach (var nombre in cabOcupadas)
                                 {
