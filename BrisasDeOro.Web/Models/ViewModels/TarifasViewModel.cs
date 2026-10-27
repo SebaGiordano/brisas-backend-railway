@@ -33,6 +33,9 @@ public class TarifasIndexViewModel
     public List<TarifaGrupoViewModel> Grupos           { get; set; } = new();
     public List<TemporadaViewModel>   Temporadas        { get; set; } = new();
     public int                        TemporadaActivaId { get; set; }
+    public string?   UltimoAjusteResumen { get; set; }
+    public DateTime? UltimoAjusteFecha   { get; set; }
+    public bool       PuedeDeshacer      { get; set; }
 }
 
 public class TemporadaEditItem

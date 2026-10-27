@@ -22,6 +22,76 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BrisasDeOro.Web.Models.AjustePrecio", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Porcentaje")
+                        .HasPrecision(9, 2)
+                        .HasColumnType("numeric(9,2)");
+
+                    b.Property<string>("Servicio")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("TemporadaId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TipoAloj")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TemporadaId", "Fecha");
+
+                    b.ToTable("AjustesPrecio");
+                });
+
+            modelBuilder.Entity("BrisasDeOro.Web.Models.AjustePrecioDetalle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AjustePrecioId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("PrecioConDesayunoAntes")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("PrecioConDesayunoDespues")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("PrecioSinDesayunoAntes")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("PrecioSinDesayunoDespues")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("TarifaId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AjustePrecioId");
+
+                    b.ToTable("AjustesPrecioDetalle");
+                });
+
             modelBuilder.Entity("BrisasDeOro.Web.Models.Alojamiento", b =>
                 {
                     b.Property<int>("Id")
@@ -516,6 +586,28 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("BrisasDeOro.Web.Models.AjustePrecio", b =>
+                {
+                    b.HasOne("BrisasDeOro.Web.Models.Temporada", "Temporada")
+                        .WithMany()
+                        .HasForeignKey("TemporadaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Temporada");
+                });
+
+            modelBuilder.Entity("BrisasDeOro.Web.Models.AjustePrecioDetalle", b =>
+                {
+                    b.HasOne("BrisasDeOro.Web.Models.AjustePrecio", "AjustePrecio")
+                        .WithMany("Detalles")
+                        .HasForeignKey("AjustePrecioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AjustePrecio");
+                });
+
             modelBuilder.Entity("BrisasDeOro.Web.Models.ApartDetalle", b =>
                 {
                     b.HasOne("BrisasDeOro.Web.Models.Alojamiento", "AlojamientoApart")
@@ -678,6 +770,11 @@ namespace BrisasDeOro.Web.Data.MigrationsPostgres
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("BrisasDeOro.Web.Models.AjustePrecio", b =>
+                {
+                    b.Navigation("Detalles");
                 });
 
             modelBuilder.Entity("BrisasDeOro.Web.Models.GrupoVinculado", b =>

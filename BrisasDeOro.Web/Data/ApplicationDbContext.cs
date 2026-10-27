@@ -26,6 +26,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ReservaAlojamiento> ReservaAlojamientos => Set<ReservaAlojamiento>();
     public DbSet<ReservaAireDia> ReservaAireDias => Set<ReservaAireDia>();
     public DbSet<GrupoVinculado> GruposVinculados => Set<GrupoVinculado>();
+    public DbSet<AjustePrecio>        AjustesPrecio        => Set<AjustePrecio>();
+    public DbSet<AjustePrecioDetalle> AjustesPrecioDetalle => Set<AjustePrecioDetalle>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -150,6 +152,22 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
              .WithMany()
              .HasForeignKey(t => t.TemporadaId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<AjustePrecio>(e =>
+        {
+            e.Property(a => a.Porcentaje).HasPrecision(9, 2);
+            e.Property(a => a.Fecha).HasColumnType("timestamp with time zone");
+            e.HasOne(a => a.Temporada).WithMany().HasForeignKey(a => a.TemporadaId).OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(a => a.Detalles).WithOne(d => d.AjustePrecio).HasForeignKey(d => d.AjustePrecioId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(a => new { a.TemporadaId, a.Fecha });
+        });
+        builder.Entity<AjustePrecioDetalle>(e =>
+        {
+            e.Property(d => d.PrecioConDesayunoAntes).HasPrecision(18, 2);
+            e.Property(d => d.PrecioSinDesayunoAntes).HasPrecision(18, 2);
+            e.Property(d => d.PrecioConDesayunoDespues).HasPrecision(18, 2);
+            e.Property(d => d.PrecioSinDesayunoDespues).HasPrecision(18, 2);
         });
     }
 

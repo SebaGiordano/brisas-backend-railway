@@ -1,8 +1,6 @@
 @model TarifasIndexViewModel
 @{
     ViewData["Title"] = "Tarifas";
-
-    var ultimoAjuste = ViewBag.UltimoAjuste as string;
 }
 
 @* ── Encabezado ── *@
@@ -75,19 +73,37 @@
                             <option value="sin-desayuno">Sin desayuno</option>
                         </select>
                     </div>
-                    <div class="pb-1">
-                        <button type="button" id="btn-aj-aplicar" class="btn btn-warning btn-sm">
-                            <i class="bi bi-calculator me-1"></i>Aplicar
-                        </button>
+                    <div class="pb-1 col-aj-accion">
+                        <button type="button" id="btn-aj-aplicar" class="btn btn-warning btn-sm">Aplicar</button>
                     </div>
                 </div>
 
-                @if (ultimoAjuste != null)
+                @if (Model.UltimoAjusteResumen != null)
                 {
-                    var partes = ultimoAjuste.Split('|');
-                    <div class="mt-2 pt-2 border-top small text-muted">
-                        <i class="bi bi-clock-history me-1"></i>
-                        <strong>Último ajuste:</strong> @string.Join(" — ", partes)
+                    <div class="mt-2 pt-2 border-top pie-ajuste-tarifas">
+                        <div class="pie-ajuste-contenido">
+                            <div class="pie-ajuste-info small text-muted">
+                                <div>
+                                    <i class="bi bi-clock-history me-1"></i>
+                                    <strong>Último ajuste:</strong> @Model.UltimoAjusteResumen
+                                </div>
+                                <div class="pie-ajuste-fecha">@Model.UltimoAjusteFecha?.ToString("dd/MM/yyyy HH:mm")</div>
+                                @if (!Model.PuedeDeshacer)
+                                {
+                                    <div class="text-warning mt-1">No se puede deshacer: hubo ediciones manuales posteriores.</div>
+                                }
+                            </div>
+                            @if (User.IsInRole("Administrador"))
+                            {
+                                <div class="col-aj-accion pie-ajuste-boton">
+                                    <button type="button" id="btn-deshacer" class="btn btn-outline-secondary btn-sm"
+                                            disabled="@(!Model.PuedeDeshacer)"
+                                            data-bs-toggle="modal" data-bs-target="#modal-deshacer">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Deshacer
+                                    </button>
+                                </div>
+                            }
+                        </div>
                     </div>
                 }
             </div>
@@ -110,6 +126,40 @@
         .gestion-precios-tarifas .card-body > .d-flex > div.pb-1 {
             padding-bottom: 0 !important;
         }
+    }
+    /* Columna compartida por el botón Aplicar (fila de campos) y el botón Deshacer
+       (pie de la card): mismo ancho fijo en ambos para que queden alineados. */
+    .gestion-precios-tarifas .col-aj-accion {
+        flex: 0 0 108px;
+        width: 108px;
+    }
+    .gestion-precios-tarifas .col-aj-accion .btn {
+        width: 100%;
+        white-space: nowrap;
+    }
+    /* Pie "Último ajuste": width:0 + min-width:100% evita que su contenido aporte
+       ancho a la card (solo la fila de campos define el ancho). */
+    .pie-ajuste-tarifas {
+        width: 0;
+        min-width: 100%;
+    }
+    .pie-ajuste-contenido {
+        display: flex;
+        align-items: flex-start;
+        gap: .5rem;
+    }
+    .pie-ajuste-info {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .pie-ajuste-fecha {
+        font-size: .75rem;
+        color: #868e96;
+        margin-top: 2px;
+    }
+    .pie-ajuste-boton {
+        align-self: flex-start;
     }
     /* Azul activo uniforme para ambas filas de filtros — desktop y mobile */
     .temporadas-tarifas .btn-primary {
@@ -239,7 +289,8 @@
             flex: 0 0 auto !important;
             margin-top: 0 !important;
         }
-        .gestion-precios-tarifas .card-body > .d-flex #btn-aj-aplicar {
+        .gestion-precios-tarifas .card-body > .d-flex #btn-aj-aplicar,
+        .gestion-precios-tarifas #btn-deshacer {
             height: 38px !important;
             min-height: 38px !important;
             padding: 0 8px !important;
@@ -247,7 +298,16 @@
             white-space: nowrap !important;
             display: flex !important;
             align-items: center !important;
+            justify-content: center !important;
         }
+        .gestion-precios-tarifas .col-aj-accion,
+        .gestion-precios-tarifas .col-aj-accion .btn {
+            width: 92px !important;
+            flex: 0 0 92px !important;
+            box-sizing: border-box !important;
+        }
+        .pie-ajuste-tarifas, .pie-ajuste-tarifas * { font-size: 12px; }
+        .pie-ajuste-fecha { font-size: 11px !important; }
         @@media (max-width: 400px) {
             .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(2) #aj-tipo,
             .gestion-precios-tarifas .card-body > .d-flex > div:nth-child(3) #aj-servicio {
@@ -255,9 +315,15 @@
                 padding-left: .3rem !important;
                 padding-right: 1.1rem !important;
             }
-            .gestion-precios-tarifas .card-body > .d-flex #btn-aj-aplicar {
+            .gestion-precios-tarifas .card-body > .d-flex #btn-aj-aplicar,
+            .gestion-precios-tarifas #btn-deshacer {
                 padding: 5px 6px !important;
                 font-size: 11px !important;
+            }
+            .gestion-precios-tarifas .col-aj-accion,
+            .gestion-precios-tarifas .col-aj-accion .btn {
+                width: 82px !important;
+                flex: 0 0 82px !important;
             }
         }
     }
@@ -398,6 +464,21 @@
             padding-top: .75rem !important;
             border-top: 1px solid #dee2e6 !important;
         }
+        /* Deshacer sigue el mismo tratamiento que Aplicar en este breakpoint:
+           columna propia, centrada, mismo ancho fijo (ver regla base .col-aj-accion). */
+        .pie-ajuste-contenido {
+            flex-wrap: wrap;
+        }
+        .gestion-precios-tarifas .pie-ajuste-boton.col-aj-accion {
+            flex: 0 0 100% !important;
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            margin-top: .5rem !important;
+        }
+        .gestion-precios-tarifas .pie-ajuste-boton.col-aj-accion .btn {
+            width: 108px !important;
+        }
     }
 </style>
 
@@ -425,7 +506,7 @@
                 <button type="button" class="btn btn-modal-cancelar btn-sm" data-bs-dismiss="modal">Cancelar</button>
                 <form asp-action="AjustarPrecios" method="post" id="form-ajuste" class="d-inline">
                     @Html.AntiForgeryToken()
-                    <input type="hidden" name="porcentaje"  id="hid-pct" />
+                    <input type="hidden" name="porcentajeStr" id="hid-pct" />
                     <input type="hidden" name="tipoAloj"    id="hid-tipo" />
                     <input type="hidden" name="servicio"    id="hid-servicio" />
                     <input type="hidden" name="temporadaId" id="hid-temporada" value="@Model.TemporadaActivaId" />
@@ -437,6 +518,36 @@
         </div>
     </div>
 </div>
+
+@if (Model.UltimoAjusteResumen != null && User.IsInRole("Administrador"))
+{
+    @* ── Modal de confirmación de deshacer ajuste ── *@
+    <div class="modal fade" id="modal-deshacer" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:460px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title fw-semibold">Confirmar deshacer ajuste</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="font-size:.92rem;">
+                    Se van a restaurar los precios anteriores al ajuste:
+                    <strong>@Model.UltimoAjusteResumen (@Model.UltimoAjusteFecha?.ToString("dd/MM/yyyy HH:mm"))</strong>.
+                    ¿Confirmás?
+                </div>
+                <div class="modal-footer py-2 gap-2">
+                    <button type="button" class="btn btn-modal-cancelar btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <form asp-action="DeshacerAjuste" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="temporadaId" value="@Model.TemporadaActivaId" />
+                        <button type="submit" class="btn btn-warning btn-sm">
+                            <i class="bi bi-check-lg me-1"></i>Confirmar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @* ── Modal de configuración de temporadas ── *@
 <div class="modal fade" id="modal-temporadas" tabindex="-1" aria-hidden="true">
@@ -662,7 +773,8 @@
         const tempPart = tempNombre ? ` (${tempNombre})` : '';
 
         document.getElementById('modal-aj-texto').innerHTML =
-            `Estás por aplicar ${accion} ${servPart} de <strong>${tipoText}</strong>${tempPart}. ¿Confirmás el cambio?`;
+            `Estás por aplicar ${accion} ${servPart} de <strong>${tipoText}</strong>${tempPart}. ¿Confirmás el cambio? ` +
+            `Los precios resultantes se redondean al $1.000 más cercano.`;
 
         document.getElementById('hid-pct').value      = pct;
         document.getElementById('hid-tipo').value     = tipo;

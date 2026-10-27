@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using BrisasDeOro.Web.Data;
 using BrisasDeOro.Web.Models;
@@ -69,21 +70,49 @@ public class TarifasController : Controller
                 .ToList();
         }
 
+        AjustePrecio? ultimoAjuste = null;
+        if (tempActiva != null)
+        {
+            ultimoAjuste = await _context.AjustesPrecio
+                .Include(a => a.Detalles)
+                .Where(a => a.TemporadaId == tempActiva.Id)
+                .OrderByDescending(a => a.Fecha)
+                .ThenByDescending(a => a.Id)
+                .FirstOrDefaultAsync();
+        }
+
+        string? ultimoAjusteResumen = null;
+        DateTime? ultimoAjusteFecha = null;
+        bool puedeDeshacer = false;
+        if (ultimoAjuste != null)
+        {
+            ultimoAjusteResumen = ResumenAjuste(ultimoAjuste);
+            ultimoAjusteFecha   = ultimoAjuste.Fecha;
+
+            var tarifaIds = ultimoAjuste.Detalles.Select(d => d.TarifaId).ToList();
+            var tarifasActuales = await _context.Tarifas
+                .Where(t => tarifaIds.Contains(t.Id))
+                .ToListAsync();
+            puedeDeshacer = PuedeDeshacerAjuste(ultimoAjuste, tarifasActuales);
+        }
+
         var vm = new TarifasIndexViewModel
         {
-            Grupos           = grupos,
-            TemporadaActivaId = tempActiva?.Id ?? 0,
-            Temporadas       = temporadas.Select(t => new TemporadaViewModel
+            Grupos              = grupos,
+            TemporadaActivaId   = tempActiva?.Id ?? 0,
+            Temporadas          = temporadas.Select(t => new TemporadaViewModel
             {
                 Id          = t.Id,
                 Nombre      = t.Nombre,
                 FechaInicio = t.FechaInicio,
                 FechaFin    = t.FechaFin,
                 Activo      = t.Activo
-            }).ToList()
+            }).ToList(),
+            UltimoAjusteResumen = ultimoAjusteResumen,
+            UltimoAjusteFecha   = ultimoAjusteFecha,
+            PuedeDeshacer       = puedeDeshacer
         };
 
-        ViewBag.UltimoAjuste = Request.Cookies["ultimo_ajuste_tarifas"];
         return View(vm);
     }
 
@@ -113,9 +142,15 @@ public class TarifasController : Controller
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> AjustarPrecios(
-        decimal porcentaje, string tipoAloj, string servicio, int temporadaId)
+        string porcentajeStr, string tipoAloj, string servicio, int temporadaId)
     {
-        if (porcentaje == 0)
+        // El input numérico del cliente siempre manda el valor con "." como separador
+        // decimal (estándar HTML), pero el model binder por defecto de ASP.NET Core
+        // parsea "decimal" con la cultura del servidor (es-AR: "." es separador de miles),
+        // lo que corrompía valores fraccionarios (ej. "0.01" se leía como 1). Por eso se
+        // recibe como string y se parsea acá con cultura invariante.
+        if (!decimal.TryParse(porcentajeStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var porcentaje)
+            || porcentaje == 0)
         {
             TempData["Mensaje"]     = "El porcentaje no puede ser 0.";
             TempData["MensajeTipo"] = "warning";
@@ -141,51 +176,100 @@ public class TarifasController : Controller
                 tarifas = tarifas.Where(t => t.Alojamiento.Tipo == tipoEnum.Value).ToList();
         }
 
+        if (!tarifas.Any())
+        {
+            TempData["Mensaje"]     = "No hay tarifas para ese filtro.";
+            TempData["MensajeTipo"] = "warning";
+            return RedirectToAction(nameof(Index), new { temporadaId });
+        }
+
         var factor = 1m + porcentaje / 100m;
+
+        var ajuste = new AjustePrecio
+        {
+            TemporadaId = temporadaId,
+            Porcentaje  = porcentaje,
+            TipoAloj    = tipoAloj,
+            Servicio    = servicio,
+            Fecha       = DateTime.Now
+        };
 
         foreach (var t in tarifas)
         {
+            var detalle = new AjustePrecioDetalle
+            {
+                TarifaId               = t.Id,
+                PrecioConDesayunoAntes = t.PrecioConDesayuno,
+                PrecioSinDesayunoAntes = t.PrecioSinDesayuno
+            };
+
             if (servicio != "sin-desayuno" && t.PrecioConDesayuno > 0)
-                t.PrecioConDesayuno = Math.Round(t.PrecioConDesayuno * factor, 0);
+                t.PrecioConDesayuno = RedondearAMil(t.PrecioConDesayuno * factor);
             if (servicio != "con-desayuno" && t.PrecioSinDesayuno > 0)
-                t.PrecioSinDesayuno = Math.Round(t.PrecioSinDesayuno * factor, 0);
+                t.PrecioSinDesayuno = RedondearAMil(t.PrecioSinDesayuno * factor);
+
+            detalle.PrecioConDesayunoDespues = t.PrecioConDesayuno;
+            detalle.PrecioSinDesayunoDespues = t.PrecioSinDesayuno;
+            ajuste.Detalles.Add(detalle);
         }
 
+        _context.AjustesPrecio.Add(ajuste);
         await _context.SaveChangesAsync();
 
-        // ── Registro de último ajuste (cookie 90 días) ────────────────────────
-        var tipoLabel = tipoAloj switch
-        {
-            "todos"      => "Todas las unidades",
-            "habitacion" => "Habitaciones",
-            "cabaña"     => "Cabañas",
-            "apart"      => "Aparts",
-            _            => tipoAloj
-        };
-        var servicioLabel = servicio switch
-        {
-            "ambos"        => "Ambos servicios",
-            "con-desayuno" => "Con desayuno",
-            "sin-desayuno" => "Sin desayuno",
-            _              => servicio
-        };
         var tempNombre = (await _context.Temporadas.FindAsync(temporadaId))?.Nombre ?? "";
 
-        var signo      = porcentaje > 0 ? "+" : "";
-        var pctDisplay = porcentaje % 1 == 0
-            ? ((int)porcentaje).ToString()
-            : porcentaje.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
-        var fechaStr   = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
-        var cookieVal  = $"{signo}{pctDisplay}%|{servicioLabel}|{tipoLabel}|{tempNombre}|{fechaStr}";
+        TempData["Mensaje"]     = $"Ajuste aplicado: {ResumenAjuste(ajuste)} en {tarifas.Count} tarifa(s) de {tempNombre}.";
+        TempData["MensajeTipo"] = "success";
+        return RedirectToAction(nameof(Index), new { temporadaId });
+    }
 
-        Response.Cookies.Append("ultimo_ajuste_tarifas", cookieVal, new CookieOptions
+    // ── DeshacerAjuste POST ───────────────────────────────────────────────────
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador")]
+    public async Task<IActionResult> DeshacerAjuste(int temporadaId)
+    {
+        var ajuste = await _context.AjustesPrecio
+            .Include(a => a.Detalles)
+            .Where(a => a.TemporadaId == temporadaId)
+            .OrderByDescending(a => a.Fecha)
+            .ThenByDescending(a => a.Id)
+            .FirstOrDefaultAsync();
+
+        if (ajuste == null)
         {
-            MaxAge      = TimeSpan.FromDays(90),
-            IsEssential = true,
-            SameSite    = SameSiteMode.Lax
-        });
+            TempData["Mensaje"]     = "No hay ningún ajuste para deshacer en esta temporada.";
+            TempData["MensajeTipo"] = "warning";
+            return RedirectToAction(nameof(Index), new { temporadaId });
+        }
 
-        TempData["Mensaje"]     = $"Ajuste aplicado: {signo}{pctDisplay}% en {tarifas.Count} tarifa(s) de {tempNombre}.";
+        var tarifaIds = ajuste.Detalles.Select(d => d.TarifaId).ToList();
+        var tarifas   = await _context.Tarifas
+            .Where(t => tarifaIds.Contains(t.Id))
+            .ToListAsync();
+
+        if (!PuedeDeshacerAjuste(ajuste, tarifas))
+        {
+            TempData["Mensaje"]     = "No se puede deshacer: hubo ediciones manuales posteriores en tarifas afectadas por este ajuste.";
+            TempData["MensajeTipo"] = "warning";
+            return RedirectToAction(nameof(Index), new { temporadaId });
+        }
+
+        foreach (var det in ajuste.Detalles)
+        {
+            var tarifa = tarifas.First(t => t.Id == det.TarifaId);
+            tarifa.PrecioConDesayuno = det.PrecioConDesayunoAntes;
+            tarifa.PrecioSinDesayuno = det.PrecioSinDesayunoAntes;
+        }
+
+        var resumen        = ResumenAjuste(ajuste);
+        var cantidadDetalle = ajuste.Detalles.Count;
+
+        _context.AjustesPrecio.Remove(ajuste);
+        await _context.SaveChangesAsync();
+
+        TempData["Mensaje"]     = $"Ajuste deshecho: {resumen}. Se restauraron {cantidadDetalle} tarifa(s).";
         TempData["MensajeTipo"] = "success";
         return RedirectToAction(nameof(Index), new { temporadaId });
     }
@@ -290,5 +374,57 @@ public class TarifasController : Controller
     {
         var m = Regex.Match(nombre, @"\d+");
         return m.Success ? int.Parse(m.Value) : 0;
+    }
+
+    // Redondea al $1.000 más cercano (500 sube). Si el resultado diera 0 (precios
+    // muy bajos), se conserva el redondeo a pesos enteros para no anular la tarifa.
+    private static decimal RedondearAMil(decimal valor)
+    {
+        var r = Math.Round(valor / 1000m, 0, MidpointRounding.AwayFromZero) * 1000m;
+        return r > 0 ? r : Math.Round(valor, 0, MidpointRounding.AwayFromZero);
+    }
+
+    private static string TipoLabel(string tipoAloj) => tipoAloj switch
+    {
+        "todos"      => "Todas las unidades",
+        "habitacion" => "Habitaciones",
+        "cabaña"     => "Cabañas",
+        "apart"      => "Aparts",
+        "casa"       => "Casa",
+        _            => tipoAloj
+    };
+
+    private static string ServicioLabel(string servicio) => servicio switch
+    {
+        "ambos"        => "Ambos servicios",
+        "con-desayuno" => "Con desayuno",
+        "sin-desayuno" => "Sin desayuno",
+        _              => servicio
+    };
+
+    private static string FormatearPorcentaje(decimal porcentaje)
+    {
+        var signo      = porcentaje > 0 ? "+" : "";
+        var pctDisplay = porcentaje % 1 == 0
+            ? ((int)porcentaje).ToString()
+            : porcentaje.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        return $"{signo}{pctDisplay}%";
+    }
+
+    private static string ResumenAjuste(AjustePrecio ajuste) =>
+        $"{FormatearPorcentaje(ajuste.Porcentaje)} · {TipoLabel(ajuste.TipoAloj)} · {ServicioLabel(ajuste.Servicio)}";
+
+    // Un ajuste solo puede deshacerse si ninguna de las tarifas que tocó fue editada
+    // a mano después: deben seguir teniendo exactamente los precios "después" guardados.
+    private static bool PuedeDeshacerAjuste(AjustePrecio ajuste, List<Tarifa> tarifasActuales)
+    {
+        foreach (var det in ajuste.Detalles)
+        {
+            var tarifa = tarifasActuales.FirstOrDefault(t => t.Id == det.TarifaId);
+            if (tarifa == null) return false;
+            if (tarifa.PrecioConDesayuno != det.PrecioConDesayunoDespues) return false;
+            if (tarifa.PrecioSinDesayuno != det.PrecioSinDesayunoDespues) return false;
+        }
+        return true;
     }
 }
