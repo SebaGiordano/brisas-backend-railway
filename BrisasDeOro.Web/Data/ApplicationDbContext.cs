@@ -58,8 +58,16 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
         builder.Entity<Temporada>(e =>
         {
-            e.Property(t => t.FechaInicio).HasColumnType("timestamp with time zone");
-            e.Property(t => t.FechaFin).HasColumnType("timestamp with time zone");
+            // Mismo problema y misma solución que Reserva.FechaIngreso/FechaSalida (ver
+            // comentario en ese bloque): con Npgsql en modo legacy timestamp, la lectura
+            // convierte automáticamente a hora local, corriendo la fecha un día hacia atrás
+            // en Argentina. Este converter deshace esa conversión al leer.
+            e.Property(t => t.FechaInicio)
+             .HasColumnType("timestamp with time zone")
+             .HasConversion(FechaSinConversionLocal);
+            e.Property(t => t.FechaFin)
+             .HasColumnType("timestamp with time zone")
+             .HasConversion(FechaSinConversionLocal);
         });
 
         builder.Entity<ApplicationUser>(e =>
