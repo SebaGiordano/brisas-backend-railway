@@ -102,6 +102,21 @@ header .navbar .navbar-nav .nav-link {
   padding-left: .6rem !important;
   padding-right: .6rem !important;
 }
+/* Menú expandido (≥1450px): un poco más de separación entre módulos. En el
+   menú hamburguesa (<1450px) el padding queda como está (Bloque 1 ya lo
+   sobrescribe con su propio valor para esa vista). */
+@media (min-width: 1450px) {
+  header .navbar .navbar-nav .nav-link {
+    padding-left: .8rem !important;
+    padding-right: .8rem !important;
+  }
+  /* Nunca partir el texto de un módulo en dos renglones (ej. "+ Nueva Reserva") */
+  header .navbar .navbar-nav .nav-link,
+  header .navbar .navbar-nav .nav-link-text,
+  header .navbar .navbar-nav .nav-link-ghost {
+    white-space: nowrap !important;
+  }
+}
 
 /* ── Links de navbar con ancho estable (evita salto de layout en hover/active) ── */
 .nav-link-stable {
@@ -119,23 +134,26 @@ header .navbar .navbar-nav .nav-link {
   user-select: none;
 }
 
-/* Menú expandido (≥1250px): centrado dentro del espacio libre entre el logo y
-   el bloque de usuario (flex-grow-1 ya hace que el <ul> ocupe ese espacio; acá
-   solo se centra su contenido, sin tocar el ancho total de la pantalla). */
-@media (min-width: 1250px) {
+/* Menú expandido (≥1450px): centrado en un punto intermedio entre "centrado
+   solo en el espacio libre logo-usuario" y "centrado respecto de la pantalla".
+   El logo (.navbar-brand, 176px + su propio margin-right de 16px = ~192px) es
+   más ancho que el bloque usuario + "Salir" (~118px), diferencia ~73.91px
+   (medida en el navegador a 1366px y 1920px; no depende del viewport). Se
+   compensa con la MITAD de esa diferencia en el margin-right del <ul>, para
+   no correr el menú tan a la izquierda como el centrado completo en pantalla.
+   margin-left usa el mínimo pedido (1.5rem). */
+@media (min-width: 1450px) {
   header .navbar .navbar-nav.flex-grow-1 {
     justify-content: center;
     padding: 0 1rem;
     box-sizing: border-box;
-    /* Compensa el margin-right propio de .navbar-brand (1rem), que agrega espacio
-       entre el logo y este <ul> por fuera de su caja: sin esto, el contenido queda
-       centrado respecto de una franja corrida 1rem a la derecha del logo real. */
-    margin-left: -1rem;
+    margin-left: 1.5rem;
+    margin-right: calc(1.5rem + 36.96px);
   }
 }
 
-/* Bloque 1: Reglas del menú colapsado, aplican desde 1249.98px hacia abajo */
-@media (max-width: 1249.98px) {
+/* Bloque 1: Reglas del menú colapsado, aplican desde 1449.98px hacia abajo */
+@media (max-width: 1449.98px) {
   .navbar { overflow: visible !important; }
   .navbar-collapse.show {
     display: flex !important;
@@ -234,8 +252,8 @@ header .navbar .navbar-nav .nav-link {
   }
 }
 
-/* Bloque 2: Forzar a Bootstrap a activar el hamburguesa en el rango 1200-1249.98px */
-@media (min-width: 1200px) and (max-width: 1249.98px) {
+/* Bloque 2: Forzar a Bootstrap a activar el hamburguesa en el rango 1200-1449.98px */
+@media (min-width: 1200px) and (max-width: 1449.98px) {
   .navbar-expand-xl .navbar-collapse:not(.show) {
     display: none !important;
   }
