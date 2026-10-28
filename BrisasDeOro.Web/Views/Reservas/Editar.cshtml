@@ -195,7 +195,7 @@
                 </div>
                 <div id="contenido-aire" class="d-none">
                     <div class="mb-3">
-                        <label asp-for="PrecioAireDiario" class="form-label">Valor diario del adicional</label>
+                        <label asp-for="PrecioAireDiario" class="form-label">Tarifa adicional por día - <strong>Aire Acondicionado</strong></label>
                         <div class="input-group" style="max-width:220px;">
                             <span class="input-group-text">$</span>
                             <input asp-for="PrecioAireDiario" type="number" step="0.01" min="0" class="form-control" id="PrecioAireDiario" placeholder="0,00" />
@@ -293,8 +293,9 @@
                     <div id="desglose-aire-simple">
                         <div class="alert alert-light border py-2 px-3 mb-2 small">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="fw-bold text-uppercase" style="letter-spacing:.03em;">
-                                    Total aire acondicionado adicional (<span id="desglose-dias-aire">0</span> días)
+                                <span>
+                                    <span class="fw-bold">Total aire acondicionado adicional</span>
+                                    <span class="desglose-dias-cero text-muted fw-normal small">(<span id="desglose-dias-aire">0</span> días)</span>
                                 </span>
                                 <strong class="fs-6 fw-bold" id="desglose-monto-aire">$0</strong>
                             </div>
@@ -454,6 +455,25 @@
         transition: background-color .15s ease, border-color .15s ease;
     }
     #bloque-toggle-aire:has(#UsaAireAcondicionado:checked) { background-color: #eaf0ff; border-color: #6c8eef !important; }
+    /* Bloquecitos de días de aire: fecha centrada vertical y horizontalmente
+       (el min-height de .btn-sm en mobile dejaba el texto pegado arriba). */
+    .btn-dia-aire {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    /* En táctiles el :hover queda "pegado" tras tocar y el label se ve azul
+       aunque el checkbox ya esté desmarcado. Se anula el hover en esos casos
+       (no afecta el hover real de mouse en escritorio). */
+    @@media (hover: none) {
+        .btn-check:not(:checked) + .btn-dia-aire:hover,
+        .btn-check:not(:checked) + .btn-dia-aire:focus,
+        .btn-check:not(:checked) + .btn-dia-aire:active {
+            background-color: transparent;
+            color: var(--bs-primary);
+            border-color: var(--bs-primary);
+        }
+    }
     #bloque-toggle-aire-texto { min-width: 0 !important; flex: 1 1 auto !important; }
     #bloque-toggle-aire-switch { flex: 0 0 auto !important; padding-left: 2.5em !important; margin: 0 !important; }
     #bloque-toggle-aire-switch .form-check-input { margin-left: -2.5em !important; float: none !important; }
@@ -478,6 +498,29 @@
         /* Modal de confirmación: altura adaptada al contenido */
         #modal-confirmar-guardado .modal-content { height: auto !important; min-height: unset !important; }
         #modal-confirmar-guardado .modal-footer { padding-bottom: 1rem !important; }
+        /* Campos de fecha de estadía: centrar verticalmente */
+        #FechaIngreso, #FechaSalida {
+            display: flex !important; align-items: center !important;
+            position: relative; padding-right: 2.5rem !important;
+        }
+        #FechaIngreso::-webkit-datetime-edit, #FechaSalida::-webkit-datetime-edit,
+        #FechaIngreso::-webkit-datetime-edit-fields-wrapper, #FechaSalida::-webkit-datetime-edit-fields-wrapper { padding: 0 !important; }
+        /* Ícono del calendario fijo contra el borde derecho del campo (el enfoque
+           anterior con flex + margin-left:auto no tenía efecto real en mobile). */
+        #FechaIngreso::-webkit-calendar-picker-indicator,
+        #FechaSalida::-webkit-calendar-picker-indicator {
+            position: absolute;
+            right: .75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: 0;
+            cursor: pointer;
+        }
+        /* "(N días)" en su propio renglón, debajo del título, solo en mobile */
+        .desglose-dias-cero { display: block; }
+        /* Grilla de días de aire: 5 columnas iguales, sin espacio vacío a la derecha */
+        .grilla-dias-aire { display: grid !important; grid-template-columns: repeat(5, 1fr); gap: .5rem; }
+        .grilla-dias-aire .btn-dia-aire { width: 100%; padding-left: 0; padding-right: 0; }
     }
     #bloque-toggle-vinculo {
         display: flex !important; align-items: center !important;
@@ -642,12 +685,18 @@
             const dias = aireCabanasSeleccionadas[cab.id]?.size || 0;
             totalDias += dias;
             const subtotalCabana = dias * precio;
-            return `<div style="font-weight:500;">${cab.nombre}: ${dias} día${dias !== 1 ? 's' : ''} × $${precio.toLocaleString('es-AR')} = $${subtotalCabana.toLocaleString('es-AR')}</div>`;
+            return `<div class="d-flex justify-content-between align-items-baseline gap-2">`
+                + `<span><strong>${cab.nombre}:</strong> ${dias} día${dias !== 1 ? 's' : ''} × $${precio.toLocaleString('es-AR')}</span>`
+                + `<span style="white-space:nowrap;">$${subtotalCabana.toLocaleString('es-AR')}</span>`
+                + `</div>`;
         });
 
         const totalGeneral = totalDias * precio;
         resumenEl.innerHTML = lineas.join('') +
-            `<div class="fw-bold mt-2 pt-1" style="border-top:1px solid #dee2e6; font-size:.92rem;">Total aire: $${totalGeneral.toLocaleString('es-AR')}</div>`;
+            `<div class="fw-bold d-flex justify-content-between align-items-baseline gap-2 mt-2 pt-1" style="border-top:1px solid #dee2e6;">`
+            + `<span>Total aire acondicionado:</span>`
+            + `<span style="font-size:1.1rem; white-space:nowrap;">$${totalGeneral.toLocaleString('es-AR')}</span>`
+            + `</div>`;
     }
 
     function renderCalendariosAire() {
@@ -700,20 +749,19 @@
             wrap.innerHTML = `<div class="fw-semibold small mb-2"><i class="bi bi-snow2 me-1"></i>${cab.nombre}</div>`;
 
             const grid = document.createElement('div');
-            grid.className = 'd-flex flex-wrap gap-2';
+            grid.className = 'd-flex flex-wrap gap-2 grilla-dias-aire';
 
             noches.forEach(fechaIso => {
                 const id = `aire-${cab.id}-${fechaIso}`;
                 const [y, m, d] = fechaIso.split('-');
-                const wrapperChk = document.createElement('div');
-                wrapperChk.innerHTML = `
+                const celda = document.createElement('div');
+                celda.innerHTML = `
                     <input type="checkbox" class="btn-check chk-aire-dia" id="${id}"
                            data-cabana-id="${cab.id}" data-fecha="${fechaIso}"
                            ${seleccionadas.has(fechaIso) ? 'checked' : ''}>
-                    <label class="btn btn-outline-primary btn-sm" for="${id}">${d}/${m}</label>
+                    <label class="btn btn-outline-primary btn-sm btn-dia-aire" for="${id}">${d}/${m}</label>
                 `;
-                grid.appendChild(wrapperChk.firstElementChild);
-                grid.appendChild(wrapperChk.firstElementChild);
+                grid.appendChild(celda);
             });
 
             wrap.appendChild(grid);

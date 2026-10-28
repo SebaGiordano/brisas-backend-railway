@@ -56,27 +56,62 @@
         #titulo-datos-aloj { font-size: .875rem !important; letter-spacing: .02em !important; white-space: nowrap !important; }
         /* Fechas y Precios: Ingreso+Egreso en fila 1, Noches+Tarifa en fila 2 */
         #fechas-precios-row .fp-fecha { flex: 0 0 50% !important; max-width: 50% !important; }
-        /* Totales: renglón propio con label izquierda · valor derecha */
+        /* Aire acondicionado adicional: ancho completo, label y valor en renglones propios */
+        #fechas-precios-row .fp-aire { flex: 0 0 100% !important; max-width: 100% !important; }
+        #fechas-precios-row .fp-aire .detalle-valor { white-space: nowrap !important; }
+        /* Totales (caso sin aire): renglón propio con label izquierda · valor derecha */
         #fechas-precios-row .fp-total { flex: 0 0 100% !important; max-width: 100% !important; display: flex !important; justify-content: space-between !important; align-items: baseline !important; }
         #fechas-precios-row .fp-total .detalle-label,
         #fechas-precios-row .fp-total .detalle-valor { white-space: nowrap !important; }
+        /* Desglose con aire (recuadro gris + bloque azul): ancho completo SIN display:flex,
+           para que el recuadro interior ocupe el 100% en vez de encogerse al contenido. */
+        #fechas-precios-row .fp-desglose { flex: 0 0 100% !important; max-width: 100% !important; }
+        #fechas-precios-row .fp-desglose .desglose-subtotal { gap: .75rem !important; }
         /* Saldo pendiente: monto y leyenda alineados a la derecha; bold+rojo cuando el cliente debe */
         #fp-saldo .detalle-valor { text-align: right !important; }
         #fp-saldo .detalle-valor.text-danger { font-weight: bold !important; color: #dc3545 !important; }
-        /* Fecha de registro: separador arriba y abajo, fondo suave */
-        #fila-fecha-registro { border-top: 1px solid #dee2e6 !important; border-bottom: 1px solid #dee2e6 !important; background-color: #f8f9fa !important; border-radius: 4px !important; }
+        /* Total cobrado / Saldo pendiente: el recuadro de color abarca toda la fila, con la
+           etiqueta adentro a la izquierda y el monto adentro a la derecha (en vez de la
+           etiqueta afuera y solo el monto dentro de un recuadro recortado al contenido). */
+        #fechas-precios-row .fp-monto-destacado {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            gap: .75rem !important;
+            padding: .6rem .75rem !important;
+            border-radius: 4px !important;
+        }
+        #fechas-precios-row .fp-monto-destacado .detalle-label { margin-bottom: 0 !important; }
+        #fechas-precios-row .fp-monto-destacado > .p-2.rounded {
+            background-color: transparent !important;
+            border-left: none !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+        }
+        #fechas-precios-row .fp-monto-destacado .detalle-valor { white-space: nowrap !important; text-align: right !important; }
+        #fechas-precios-row .fp-monto-cobrado { background-color: #eafaf1 !important; border-left: 3px solid #198754 !important; }
+        #fechas-precios-row .fp-monto-saldo { background-color: #fdecea !important; border-left: 3px solid #dc3545 !important; }
+        /* Fecha de registro: separador arriba y abajo, fondo suave, más aire interno */
+        #fila-fecha-registro { border-top: 1px solid #dee2e6 !important; border-bottom: 1px solid #dee2e6 !important; background-color: #f8f9fa !important; border-radius: 4px !important; padding: .6rem .75rem !important; }
         /* Botón "Agregar pago" del card header: contenido centrado */
         .btn-agregar-pago-card { display: flex !important; align-items: center !important; justify-content: center !important; }
-        /* Tabla de pagos: ancho mínimo y sin quiebre */
-        #tabla-pagos table { min-width: 600px !important; }
-        #tabla-pagos td, #tabla-pagos th { white-space: nowrap !important; }
+        /* Tabla de pagos: cada columna toma el ancho de su contenido, separación pareja */
+        #tabla-pagos table { width: max-content !important; min-width: 100% !important; }
+        #tabla-pagos td, #tabla-pagos th { white-space: nowrap !important; padding: .5rem .75rem !important; }
         /* Botón "Ver listado de reservas" superior: contenido centrado */
         .btn-listado-top { display: flex !important; align-items: center !important; justify-content: center !important; }
         /* Barra de navegación mobile (modo calendario): botones a ancho completo */
         #nav-bar-mobile .btn-nav-mobile { flex: 1 !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-        /* Botones inferiores: una fila centrada, ocultar navegación redundante */
-        #detalle-acciones { flex-wrap: nowrap !important; gap: .35rem !important; justify-content: center !important; }
-        #detalle-acciones .btn { font-size: .78rem !important; padding: .35rem .65rem !important; display: flex !important; align-items: center !important; justify-content: center !important; white-space: nowrap !important; }
+        /* Botones inferiores: fila de gestión (Editar/Agregar pago/Cancelar) repartida en
+           partes iguales, y "Descargar comprobante" debajo a ancho completo (vía order,
+           sin alterar el orden del HTML ni el layout de escritorio). */
+        #detalle-acciones { flex-wrap: wrap !important; gap: .5rem !important; justify-content: center !important; }
+        #detalle-acciones .btn { font-size: .78rem !important; padding: .35rem .65rem !important; min-height: 2.15rem !important; display: flex !important; align-items: center !important; justify-content: center !important; white-space: nowrap !important; }
+        #detalle-acciones .btn-gestion,
+        #detalle-acciones .btn-gestion-form { flex: 1 1 0 !important; }
+        #detalle-acciones .btn-gestion-form { display: flex !important; }
+        #detalle-acciones .btn-gestion-form .btn-gestion { width: 100% !important; }
+        #detalle-acciones .btn-comprobante-bottom { flex: 0 0 100% !important; max-width: 100% !important; order: 2 !important; }
         #detalle-acciones .btn-listado-bottom { display: none !important; }
         #detalle-acciones .btn-cal-bottom { display: none !important; }
         /* Modal de cancelación: altura adaptada al contenido */
@@ -86,7 +121,7 @@
     }
     @@media (min-width: 769px) {
         /* Fecha de registro: ancho completo, línea arriba y abajo, fondo suave, título y fecha en línea */
-        #fila-fecha-registro { flex: 0 0 100% !important; max-width: 100% !important; display: flex !important; align-items: center !important; gap: .75rem !important; border-top: 1px solid #dee2e6 !important; border-bottom: 1px solid #dee2e6 !important; background-color: #f8f9fa !important; border-radius: 0 !important; padding: .4rem .75rem !important; margin-top: 1.5rem !important; }
+        #fila-fecha-registro { flex: 0 0 100% !important; max-width: 100% !important; display: flex !important; justify-content: space-between !important; align-items: center !important; gap: .75rem !important; border-top: 1px solid #dee2e6 !important; border-bottom: 1px solid #dee2e6 !important; background-color: #f8f9fa !important; border-radius: 0 !important; padding: .4rem .75rem !important; margin-top: 1.5rem !important; }
         #fila-fecha-registro .detalle-label,
         #fila-fecha-registro .detalle-valor { margin-bottom: 0 !important; }
     }
@@ -377,7 +412,7 @@
                         }
                         @if (diasAireTotalGlobal > 0)
                         {
-                            <div class="col-12 fp-fecha">
+                            <div class="col-12 fp-aire">
                                 <div class="detalle-label" style="color:#0d6efd;">Aire acondicionado adicional</div>
                                 <div class="detalle-valor" style="color:#0d6efd;">
                                     @diasAireTotalGlobal día@(diasAireTotalGlobal != 1 ? "s" : "") × $@Formato.Numero(Model.PrecioAireDiario!.Value) = <strong>$@Formato.Numero(subtotalAireGlobal)</strong>
@@ -387,7 +422,7 @@
                         <div class="col-12"><hr class="my-1" /></div>
                         @if (diasAireTotalGlobal > 0)
                         {
-                            <div class="col-12 fp-total">
+                            <div class="col-12 fp-desglose">
                                 <div class="p-2 rounded" style="background-color:#f8f9fa;">
                                     <div class="desglose-subtotal">
                                         <span class="desglose-subtotal-label">Subtotal alojamiento:</span>
@@ -399,10 +434,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12 fp-total">
-                                <div class="p-3 rounded text-white d-flex justify-content-between align-items-center" style="background-color:#0d6efd;">
-                                    <span class="fw-bold text-uppercase" style="letter-spacing:.04em;">Total final a cobrar</span>
-                                    <span class="fw-bold fs-5">$@Formato.Numero(Model.MontoTotal)</span>
+                            <div class="col-12 fp-desglose">
+                                <div class="p-3 rounded text-white d-flex justify-content-between align-items-center" style="background-color:#0d6efd; gap:.75rem;">
+                                    <span class="fw-bold text-uppercase" style="letter-spacing:.04em; flex:1 1 auto; min-width:0;">Total final a cobrar</span>
+                                    <span class="fw-bold fs-5" style="white-space:nowrap; flex:0 0 auto;">$@Formato.Numero(Model.MontoTotal)</span>
                                 </div>
                             </div>
                         }
@@ -417,13 +452,13 @@
                             <div class="detalle-label">Estado de pago</div>
                             <div class="detalle-valor"><span class="badge-pago @estadoPagoClase">@estadoPagoTexto</span></div>
                         </div>
-                        <div class="@colTotalesGrupal fp-total">
+                        <div class="@colTotalesGrupal fp-total fp-monto-destacado fp-monto-cobrado">
                             <div class="detalle-label" style="color:#198754;font-weight:bold;">Total cobrado</div>
                             <div class="p-2 rounded" style="background-color:#eafaf1; border-left:3px solid #198754;">
                                 <div class="detalle-valor text-success fw-bold fs-5">$@Formato.Numero(totalCobrado)</div>
                             </div>
                         </div>
-                        <div id="fp-saldo" class="@colTotalesGrupal fp-total">
+                        <div id="fp-saldo" class="@colTotalesGrupal fp-total fp-monto-destacado fp-monto-saldo">
                             <div class="detalle-label" style="color:#dc3545;font-weight:bold;">Saldo pendiente</div>
                             <div class="p-2 rounded" style="background-color:#fdecea; border-left:3px solid #dc3545;">
                                 <div class="detalle-valor fw-bold fs-5 @(saldoPendiente > 0 ? "text-danger" : "text-success")">
@@ -434,8 +469,8 @@
                             </div>
                         </div>
                         <div id="fila-fecha-registro" class="col-sm-6 fp-total">
-                            <div class="detalle-label">Fecha de registro</div>
-                            <div class="detalle-valor text-muted small">@Model.FechaCarga.ToString("dd/MM/yyyy HH:mm")</div>
+                            <div class="detalle-label">Fecha de registro:</div>
+                            <div class="detalle-valor text-muted small">@Model.FechaCarga.ToString("dd/MM/yyyy | HH:mm")</div>
                         </div>
                     </div>
                 </div>
@@ -582,7 +617,7 @@ else
                         }
                         @if (diasAireTotalGlobal > 0)
                         {
-                            <div class="col-sm-8 fp-fecha">
+                            <div class="col-sm-8 fp-aire">
                                 <div class="detalle-label" style="color:#0d6efd;">Aire acondicionado adicional</div>
                                 <div class="detalle-valor" style="color:#0d6efd;">
                                     @diasAireTotalGlobal día@(diasAireTotalGlobal != 1 ? "s" : "") × $@Formato.Numero(Model.PrecioAireDiario!.Value) = <strong>$@Formato.Numero(subtotalAireGlobal)</strong>
@@ -592,7 +627,7 @@ else
                         <div class="col-12"><hr class="my-1" /></div>
                         @if (diasAireTotalGlobal > 0)
                         {
-                            <div class="col-12 fp-total">
+                            <div class="col-12 fp-desglose">
                                 <div class="p-2 rounded" style="background-color:#f8f9fa;">
                                     <div class="desglose-subtotal">
                                         <span class="desglose-subtotal-label">Subtotal alojamiento:</span>
@@ -604,10 +639,10 @@ else
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12 fp-total">
-                                <div class="p-3 rounded text-white d-flex justify-content-between align-items-center" style="background-color:#0d6efd;">
-                                    <span class="fw-bold text-uppercase" style="letter-spacing:.04em;">Total final a cobrar</span>
-                                    <span class="fw-bold fs-5">$@Formato.Numero(Model.MontoTotal)</span>
+                            <div class="col-12 fp-desglose">
+                                <div class="p-3 rounded text-white d-flex justify-content-between align-items-center" style="background-color:#0d6efd; gap:.75rem;">
+                                    <span class="fw-bold text-uppercase" style="letter-spacing:.04em; flex:1 1 auto; min-width:0;">Total final a cobrar</span>
+                                    <span class="fw-bold fs-5" style="white-space:nowrap; flex:0 0 auto;">$@Formato.Numero(Model.MontoTotal)</span>
                                 </div>
                             </div>
                         }
@@ -622,13 +657,13 @@ else
                             <div class="detalle-label">Estado de pago</div>
                             <div class="detalle-valor"><span class="badge-pago @estadoPagoClase">@estadoPagoTexto</span></div>
                         </div>
-                        <div class="@colTotalesIndividual fp-total">
+                        <div class="@colTotalesIndividual fp-total fp-monto-destacado fp-monto-cobrado">
                             <div class="detalle-label" style="color:#198754;font-weight:bold;">Total cobrado</div>
                             <div class="p-2 rounded" style="background-color:#eafaf1; border-left:3px solid #198754;">
                                 <div class="detalle-valor text-success fw-bold fs-5">$@Formato.Numero(totalCobrado)</div>
                             </div>
                         </div>
-                        <div id="fp-saldo" class="@colTotalesIndividual fp-total">
+                        <div id="fp-saldo" class="@colTotalesIndividual fp-total fp-monto-destacado fp-monto-saldo">
                             <div class="detalle-label" style="color:#dc3545;font-weight:bold;">Saldo pendiente</div>
                             <div class="p-2 rounded" style="background-color:#fdecea; border-left:3px solid #dc3545;">
                                 <div class="detalle-valor fw-bold fs-5 @(saldoPendiente > 0 ? "text-danger" : "text-success")">
@@ -639,8 +674,8 @@ else
                             </div>
                         </div>
                         <div id="fila-fecha-registro" class="col-sm-6 fp-total">
-                            <div class="detalle-label">Fecha de registro</div>
-                            <div class="detalle-valor text-muted small">@Model.FechaCarga.ToString("dd/MM/yyyy HH:mm")</div>
+                            <div class="detalle-label">Fecha de registro:</div>
+                            <div class="detalle-valor text-muted small">@Model.FechaCarga.ToString("dd/MM/yyyy | HH:mm")</div>
                         </div>
                     </div>
                 </div>
@@ -727,27 +762,33 @@ else
 
 @* ── Botones de acción ── *@
 <div id="detalle-acciones" class="d-flex flex-wrap gap-2">
-    <a asp-action="DescargarComprobantePdf" asp-route-id="@Model.Id" class="btn btn-outline-primary">
-        <i class="bi bi-file-earmark-pdf me-1"></i>Descargar comprobante
+    <a asp-action="DescargarComprobantePdf" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-comprobante-bottom">
+        <i class="bi bi-file-earmark-pdf me-1"></i><span>Descargar comprobante</span>
     </a>
     @if (User.IsInRole("Administrador"))
     {
-        <a asp-action="Editar" asp-route-id="@Model.Id" class="btn btn-primary">
-            <i class="bi bi-pencil me-1"></i>Editar reserva
+        <a asp-action="Editar" asp-route-id="@Model.Id" class="btn btn-primary btn-gestion">
+            <i class="bi bi-pencil me-1"></i>
+            <span class="d-none d-md-inline">Editar reserva</span>
+            <span class="d-md-none">Editar</span>
         </a>
         <a asp-controller="Pagos" asp-action="AgregarPago" asp-route-reservaId="@Model.Id"
            asp-route-from="@(fromCalendario ? "calendario" : null)"
-           class="btn btn-outline-success">
-            <i class="bi bi-plus-circle me-1"></i>Agregar pago
+           class="btn btn-outline-success btn-gestion">
+            <i class="bi bi-plus-circle me-1"></i>
+            <span class="d-none d-md-inline">Agregar pago</span>
+            <span class="d-md-none">Agregar pago</span>
         </a>
         @if (Model.Estado != EstadoReserva.Cancelada)
         {
-            <form asp-action="Cancelar" asp-route-id="@Model.Id" method="post" class="d-inline"
+            <form asp-action="Cancelar" asp-route-id="@Model.Id" method="post" class="d-inline btn-gestion-form"
                   id="form-cancelar-reserva">
                 @Html.AntiForgeryToken()
-                <button type="button" class="btn btn-outline-danger"
+                <button type="button" class="btn btn-outline-danger btn-gestion"
                         data-bs-toggle="modal" data-bs-target="#modal-cancelar-reserva">
-                    <i class="bi bi-x-circle me-1"></i>Cancelar reserva
+                    <i class="bi bi-x-circle me-1"></i>
+                    <span class="d-none d-md-inline">Cancelar reserva</span>
+                    <span class="d-md-none">Cancelar</span>
                 </button>
             </form>
         }

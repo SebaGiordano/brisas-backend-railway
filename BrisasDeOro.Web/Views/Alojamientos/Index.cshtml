@@ -36,14 +36,17 @@
         .tabla-aloj-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .tabla-aloj-responsive td,
         .tabla-aloj-responsive th { white-space: nowrap; padding: 0.5rem 0.6rem; }
-        /* Filtros: una sola línea en mobile */
+        /* Filtros: mismo criterio que .filtros-tipo-tarifas en Tarifas — título arriba,
+           botones abajo repartiendo todo el ancho en partes iguales, sin scroll. */
         .filtros-aloj-sticky {
-            flex-wrap: nowrap !important; overflow-x: auto;
+            width: 100% !important; flex-wrap: wrap !important; gap: 4px !important;
         }
+        .filtros-aloj-sticky > span { width: 100%; margin-bottom: 2px; }
         .filtros-aloj-sticky .filtro-tipo-aloj {
-            font-size: 11px; padding: 3px 8px; white-space: nowrap; flex-shrink: 0;
+            flex: 1 !important; font-size: 12px !important; padding: 5px 4px !important;
+            display: flex !important; align-items: center !important; justify-content: center !important;
+            white-space: nowrap;
         }
-        .filtros-aloj-sticky .text-muted { flex-shrink: 0; font-size: 11px; }
         /* Botones de acciones con ícono centrado */
         .tabla-aloj-responsive .btn { display: inline-flex !important; align-items: center; justify-content: center; }
     }

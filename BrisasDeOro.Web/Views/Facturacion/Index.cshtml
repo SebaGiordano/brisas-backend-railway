@@ -61,29 +61,41 @@
         }
         /* Monto total de saldos en negrita */
         #pane-saldos tfoot td.text-danger { font-weight: 700 !important; }
-        /* Formulario Saldos: fila 1 = Titular, fila 2 = Filtrar + Limpiar al 50% */
+        /* Formulario Saldos: fila 1 = Titular 100%, fila 2 = Desde/Hasta/Ordenar al 33,33%,
+           fila 3 = Filtrar/Limpiar al 50% (mismo criterio que #pane-movimientos). */
         #pane-saldos form .row { flex-wrap: wrap !important; }
         #pane-saldos form .row > div:first-child { flex: 0 0 100% !important; width: 100% !important; max-width: 100% !important; }
         #input-titular-saldos { font-size: 16px !important; }
-        #pane-saldos form .row > div:nth-child(2),
-        #pane-saldos form .row > div:nth-child(3) { flex: 1 !important; }
-        #pane-saldos form .row > div:nth-child(2) .btn,
-        #pane-saldos form .row > div:nth-child(3) .btn { width: 100% !important; display: flex !important; }
+        #pane-saldos form input:not(#input-titular-saldos), #pane-saldos form select { font-size: 13px !important; }
+        #pane-saldos form .row > div:not(:first-child):not(.col-auto):not(.filtro-break-fact) { flex: 0 0 33.33% !important; max-width: 33.33% !important; }
+        #pane-saldos form .row > div:nth-last-child(-n+2) { flex: 1 !important; }
+        #pane-saldos form .row > div:nth-last-child(-n+2) .btn { width: 100% !important; display: flex !important; }
         /* Formulario Movimientos: 2 filas de 3 filtros + botones al 50% */
         #pane-movimientos form input, #pane-movimientos form select { font-size: 13px !important; }
         #pane-movimientos form .row > div:not(.col-auto):not(.filtro-break-fact) { flex: 0 0 33.33% !important; max-width: 33.33% !important; }
         #pane-movimientos form .row > div:nth-last-child(-n+2) { flex: 1 !important; }
         #pane-movimientos form .row > div:nth-last-child(-n+2) .btn { width: 100% !important; display: flex !important; }
-        /* Campos de fecha: centrar horizontal y vertical */
+        /* Campos de fecha (Movimientos y Saldos): centrar horizontal y vertical */
         #pane-movimientos input[type="date"],
-        #pane-movimientos input[type="text"][placeholder="dd/mm/aaaa"] { text-align: center; }
-        #pane-movimientos input[type="date"] { display: flex !important; align-items: center !important; }
+        #pane-saldos input[type="date"],
+        #pane-movimientos input[type="text"][placeholder="dd/mm/aaaa"],
+        #pane-saldos input[type="text"][placeholder="dd/mm/aaaa"] { text-align: center; }
+        #pane-movimientos input[type="date"],
+        #pane-saldos input[type="date"] { display: flex !important; align-items: center !important; }
         #pane-movimientos input[type="date"]::-webkit-datetime-edit,
-        #pane-movimientos input[type="date"]::-webkit-datetime-edit-fields-wrapper { padding: 0 !important; }
+        #pane-saldos input[type="date"]::-webkit-datetime-edit,
+        #pane-movimientos input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+        #pane-saldos input[type="date"]::-webkit-datetime-edit-fields-wrapper { padding: 0 !important; }
         /* Autocompletado: scroll suave en iOS */
         .ac-dropdown { -webkit-overflow-scrolling: touch !important; }
         /* Prevenir zoom automático en iOS (ocurre cuando font-size < 16px) */
         input, select, textarea { font-size: 16px !important; }
+        /* Botón "Descargar PDF" + texto en una sola línea, centrado (Movimientos y Saldos) */
+        .descarga-pdf-row { display: flex !important; align-items: center !important; justify-content: center !important; flex-wrap: nowrap !important; gap: .5rem !important; }
+        .texto-pdf-corto { white-space: nowrap !important; }
+    }
+    @@media (max-width: 360px) {
+        .texto-pdf-corto { font-size: 12px !important; }
     }
     @@media (min-width: 768px) {
         /* Filtros Movimientos: campos proporcionales (aplica a ambos sub-rangos: md y lg+) */
@@ -268,11 +280,12 @@
                 </div>
             </div>
             <hr class="my-2" style="border-color: #dee2e6; opacity: 0.6;">
-            <div class="mt-2">
+            <div class="mt-2 descarga-pdf-row">
                 <button type="submit" formaction="@Url.Action("DescargarMovimientosPdf")" class="btn btn-outline-danger btn-sm">
                     Descargar PDF
                 </button>
-                <span class="text-muted small ms-2">Se descarga con los filtros actuales aplicados.</span>
+                <span class="text-muted small ms-2 d-none d-md-inline">Se descarga con los filtros actuales aplicados.</span>
+                <span class="text-muted small d-md-none texto-pdf-corto">Incluye los filtros aplicados.</span>
             </div>
         </form>
 
@@ -430,11 +443,12 @@
                 </div>
             </div>
             <hr class="my-2" style="border-color: #dee2e6; opacity: 0.6;">
-            <div class="mt-2">
+            <div class="mt-2 descarga-pdf-row">
                 <button type="submit" formaction="@Url.Action("DescargarSaldosPdf")" class="btn btn-outline-danger btn-sm">
                     Descargar PDF
                 </button>
-                <span class="text-muted small ms-2">Se descarga con los filtros actuales aplicados.</span>
+                <span class="text-muted small ms-2 d-none d-md-inline">Se descarga con los filtros actuales aplicados.</span>
+                <span class="text-muted small d-md-none texto-pdf-corto">Incluye los filtros aplicados.</span>
             </div>
         </form>
 
@@ -714,8 +728,13 @@
     // Mobile: placeholder en campos de fecha + prevenir fecha preseleccionada al cerrar calendario
     (function() {
         if (window.innerWidth >= 768) return;
-        ['desde', 'hasta'].forEach(function(name) {
-            var input = document.querySelector('#pane-movimientos input[name="' + name + '"]');
+        [
+            '#pane-movimientos input[name="desde"]',
+            '#pane-movimientos input[name="hasta"]',
+            '#pane-saldos input[name="desdeSaldos"]',
+            '#pane-saldos input[name="hastaSaldos"]'
+        ].forEach(function(selector) {
+            var input = document.querySelector(selector);
             if (!input) return;
             if (!input.value) input.type = 'text';
             var prevValue = '', changed = false;
