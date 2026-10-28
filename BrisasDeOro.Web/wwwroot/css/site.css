@@ -119,6 +119,21 @@ header .navbar .navbar-nav .nav-link {
   user-select: none;
 }
 
+/* Menú expandido (≥1250px): centrado dentro del espacio libre entre el logo y
+   el bloque de usuario (flex-grow-1 ya hace que el <ul> ocupe ese espacio; acá
+   solo se centra su contenido, sin tocar el ancho total de la pantalla). */
+@media (min-width: 1250px) {
+  header .navbar .navbar-nav.flex-grow-1 {
+    justify-content: center;
+    padding: 0 1rem;
+    box-sizing: border-box;
+    /* Compensa el margin-right propio de .navbar-brand (1rem), que agrega espacio
+       entre el logo y este <ul> por fuera de su caja: sin esto, el contenido queda
+       centrado respecto de una franja corrida 1rem a la derecha del logo real. */
+    margin-left: -1rem;
+  }
+}
+
 /* Bloque 1: Reglas del menú colapsado, aplican desde 1249.98px hacia abajo */
 @media (max-width: 1249.98px) {
   .navbar { overflow: visible !important; }
