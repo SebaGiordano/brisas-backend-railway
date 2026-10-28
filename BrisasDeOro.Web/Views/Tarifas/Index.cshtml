@@ -80,14 +80,12 @@
 
                 @if (Model.UltimoAjusteResumen != null)
                 {
-                    <div class="mt-2 pt-2 border-top pie-ajuste-tarifas">
+                    <div class="mt-2 pt-1 border-top pie-ajuste-tarifas">
                         <div class="pie-ajuste-contenido">
-                            <div class="pie-ajuste-info small text-muted">
-                                <div>
-                                    <i class="bi bi-clock-history me-1"></i>
-                                    <strong>Último ajuste:</strong> @Model.UltimoAjusteResumen
-                                </div>
-                                <div class="pie-ajuste-fecha">@Model.UltimoAjusteFecha?.ToString("dd/MM/yyyy HH:mm")</div>
+                            <div class="pie-ajuste-info small">
+                                <i class="bi bi-clock-history me-1"></i>
+                                <strong>Último ajuste:</strong> @Model.UltimoAjusteResumen
+                                <span class="pie-ajuste-fecha text-muted">· @Model.UltimoAjusteFecha?.ToString("dd/MM HH:mm")</span>
                                 @if (!Model.PuedeDeshacer)
                                 {
                                     <div class="text-warning mt-1">No se puede deshacer: hubo ediciones manuales posteriores.</div>
@@ -96,7 +94,7 @@
                             @if (User.IsInRole("Administrador"))
                             {
                                 <div class="col-aj-accion pie-ajuste-boton">
-                                    <button type="button" id="btn-deshacer" class="btn btn-outline-secondary btn-sm"
+                                    <button type="button" id="btn-deshacer" class="btn btn-outline-secondary btn-sm btn-deshacer-ajuste"
                                             disabled="@(!Model.PuedeDeshacer)"
                                             data-bs-toggle="modal" data-bs-target="#modal-deshacer">
                                         <i class="bi bi-arrow-counterclockwise me-1"></i>Deshacer
@@ -145,7 +143,7 @@
     }
     .pie-ajuste-contenido {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: .5rem;
     }
     .pie-ajuste-info {
@@ -154,12 +152,19 @@
         overflow-wrap: anywhere;
     }
     .pie-ajuste-fecha {
-        font-size: .75rem;
-        color: #868e96;
-        margin-top: 2px;
+        white-space: nowrap;
     }
-    .pie-ajuste-boton {
-        align-self: flex-start;
+    /* Hover/focus en rojo exclusivo del botón Deshacer (no afecta otros
+       btn-outline-secondary de la vista, como Configurar o las pestañas). */
+    .btn-deshacer-ajuste {
+        transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+    }
+    .btn-deshacer-ajuste:not(:disabled):hover,
+    .btn-deshacer-ajuste:not(:disabled):focus-visible,
+    .btn-deshacer-ajuste:not(:disabled):active {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        color: #fff !important;
     }
     /* Azul activo uniforme para ambas filas de filtros — desktop y mobile */
     .temporadas-tarifas .btn-primary {
@@ -179,7 +184,7 @@
     }
     @@media (min-width: 769px) {
         .barra-superior-tarifas { align-items: stretch !important; }
-        .barra-superior-tarifas .temporadas-tarifas { justify-content: space-between !important; }
+        .barra-superior-tarifas .temporadas-tarifas { justify-content: center !important; gap: .5rem !important; }
     }
     @@media (max-width: 767.98px) {
         /* Filtro por tipo: ancho completo, botones distribuidos */

@@ -384,9 +384,11 @@ public class TarifasController : Controller
         return r > 0 ? r : Math.Round(valor, 0, MidpointRounding.AwayFromZero);
     }
 
+    private static readonly CultureInfo CulturaArgentina = CultureInfo.GetCultureInfo("es-AR");
+
     private static string TipoLabel(string tipoAloj) => tipoAloj switch
     {
-        "todos"      => "Todas las unidades",
+        "todos"      => "Todos",
         "habitacion" => "Habitaciones",
         "cabaña"     => "Cabañas",
         "apart"      => "Aparts",
@@ -396,7 +398,7 @@ public class TarifasController : Controller
 
     private static string ServicioLabel(string servicio) => servicio switch
     {
-        "ambos"        => "Ambos servicios",
+        "ambos"        => "Ambos",
         "con-desayuno" => "Con desayuno",
         "sin-desayuno" => "Sin desayuno",
         _              => servicio
@@ -407,7 +409,7 @@ public class TarifasController : Controller
         var signo      = porcentaje > 0 ? "+" : "";
         var pctDisplay = porcentaje % 1 == 0
             ? ((int)porcentaje).ToString()
-            : porcentaje.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            : porcentaje.ToString("0.##", CulturaArgentina);
         return $"{signo}{pctDisplay}%";
     }
 
