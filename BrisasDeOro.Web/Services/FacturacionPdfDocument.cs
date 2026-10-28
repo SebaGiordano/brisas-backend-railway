@@ -163,7 +163,7 @@ public class FacturacionPdfDocument : IDocument
                         .AlignMiddle().Text(EnumDisplayHelper.NombreMetodoPago(mov.MetodoPago));
 
                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
-                        .AlignRight().AlignMiddle().Text($"${mov.Monto:N0}").FontSize(8.5f).SemiBold();
+                        .AlignRight().AlignMiddle().Text(Formato.Moneda(mov.Monto)).FontSize(8.5f).SemiBold();
 
                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
                         .AlignMiddle().Text(mov.Observaciones ?? "—").FontColor(Colors.Grey.Darken1).ClampLines(2, "…");
@@ -200,7 +200,7 @@ public class FacturacionPdfDocument : IDocument
             // de Monto en esta tabla (confirmado con el motor real: la columna de 51.6pt
             // no entra con Padding(6)/FontSize(10), ni siquiera para "$360.000").
             totalRow.Cell().Background("#d1e7dd").Padding(4)
-                .AlignRight().AlignMiddle().Text($"${_totalPeriodo:N0}").FontSize(8.5f).Bold().FontColor("#0a3622");
+                .AlignRight().AlignMiddle().Text(Formato.Moneda(_totalPeriodo)).FontSize(8.5f).Bold().FontColor("#0a3622");
 
             totalRow.Cell().Background("#d1e7dd").Padding(6).Text("");
         });
@@ -270,13 +270,13 @@ public class FacturacionPdfDocument : IDocument
                     .AlignMiddle().Text(s.FechaSalida.ToString("dd/MM/yy"));
 
                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
-                    .AlignRight().AlignMiddle().Text($"${s.MontoTotal:N0}");
+                    .AlignRight().AlignMiddle().Text(Formato.Moneda(s.MontoTotal));
 
                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
-                    .AlignRight().AlignMiddle().Text($"${s.TotalCobrado:N0}").FontColor(Colors.Green.Darken1);
+                    .AlignRight().AlignMiddle().Text(Formato.Moneda(s.TotalCobrado)).FontColor(Colors.Green.Darken1);
 
                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
-                    .AlignRight().AlignMiddle().Text($"${s.SaldoPendiente:N0}").SemiBold().FontColor(colorSaldo);
+                    .AlignRight().AlignMiddle().Text(Formato.Moneda(s.SaldoPendiente)).SemiBold().FontColor(colorSaldo);
 
                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFila)
                     .AlignRight().AlignMiddle().Text(s.EstadoPagoTexto);
@@ -304,7 +304,7 @@ public class FacturacionPdfDocument : IDocument
                 .AlignRight().Text("TOTAL SALDO PENDIENTE:").FontSize(9).Bold();
 
             totalRow.Cell().Background("#f8d7da").PaddingVertical(6).PaddingRight(4)
-                .AlignRight().AlignMiddle().Text($"${_saldos!.Sum(s => s.SaldoPendiente):N0}").FontSize(10f).Bold().FontColor("#842029");
+                .AlignRight().AlignMiddle().Text(Formato.Moneda(_saldos!.Sum(s => s.SaldoPendiente))).FontSize(10f).Bold().FontColor("#842029");
 
             totalRow.Cell().Background("#f8d7da").Padding(6).Text("");
         });

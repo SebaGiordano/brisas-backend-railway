@@ -483,10 +483,10 @@ else
                                 <i class="bi bi-x-circle-fill text-danger" title="No incluye desayuno"></i>
                             }
                         </td>
-                        <td class="text-end text-nowrap">$@item.MontoTotal.ToString("N0")</td>
-                        <td class="text-end text-nowrap">$@item.TotalCobrado.ToString("N0")</td>
+                        <td class="text-end text-nowrap">$@Formato.Numero(item.MontoTotal)</td>
+                        <td class="text-end text-nowrap">$@Formato.Numero(item.TotalCobrado)</td>
                         <td class="text-end text-nowrap col-saldo-res@(item.SaldoPendiente < 0 ? " col-saldo-negativo" : "")">
-                            $@item.SaldoPendiente.ToString("N0")
+                            $@Formato.Numero(item.SaldoPendiente)
                         </td>
                         <td class="text-center">
                             <span class="badge-pago @item.EstadoPagoClase">@item.EstadoPagoTexto</span>

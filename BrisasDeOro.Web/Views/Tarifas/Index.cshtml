@@ -984,11 +984,11 @@ else
                                     }
                                     <td class="tar-pers">@row.Pers</td>
                                     <td class="text-end text-nowrap tar-cd">
-                                        @if (row.CD > 0) { <text>$@row.CD.ToString("N0")</text> }
+                                        @if (row.CD > 0) { <text>$@Formato.Numero(row.CD)</text> }
                                         else             { <span class="text-muted">—</span> }
                                     </td>
                                     <td class="text-end text-nowrap tar-sd">
-                                        @if (row.SD > 0) { <text>$@row.SD.ToString("N0")</text> }
+                                        @if (row.SD > 0) { <text>$@Formato.Numero(row.SD)</text> }
                                         else             { <span class="text-muted">—</span> }
                                     </td>
                                     <td>

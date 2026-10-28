@@ -116,7 +116,7 @@
                 <div class="detalle-valor fw-semibold">
                     @if (tarifaDia.HasValue)
                     {
-                        <text>$@Math.Round(tarifaDia.Value, 0).ToString("N0")</text>
+                        <text>$@Formato.Numero(Math.Round(tarifaDia.Value, 0))</text>
                     }
                     else
                     {
@@ -129,16 +129,16 @@
 
             <div class="col-4">
                 <div class="detalle-label">Total estadía</div>
-                <div class="detalle-valor fs-5 fw-semibold">$@Model.MontoTotal.ToString("N0")</div>
+                <div class="detalle-valor fs-5 fw-semibold">$@Formato.Numero(Model.MontoTotal)</div>
             </div>
             <div class="col-4">
                 <div class="detalle-label" style="color:#198754;font-weight:bold;">Total cobrado</div>
-                <div class="detalle-valor fs-5 text-success fw-semibold">$@Model.TotalCobrado.ToString("N0")</div>
+                <div class="detalle-valor fs-5 text-success fw-semibold">$@Formato.Numero(Model.TotalCobrado)</div>
             </div>
             <div class="col-4">
                 <div class="detalle-label" style="font-size:1.1rem;color:#dc3545;font-weight:bold;">Saldo pendiente</div>
                 <div class="detalle-valor @(Model.SaldoPendiente > 0 ? "saldo-deuda" : Model.SaldoPendiente < 0 ? "saldo-negativo" : "saldo-cero")" style="font-size:1.2rem;">
-                    $@Model.SaldoPendiente.ToString("N0")
+                    $@Formato.Numero(Model.SaldoPendiente)
                     @if (Model.SaldoPendiente == 0)
                     {
                         <i class="bi bi-check-circle-fill fs-5 ms-1 text-success"></i>
@@ -175,7 +175,7 @@
                 </div>
             </div>
             <div class="col-auto">
-                <span class="text-muted small">del total de $@Model.MontoTotal.ToString("N0")</span>
+                <span class="text-muted small">del total de $@Formato.Numero(Model.MontoTotal)</span>
             </div>
         </div>
         <div class="d-flex align-items-center gap-3 mt-3">
@@ -212,7 +212,7 @@
 
         <div id="aviso-exceso" class="alert alert-warning d-none">
             <i class="bi bi-exclamation-triangle me-2"></i>
-            El monto ingresado supera el saldo pendiente ($@Model.SaldoPendiente.ToString("N0")).
+            El monto ingresado supera el saldo pendiente ($@Formato.Numero(Model.SaldoPendiente)).
             Podés guardarlo igual si corresponde (ej: pago adelantado o error a corregir).
         </div>
 

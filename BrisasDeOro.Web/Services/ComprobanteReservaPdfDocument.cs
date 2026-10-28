@@ -141,7 +141,7 @@ public class ComprobanteReservaPdfDocument : IDocument
                                 && _diasAirePorCabana.TryGetValue(u.AlojamientoId, out var dias) && dias > 0)
                             {
                                 var montoAire = dias * _reserva.PrecioAireDiario!.Value;
-                                c.Item().Text($"Aire acond. adicional: {dias} día{(dias != 1 ? "s" : "")} × ${_reserva.PrecioAireDiario.Value:N0} = ${montoAire:N0}")
+                                c.Item().Text($"Aire acond. adicional: {dias} día{(dias != 1 ? "s" : "")} × {Formato.Moneda(_reserva.PrecioAireDiario.Value)} = {Formato.Moneda(montoAire)}")
                                     .FontSize(8).FontColor(Colors.Blue.Darken1);
                             }
                         });
@@ -164,7 +164,7 @@ public class ComprobanteReservaPdfDocument : IDocument
                     ("NOCHES", noches.ToString()),
                 };
                 if (tarifaDia.HasValue)
-                    camposFechas.Add(("TARIFA POR DÍA", $"${Math.Round(tarifaDia.Value, 0):N0}"));
+                    camposFechas.Add(("TARIFA POR DÍA", Formato.Moneda(Math.Round(tarifaDia.Value, 0))));
 
                 FilaCampos(col, camposFechas.ToArray());
 
@@ -175,7 +175,7 @@ public class ComprobanteReservaPdfDocument : IDocument
                         c.Item().Text("AIRE ACONDICIONADO ADICIONAL")
                             .FontSize(7.5f).FontColor(Colors.Grey.Darken1).SemiBold();
                         c.Item().PaddingTop(1)
-                            .Text($"{diasAireTotalGlobal} día{(diasAireTotalGlobal != 1 ? "s" : "")} × ${_reserva.PrecioAireDiario!.Value:N0} = ${subtotalAireGlobal:N0}")
+                            .Text($"{diasAireTotalGlobal} día{(diasAireTotalGlobal != 1 ? "s" : "")} × {Formato.Moneda(_reserva.PrecioAireDiario!.Value)} = {Formato.Moneda(subtotalAireGlobal)}")
                             .FontSize(9.5f).FontColor(Colors.Blue.Darken1);
                     });
                 }
@@ -189,12 +189,12 @@ public class ComprobanteReservaPdfDocument : IDocument
                     col.Item().PaddingTop(6).Row(row =>
                     {
                         row.RelativeItem().Text("Subtotal alojamiento:").FontSize(9);
-                        row.RelativeItem().AlignRight().Text($"${(_reserva.MontoTotal - subtotalAireGlobal):N0}").SemiBold();
+                        row.RelativeItem().AlignRight().Text($"{Formato.Moneda(_reserva.MontoTotal - subtotalAireGlobal)}").SemiBold();
                     });
                     col.Item().Row(row =>
                     {
                         row.RelativeItem().Text("Subtotal aire acondicionado adicional:").FontSize(9);
-                        row.RelativeItem().AlignRight().Text($"${subtotalAireGlobal:N0}").SemiBold();
+                        row.RelativeItem().AlignRight().Text($"{Formato.Moneda(subtotalAireGlobal)}").SemiBold();
                     });
                 }
 
@@ -203,7 +203,7 @@ public class ComprobanteReservaPdfDocument : IDocument
                 {
                     row.RelativeItem().AlignMiddle().Text("TOTAL FINAL A COBRAR").FontColor(Colors.White).Bold();
                     row.RelativeItem().AlignRight().AlignMiddle()
-                        .Text($"${_reserva.MontoTotal:N0}").FontColor(Colors.White).Bold().FontSize(12);
+                        .Text($"{Formato.Moneda(_reserva.MontoTotal)}").FontColor(Colors.White).Bold().FontSize(12);
                 });
 
                 col.Item().PaddingTop(10).Row(row =>
@@ -214,14 +214,14 @@ public class ComprobanteReservaPdfDocument : IDocument
                 col.Item().Row(row =>
                 {
                     row.RelativeItem().Text("Total cobrado:").FontSize(9);
-                    row.RelativeItem().AlignRight().Text($"${totalCobrado:N0}").Bold().FontColor(Colors.Green.Darken1);
+                    row.RelativeItem().AlignRight().Text($"{Formato.Moneda(totalCobrado)}").Bold().FontColor(Colors.Green.Darken1);
                 });
                 col.Item().Row(row =>
                 {
                     row.RelativeItem().Text("Saldo pendiente:").FontSize(9);
                     row.RelativeItem().AlignRight().Column(c =>
                     {
-                        c.Item().AlignRight().Text($"${saldoPendiente:N0}").Bold()
+                        c.Item().AlignRight().Text($"{Formato.Moneda(saldoPendiente)}").Bold()
                             .FontColor(saldoPendiente > 0 ? Colors.Red.Medium : Colors.Green.Medium);
                         if (saldoPendiente < 0)
                             c.Item().AlignRight().Text("(A devolver al cliente)").FontSize(7).FontColor(Colors.Grey.Darken1);
@@ -282,7 +282,7 @@ public class ComprobanteReservaPdfDocument : IDocument
                                 .AlignMiddle().Text(EnumDisplayHelper.NombreMetodoPago(pago.MetodoPago));
 
                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFilaPago)
-                                .AlignCenter().AlignMiddle().Text($"${pago.Monto:N0}")
+                                .AlignCenter().AlignMiddle().Text($"{Formato.Moneda(pago.Monto)}")
                                 .SemiBold().FontColor(pago.Monto < 0 ? Colors.Red.Medium : Colors.Black);
 
                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).MinHeight(alturaFilaPago)
@@ -311,21 +311,21 @@ public class ComprobanteReservaPdfDocument : IDocument
                         totales.Cell().ColumnSpan(3).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text("Total cobrado:").FontSize(9).SemiBold();
                         totales.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                            .AlignCenter().Text($"${totalCobrado:N0}").FontSize(9).Bold().FontColor(Colors.Green.Darken1);
+                            .AlignCenter().Text($"{Formato.Moneda(totalCobrado)}").FontSize(9).Bold().FontColor(Colors.Green.Darken1);
                         totales.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text("");
 
                         // Fila 2: TOTAL ESTADÍA — con fondo gris clarito para destacarla
                         totales.Cell().ColumnSpan(3).Background("#f8f9fa").Padding(4)
                             .AlignRight().Text("TOTAL ESTADÍA:").FontSize(9).Bold();
                         totales.Cell().Background("#f8f9fa").Padding(4)
-                            .AlignCenter().Text($"${_reserva.MontoTotal:N0}").FontSize(9).Bold();
+                            .AlignCenter().Text($"{Formato.Moneda(_reserva.MontoTotal)}").FontSize(9).Bold();
                         totales.Cell().Background("#f8f9fa").Padding(4).Text("");
 
                         // Fila 3: Saldo pendiente
                         totales.Cell().ColumnSpan(3).BorderTop(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
                             .AlignRight().Text("Saldo pendiente:").FontSize(9).SemiBold();
                         totales.Cell().BorderTop(1).BorderColor(Colors.Grey.Lighten2).Padding(4)
-                            .AlignCenter().Text($"${saldoPendiente:N0}").FontSize(9).Bold()
+                            .AlignCenter().Text($"{Formato.Moneda(saldoPendiente)}").FontSize(9).Bold()
                             .FontColor(saldoPendiente > 0 ? Colors.Red.Medium : Colors.Green.Medium);
                         totales.Cell().BorderTop(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text("");
                     });

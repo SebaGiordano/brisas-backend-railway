@@ -8,7 +8,7 @@
 
 @* ── helpers locales ── *@
 @functions {
-    static string Fmt(decimal v)    => v.ToString("N0");
+    static string Fmt(decimal v)    => Formato.Numero(v);
     static string FmtPct(decimal v) => v.ToString("F1") + "%";
     static string Inv(decimal v)    => v.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
     static string Inv0(decimal v)   => ((int)v).ToString();

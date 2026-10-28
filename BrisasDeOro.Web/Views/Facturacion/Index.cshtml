@@ -350,7 +350,7 @@
                                 <td>@EnumDisplayHelper.NombreTipoPago(mov.TipoPago)</td>
                                 <td>@EnumDisplayHelper.NombreMetodoPago(mov.MetodoPago)</td>
                                 <td class="text-end fw-bold text-nowrap @(mov.Monto < 0 ? "text-danger" : "text-success")">
-                                    $@mov.Monto.ToString("N0")
+                                    $@Formato.Numero(mov.Monto)
                                 </td>
                                 <td class="text-muted small">@(mov.Observaciones ?? "—")</td>
                             </tr>
@@ -360,7 +360,7 @@
                         <tr>
                             <td colspan="5" class="text-end">Total del período:</td>
                             <td class="text-end fs-6 text-nowrap" style="background-color:#d4edda;color:#155724;font-weight:bold;">
-                                $@Model.TotalPeriodo.ToString("N0")
+                                $@Formato.Numero(Model.TotalPeriodo)
                             </td>
                             <td></td>
                         </tr>
@@ -511,12 +511,12 @@
                                 <td class="text-center text-nowrap d-mobile-none">
                                     @s.FechaSalida.ToString("dd/MM/yyyy")
                                 </td>
-                                <td class="text-end text-nowrap d-mobile-none">$@s.MontoTotal.ToString("N0")</td>
+                                <td class="text-end text-nowrap d-mobile-none">$@Formato.Numero(s.MontoTotal)</td>
                                 <td class="text-end text-success text-nowrap d-mobile-none">
-                                    $@s.TotalCobrado.ToString("N0")
+                                    $@Formato.Numero(s.TotalCobrado)
                                 </td>
                                 <td class="text-end fw-bold text-danger text-nowrap">
-                                    $@s.SaldoPendiente.ToString("N0")
+                                    $@Formato.Numero(s.SaldoPendiente)
                                 </td>
                                 <td class="text-center d-mobile-none">
                                     <span class="badge-pago @s.EstadoPagoClase">@s.EstadoPagoTexto</span>
@@ -541,7 +541,7 @@
                             <td colspan="2" class="d-mobile-none"></td>
                             <td colspan="4" class="text-end d-mobile-none">Total saldo pendiente:</td>
                             <td class="text-end text-nowrap" style="background-color:#f8d7da;color:#721c24;font-weight:bold;">
-                                $@Model.SaldosPendientes.Sum(s => s.SaldoPendiente).ToString("N0")
+                                $@Formato.Numero(Model.SaldosPendientes.Sum(s => s.SaldoPendiente))
                             </td>
                             <td class="d-mobile-none"></td>
                             <td></td>

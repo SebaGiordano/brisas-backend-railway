@@ -614,7 +614,7 @@
                                     <span class="badge bg-warning text-dark">Mañana</span>
                                 }
                             </td>
-                            <td class="text-end fw-semibold text-danger">$@p.SaldoPendiente.ToString("N0")</td>
+                            <td class="text-end fw-semibold text-danger">$@Formato.Numero(p.SaldoPendiente)</td>
                             <td class="text-end">
                                 <a asp-controller="Reservas" asp-action="Details" asp-route-id="@p.ReservaId"
                                    class="btn btn-outline-danger btn-sm py-0">Ver</a>

@@ -1,4 +1,5 @@
 using BrisasDeOro.Web.Data;
+using BrisasDeOro.Web.Helpers;
 using BrisasDeOro.Web.Models;
 using BrisasDeOro.Web.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -88,7 +89,7 @@ public class PagosController : Controller
         _context.Pagos.Add(pago);
         await _context.SaveChangesAsync();
 
-        TempData["Mensaje"]     = $"Pago de ${model.Monto:N0} registrado correctamente.";
+        TempData["Mensaje"]     = $"Pago de {Formato.Moneda(model.Monto)} registrado correctamente.";
         TempData["MensajeTipo"] = "success";
 
         return RedirectToAction("Details", "Reservas", new { id = model.ReservaId });

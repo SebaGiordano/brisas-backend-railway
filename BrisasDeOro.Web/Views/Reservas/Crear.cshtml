@@ -295,18 +295,36 @@
                     </div>
                 </div>
                 <div id="desglose-aire" class="col-12">
-                    <div class="alert alert-light border py-2 px-3 mb-2 small">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold text-uppercase" style="letter-spacing:.03em;">
-                                Total aire acondicionado adicional (<span id="desglose-dias-aire">0</span> días)
-                            </span>
-                            <strong class="fs-6 fw-bold" id="desglose-monto-aire">$0</strong>
+                    <div id="desglose-aire-simple">
+                        <div class="alert alert-light border py-2 px-3 mb-2 small">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-uppercase" style="letter-spacing:.03em;">
+                                    Total aire acondicionado adicional (<span id="desglose-dias-aire">0</span> días)
+                                </span>
+                                <strong class="fs-6 fw-bold" id="desglose-monto-aire">$0</strong>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded text-white" style="background-color:#0d6efd;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-uppercase" style="letter-spacing:.04em;">Total final a cobrar</span>
+                                <span class="fw-bold fs-4" id="desglose-total-final">$0</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="p-3 rounded text-white" style="background-color:#0d6efd;">
-                        <div class="d-flex justify-content-between align-items-center">
+                    <div id="desglose-aire-detalle" class="d-none">
+                        <div class="p-2 rounded mb-2" style="background-color:#f8f9fa;">
+                            <div class="desglose-subtotal">
+                                <span class="desglose-subtotal-label">Subtotal alojamiento:</span>
+                                <span class="desglose-subtotal-monto" id="desglose-subtotal-alojamiento">$0</span>
+                            </div>
+                            <div class="desglose-subtotal">
+                                <span class="desglose-subtotal-label">Subtotal aire acondicionado adicional:</span>
+                                <span class="desglose-subtotal-monto" id="desglose-subtotal-aire">$0</span>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded text-white d-flex justify-content-between align-items-center" style="background-color:#0d6efd;">
                             <span class="fw-bold text-uppercase" style="letter-spacing:.04em;">Total final a cobrar</span>
-                            <span class="fw-bold fs-4" id="desglose-total-final">$0</span>
+                            <span class="fw-bold fs-5" id="desglose-total-final-detalle">$0</span>
                         </div>
                     </div>
                 </div>
@@ -706,9 +724,21 @@
         let totalDias = 0;
         Object.values(aireCabanasSeleccionadas).forEach(s => { totalDias += s.size; });
 
+        const totalFinal = montoAlojamiento + subtotalAire;
+
+        // Modo simple (comportamiento actual, sin cambios): aire apagado o sin días tildados
         gid('desglose-dias-aire').textContent = totalDias;
         gid('desglose-monto-aire').textContent = fmtMonedaAire(subtotalAire);
-        gid('desglose-total-final').textContent = fmtMonedaAire(montoAlojamiento + subtotalAire);
+        gid('desglose-total-final').textContent = fmtMonedaAire(totalFinal);
+
+        // Modo desglose (igual al detalle de la reserva): aire activo con al menos 1 día
+        gid('desglose-subtotal-alojamiento').textContent = fmtMonedaAire(montoAlojamiento);
+        gid('desglose-subtotal-aire').textContent = fmtMonedaAire(subtotalAire);
+        gid('desglose-total-final-detalle').textContent = fmtMonedaAire(totalFinal);
+
+        const usaAireActivo = totalDias > 0;
+        gid('desglose-aire-simple').classList.toggle('d-none', usaAireActivo);
+        gid('desglose-aire-detalle').classList.toggle('d-none', !usaAireActivo);
     }
 
     function actualizarResumenAireTexto() {
