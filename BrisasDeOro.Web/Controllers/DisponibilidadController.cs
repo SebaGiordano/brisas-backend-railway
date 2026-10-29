@@ -118,6 +118,10 @@ public class DisponibilidadController : ControllerBase
         // ── Cabaña grande (Cabaña 8) ──────────────────────────────────────────
         int cabGrandeDisponibles = EsDisponible(ByNombre("Cabaña 8")) ? 1 : 0;
 
+        // ── Casa (Icho Cruz) ───────────────────────────────────────────────────
+        var casa = alojamientos.FirstOrDefault(a => a.Tipo == TipoAlojamiento.Casa);
+        int casaDisponibles = EsDisponible(casa) ? 1 : 0;
+
         return Ok(new
         {
             habitaciones = new
@@ -144,6 +148,11 @@ public class DisponibilidadController : ControllerBase
             {
                 disponible        = cabGrandeDisponibles > 0,
                 unidadesDisponibles = cabGrandeDisponibles
+            },
+            casa = new
+            {
+                disponible        = casaDisponibles > 0,
+                unidadesDisponibles = casaDisponibles
             }
         });
     }
