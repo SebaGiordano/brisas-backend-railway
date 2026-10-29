@@ -39,12 +39,26 @@ public class DisponibilidadController : ControllerBase
         // Alojamientos con reserva activa que solapa el rango pedido.
         // El día de egreso de una reserva existente SÍ puede ser ingreso de una nueva
         // → se usa FechaSalida > fechaIngreso (no >=).
-        var ocupadosDirectos = (await _db.Reservas
+        var reservasEnRango = await _db.Reservas
             .Where(r => r.Estado != EstadoReserva.Cancelada
                      && r.FechaIngreso < fechaEgreso
                      && r.FechaSalida > fechaIngreso)
+            .Select(r => new { r.Id, r.AlojamientoId, r.EsGrupal })
+            .ToListAsync();
+
+        var reservaIdsEnRango = reservasEnRango.Select(r => r.Id).ToList();
+
+        // Grupales: las unidades reales están en ReservaAlojamientos, no en AlojamientoId
+        // (que en una reserva grupal es solo la primera unidad del grupo).
+        var ocupadosGrupales = await _db.ReservaAlojamientos
+            .Where(ra => reservaIdsEnRango.Contains(ra.ReservaId))
+            .Select(ra => ra.AlojamientoId)
+            .ToListAsync();
+
+        var ocupadosDirectos = reservasEnRango
+            .Where(r => !r.EsGrupal)
             .Select(r => r.AlojamientoId)
-            .ToListAsync())
+            .Concat(ocupadosGrupales)
             .ToHashSet();
 
         // Expandir con lógica de Apart:
