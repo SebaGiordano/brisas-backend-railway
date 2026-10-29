@@ -43,7 +43,12 @@ if (databaseUrl != null)
 }
 else
 {
-    npgsqlConn = defaultConnection!;
+    if (string.IsNullOrEmpty(defaultConnection))
+        throw new InvalidOperationException(
+            "No hay cadena de conexión configurada. En desarrollo, configurala con: " +
+            "dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"...\"");
+
+    npgsqlConn = defaultConnection;
 }
 
 builder.Services.AddDbContext<PostgresApplicationDbContext>(options => options.UseNpgsql(npgsqlConn));

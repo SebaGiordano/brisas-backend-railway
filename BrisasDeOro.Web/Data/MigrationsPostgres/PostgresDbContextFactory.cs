@@ -17,9 +17,24 @@ public class PostgresDbContextFactory : IDesignTimeDbContextFactory<PostgresAppl
         var config = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json")
+            .AddUserSecrets(typeof(PostgresDbContextFactory).Assembly, optional: true)
+            .AddEnvironmentVariables()
             .Build();
 
-        var connStr = config.GetConnectionString("DefaultConnection");
+        // Misma conversión que Program.cs: en Railway se usa DATABASE_URL; en desarrollo
+        // local, ConnectionStrings:DefaultConnection (hoy en User Secrets).
+        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+        string? connStr;
+        if (databaseUrl != null)
+        {
+            var uri = new Uri(databaseUrl);
+            var userInfo = uri.UserInfo.Split(':');
+            connStr = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+        }
+        else
+        {
+            connStr = config.GetConnectionString("DefaultConnection");
+        }
 
         var options = new DbContextOptionsBuilder<PostgresApplicationDbContext>()
             .UseNpgsql(connStr)
