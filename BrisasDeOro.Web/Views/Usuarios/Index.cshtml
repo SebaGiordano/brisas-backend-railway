@@ -4,7 +4,30 @@
 }
 
 <style>
+    /* Acciones: alineadas a la izquierda, con posición fija por tipo de botón
+       (Editar → Activar/Desactivar → Eliminar) — mismo ancho y separación para
+       que los botones queden alineados verticalmente entre filas, tenga la fila
+       1, 2 o 3 acciones. */
+    .acciones-usr-cell {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: .35rem;
+    }
+    /* Nombre en los modales de confirmación: en su propio renglón, en una sola
+       línea salvo que no entre (último recurso: se corta por cualquier punto). */
+    .modal-nombre-confirmacion { overflow-wrap: anywhere; }
+    .btn-accion-usr {
+        width: 31px;
+        height: 31px;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+    }
     @@media (max-width: 767.98px) {
+        /* Cuadrados: mismo ancho que la altura que ya tienen los .btn-sm en mobile (38px) */
+        .btn-accion-usr { width: 38px; height: 38px; }
         .tabla-usr-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .tabla-usr-responsive table { min-width: 520px; }
         .tabla-usr-responsive td,
@@ -22,14 +45,26 @@
         /* Columna Usuario sticky */
         .col-usuario-sticky {
             position: sticky; left: 0; z-index: 2;
-            background-color: #fff !important;
             box-shadow: 3px 0 6px -2px rgba(0,0,0,.15);
         }
         thead .col-usuario-sticky { z-index: 5; background-color: #212529 !important; }
+        /* Fondo de la columna sticky: blanco en filas activas, mismo gris de
+           table-secondary en filas de usuarios desactivados (para que el nombre
+           no quede "blanco" mientras el resto de la fila está en gris). */
+        tbody tr:not(.table-secondary) .col-usuario-sticky { background-color: #fff !important; }
+        tbody tr.table-secondary .col-usuario-sticky { background-color: #e2e3e5 !important; }
         /* Botones, badges e íconos centrados */
         .btn { display: inline-flex !important; align-items: center; justify-content: center; }
         .badge { display: inline-flex !important; align-items: center; justify-content: center; }
         .tabla-usr-responsive td.text-center { vertical-align: middle; }
+        .acciones-usr-cell { text-align: left !important; }
+        /* Modales de confirmación: altura adaptada al contenido */
+        #modal-desactivar-usr .modal-dialog,
+        #modal-eliminar-usr .modal-dialog { min-height: unset !important; }
+        #modal-desactivar-usr .modal-content,
+        #modal-eliminar-usr .modal-content { height: auto !important; min-height: unset !important; max-height: 90vh !important; }
+        #modal-desactivar-usr .modal-footer,
+        #modal-eliminar-usr .modal-footer { padding-bottom: .75rem !important; }
     }
 </style>
 
@@ -42,12 +77,19 @@
 </div>
 
 @* ── Mensajes TempData ── *@
-@if (TempData["Mensaje"] != null)
+@if (TempData["Mensaje"] != null || TempData["MensajeDestacado"] != null)
 {
     var tipo = TempData["MensajeTipo"]?.ToString() ?? "success";
     <div class="alert alert-@tipo alert-dismissible fade show" role="alert">
         <i class="bi bi-@(tipo == "success" ? "check-circle" : tipo == "warning" ? "exclamation-triangle" : "info-circle") me-2"></i>
-        @TempData["Mensaje"]
+        @if (TempData["MensajeDestacado"] != null)
+        {
+            @TempData["MensajePrefijo"]<strong>@TempData["MensajeDestacado"]</strong>@TempData["MensajeSufijo"]
+        }
+        else
+        {
+            @TempData["Mensaje"]
+        }
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
@@ -102,9 +144,9 @@
                                     <span class="badge bg-danger">Inactivo</span>
                                 }
                             </td>
-                            <td class="text-center text-nowrap">
+                            <td class="text-nowrap acciones-usr-cell">
                                 <a asp-action="Editar" asp-route-id="@u.Id"
-                                   class="btn btn-outline-primary btn-sm" title="Editar">
+                                   class="btn btn-outline-primary btn-sm btn-accion-usr" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 @if (!u.EsUsuarioActual)
@@ -112,10 +154,12 @@
                                     @if (u.Activo)
                                     {
                                         <form asp-action="Desactivar" asp-route-id="@u.Id"
-                                              method="post" class="d-inline"
-                                              onsubmit="return confirm('¿Desactivar al usuario @Html.Raw(u.UserName.Replace("'", "\\'"))? No podrá iniciar sesión hasta que sea reactivado.')">
+                                              method="post" class="d-inline-flex" id="form-desactivar-usr-@u.Id">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Desactivar">
+                                            <button type="button" class="btn btn-outline-warning btn-sm btn-accion-usr btn-abrir-desactivar-usr"
+                                                    title="Desactivar"
+                                                    data-nombre="@u.UserName"
+                                                    data-form="form-desactivar-usr-@u.Id">
                                                 <i class="bi bi-person-x"></i>
                                             </button>
                                         </form>
@@ -123,10 +167,20 @@
                                     else
                                     {
                                         <form asp-action="Activar" asp-route-id="@u.Id"
-                                              method="post" class="d-inline">
+                                              method="post" class="d-inline-flex">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-outline-success btn-sm" title="Activar">
+                                            <button type="submit" class="btn btn-outline-success btn-sm btn-accion-usr" title="Activar">
                                                 <i class="bi bi-person-check"></i>
+                                            </button>
+                                        </form>
+                                        <form asp-action="Eliminar" asp-route-id="@u.Id"
+                                              method="post" class="d-inline-flex" id="form-eliminar-usr-@u.Id">
+                                            @Html.AntiForgeryToken()
+                                            <button type="button" class="btn btn-outline-danger btn-sm btn-accion-usr btn-abrir-eliminar-usr"
+                                                    title="Eliminar definitivamente"
+                                                    data-nombre="@u.UserName"
+                                                    data-form="form-eliminar-usr-@u.Id">
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
                                     }
@@ -143,3 +197,79 @@
 <div class="text-muted small mt-2">
     @Model.Count usuario@(Model.Count != 1 ? "s" : "") registrado@(Model.Count != 1 ? "s" : "")
 </div>
+
+@* ── Modal: Confirmar desactivación ── *@
+<div class="modal fade" id="modal-desactivar-usr" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold">Desactivar usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-1">¿Querés desactivar este usuario?</p>
+                <p class="mb-2 fw-bold modal-nombre-confirmacion" id="desactivar-usr-nombre"></p>
+                <p class="mb-0">No podrá iniciar sesión hasta que sea reactivado.</p>
+            </div>
+            <div class="modal-footer">
+                <div class="d-flex gap-2 w-100">
+                    <button type="button" class="btn btn-modal-cancelar flex-fill" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning flex-fill" id="btn-confirmar-desactivar-usr">Desactivar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Modal: Confirmar eliminación definitiva ── *@
+<div class="modal fade" id="modal-eliminar-usr" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold">Eliminar usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-1">¿Querés eliminar definitivamente este usuario?</p>
+                <p class="mb-2 fw-bold modal-nombre-confirmacion" id="eliminar-usr-nombre"></p>
+                <p class="mb-0 text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <div class="d-flex gap-2 w-100">
+                    <button type="button" class="btn btn-modal-cancelar flex-fill" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger flex-fill" id="btn-confirmar-eliminar-usr">Eliminar usuario</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let _formDesactivarUsr = null;
+    document.querySelectorAll('.btn-abrir-desactivar-usr').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.getElementById('desactivar-usr-nombre').textContent = this.dataset.nombre;
+            _formDesactivarUsr = document.getElementById(this.dataset.form);
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-desactivar-usr')).show();
+        });
+    });
+    document.getElementById('btn-confirmar-desactivar-usr').addEventListener('click', function () {
+        bootstrap.Modal.getInstance(document.getElementById('modal-desactivar-usr')).hide();
+        _formDesactivarUsr?.submit();
+    });
+
+    let _formEliminarUsr = null;
+    document.querySelectorAll('.btn-abrir-eliminar-usr').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.getElementById('eliminar-usr-nombre').textContent = this.dataset.nombre;
+            _formEliminarUsr = document.getElementById(this.dataset.form);
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-eliminar-usr')).show();
+        });
+    });
+    document.getElementById('btn-confirmar-eliminar-usr').addEventListener('click', function () {
+        bootstrap.Modal.getInstance(document.getElementById('modal-eliminar-usr')).hide();
+        _formEliminarUsr?.submit();
+    });
+</script>
+}

@@ -32,6 +32,9 @@
         border-color: #ced4da !important;
         color: #495057 !important;
     }
+    /* Nombre en el modal de confirmación: en su propio renglón, en una sola
+       línea salvo que no entre (último recurso: se corta por cualquier punto). */
+    .modal-nombre-confirmacion { overflow-wrap: anywhere; }
     @@media (max-width: 767.98px) {
         .tabla-aloj-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         /* Columnas ajustadas al contenido (no estiradas a todo el ancho), igual
@@ -70,6 +73,10 @@
         }
         /* Botones de acciones con ícono centrado */
         .tabla-aloj-responsive .btn { display: inline-flex !important; align-items: center; justify-content: center; }
+        /* Modal de confirmación: altura adaptada al contenido */
+        #modal-desactivar-aloj .modal-dialog  { min-height: unset !important; }
+        #modal-desactivar-aloj .modal-content { height: auto !important; min-height: unset !important; max-height: 90vh !important; }
+        #modal-desactivar-aloj .modal-footer  { padding-bottom: .75rem !important; }
     }
 </style>
 
@@ -89,12 +96,19 @@
 </div>
 
 @* ── Mensajes TempData ── *@
-@if (TempData["Mensaje"] != null)
+@if (TempData["Mensaje"] != null || TempData["MensajeDestacado"] != null)
 {
     var tipo = TempData["MensajeTipo"]?.ToString() ?? "success";
     <div class="alert alert-@tipo alert-dismissible fade show" role="alert">
         <i class="bi bi-@(tipo == "success" ? "check-circle" : "exclamation-triangle") me-2"></i>
-        @TempData["Mensaje"]
+        @if (TempData["MensajeDestacado"] != null)
+        {
+            @TempData["MensajePrefijo"]<strong>@TempData["MensajeDestacado"]</strong>@TempData["MensajeSufijo"]
+        }
+        else
+        {
+            @TempData["Mensaje"]
+        }
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
@@ -145,10 +159,12 @@
                                     @if (a.Activo)
                                     {
                                         <form asp-action="Desactivar" asp-route-id="@a.Id"
-                                              method="post" class="d-inline"
-                                              onsubmit="return confirm('¿Desactivar @Html.Raw(a.Nombre.Replace("'", "\\'"))? No aparecerá en el formulario de nueva reserva.')">
+                                              method="post" class="d-inline" id="form-desactivar-aloj-@a.Id">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-outline-warning btn-sm" title="Desactivar">
+                                            <button type="button" class="btn btn-outline-warning btn-sm btn-abrir-desactivar-aloj"
+                                                    title="Desactivar"
+                                                    data-nombre="@a.Nombre"
+                                                    data-form="form-desactivar-aloj-@a.Id">
                                                 <i class="bi bi-eye-slash"></i>
                                             </button>
                                         </form>
@@ -178,8 +194,45 @@
     · @Model.Count(a => a.Activo) activo@(Model.Count(a => a.Activo) != 1 ? "s" : "")
 </div>
 
+@* ── Modal: Confirmar desactivación ── *@
+<div class="modal fade" id="modal-desactivar-aloj" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold">Desactivar alojamiento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-1">¿Querés desactivar este alojamiento?</p>
+                <p class="mb-2 fw-bold modal-nombre-confirmacion" id="desactivar-aloj-nombre"></p>
+                <p class="mb-0">No aparecerá en el formulario de nueva reserva hasta que sea reactivado.</p>
+            </div>
+            <div class="modal-footer">
+                <div class="d-flex gap-2 w-100">
+                    <button type="button" class="btn btn-modal-cancelar flex-fill" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning flex-fill" id="btn-confirmar-desactivar-aloj">Desactivar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
+(function () {
+    let _formDesactivarAloj = null;
+    document.querySelectorAll('.btn-abrir-desactivar-aloj').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.getElementById('desactivar-aloj-nombre').textContent = this.dataset.nombre;
+            _formDesactivarAloj = document.getElementById(this.dataset.form);
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-desactivar-aloj')).show();
+        });
+    });
+    document.getElementById('btn-confirmar-desactivar-aloj')?.addEventListener('click', function () {
+        bootstrap.Modal.getInstance(document.getElementById('modal-desactivar-aloj')).hide();
+        _formDesactivarAloj?.submit();
+    });
+})();
 (function () {
     const botones = document.querySelectorAll('.filtro-tipo-aloj');
     const filas   = document.querySelectorAll('tbody tr[data-tipo]');

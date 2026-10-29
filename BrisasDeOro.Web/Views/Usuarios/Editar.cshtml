@@ -10,6 +10,23 @@
         #btns-editar-usr .btn {
             display: flex !important; align-items: center !important; justify-content: center !important;
         }
+        /* Modal confirmación: altura auto, padding-bottom igual al lateral */
+        #modal-confirmar-editar .modal-content { height: auto !important; min-height: unset !important; }
+        #modal-confirmar-editar .modal-footer  { padding-bottom: 1rem !important; }
+    }
+    /* Modal de confirmación (Editar/Crear usuario): mismo formato en todos los
+       tamaños — campo en semi-negrita, valor(es) debajo con sangría. Los valores
+       van en una sola línea salvo que no entren, caso en el que se cortan por
+       cualquier punto (en vez de desbordar o recortarse a la mitad). */
+    .modal-campo-usr + .modal-campo-usr { margin-top: .6rem; }
+    .modal-campo-usr .modal-campo-usr-label { font-weight: 600; }
+    .modal-campo-usr .modal-valor-usr {
+        overflow-wrap: anywhere;
+    }
+    .modal-campo-usr .modal-valor-usr-label {
+        color: #6c757d;
+        min-width: 4.3rem;
+        flex: 0 0 auto;
     }
 </style>
 
@@ -36,7 +53,14 @@
             </div>
         }
 
-        <form asp-action="Editar" method="post" novalidate>
+        <div id="aviso-sin-cambios" class="alert alert-info d-none">
+            No hay cambios para guardar.
+        </div>
+
+        <form id="form-editar-usr" asp-action="Editar" method="post" novalidate
+              data-orig-username="@Model.UserName"
+              data-orig-phone="@Model.PhoneNumber"
+              data-orig-rol="@Model.Rol">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="Id" />
 
@@ -117,6 +141,106 @@
     </div>
 </div>
 
+@* ── Modal de confirmación ── *@
+<div class="modal fade" id="modal-confirmar-editar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title fw-semibold">Confirmar cambios</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pb-2" style="font-size:.9rem;">
+                <div class="mb-3">Usuario: <strong>@Model.UserName</strong></div>
+                <div id="modal-editar-cambios-body"></div>
+                <div id="modal-editar-nota" class="small text-muted mt-3 d-none">
+                    <i class="bi bi-info-circle me-1"></i>El usuario deberá iniciar sesión con los datos actualizados.
+                </div>
+            </div>
+            <div class="modal-footer py-2 gap-2">
+                <button type="button" class="btn btn-modal-cancelar btn-sm" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-confirmar-editar">
+                    <i class="bi bi-check-lg me-1"></i>Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <script>
+    (function () {
+        const form = document.getElementById('form-editar-usr');
+        const origUsername = form.dataset.origUsername || '';
+        const origPhone    = form.dataset.origPhone || '';
+        const origRol      = form.dataset.origRol || '';
+
+        const escHtml = s => String(s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        let _confirmadoEditar = false;
+
+        form.addEventListener('submit', function (e) {
+            if (_confirmadoEditar) return;
+            e.preventDefault();
+
+            const nuevoUsername  = document.getElementById('UserName').value.trim();
+            const nuevoPhone     = document.getElementById('PhoneNumber').value.trim();
+            const nuevoRol       = document.getElementById('Rol').value;
+            const nuevaPassword  = document.getElementById('NuevaPassword').value;
+
+            const cambioUsername = nuevoUsername !== origUsername;
+            const cambioPhone    = nuevoPhone !== origPhone;
+            const cambioRol      = nuevoRol !== origRol;
+            const cambioPassword = nuevaPassword.length > 0;
+
+            if (!cambioUsername && !cambioPhone && !cambioRol && !cambioPassword) {
+                document.getElementById('aviso-sin-cambios').classList.remove('d-none');
+                return;
+            }
+            document.getElementById('aviso-sin-cambios').classList.add('d-none');
+
+            const campoAnteriorNuevo = (nombre, anterior, nuevo) => `
+                <div class="modal-campo-usr">
+                    <div class="modal-campo-usr-label">${escHtml(nombre)}</div>
+                    <div class="ps-3">
+                        <div class="d-flex gap-1"><span class="modal-valor-usr-label">Anterior:</span><span class="modal-valor-usr">${escHtml(anterior)}</span></div>
+                        <div class="d-flex gap-1"><span class="modal-valor-usr-label">Nuevo:</span><span class="modal-valor-usr">${escHtml(nuevo)}</span></div>
+                    </div>
+                </div>`;
+
+            let bloques = '';
+            if (cambioUsername) {
+                bloques += campoAnteriorNuevo('Nombre de usuario', origUsername, nuevoUsername);
+            }
+            if (cambioPassword) {
+                bloques += `
+                <div class="modal-campo-usr">
+                    <div class="modal-campo-usr-label">Contraseña</div>
+                    <div class="ps-3">Se actualizará</div>
+                </div>`;
+            }
+            if (cambioPhone) {
+                bloques += campoAnteriorNuevo('Celular', origPhone || 'No registrado', nuevoPhone || 'No registrado');
+            }
+            if (cambioRol) {
+                bloques += campoAnteriorNuevo('Rol', origRol, nuevoRol);
+            }
+            document.getElementById('modal-editar-cambios-body').innerHTML = bloques;
+            document.getElementById('modal-editar-nota').classList.toggle('d-none', !(cambioUsername || cambioPassword));
+
+            new bootstrap.Modal(document.getElementById('modal-confirmar-editar')).show();
+        });
+
+        document.getElementById('btn-confirmar-editar').addEventListener('click', function () {
+            _confirmadoEditar = true;
+            bootstrap.Modal.getInstance(document.getElementById('modal-confirmar-editar')).hide();
+            form.requestSubmit();
+        });
+    })();
+    </script>
 }

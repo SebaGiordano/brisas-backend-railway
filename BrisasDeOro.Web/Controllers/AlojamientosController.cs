@@ -106,8 +106,10 @@ public class AlojamientosController : Controller
         a.Activo = false;
         await _context.SaveChangesAsync();
 
-        TempData["Mensaje"]     = $"Alojamiento '{a.Nombre}' desactivado.";
-        TempData["MensajeTipo"] = "warning";
+        TempData["MensajePrefijo"]   = $"Alojamiento '{a.Nombre}' ";
+        TempData["MensajeDestacado"] = "desactivado";
+        TempData["MensajeSufijo"]    = ".";
+        TempData["MensajeTipo"]      = "warning";
         return RedirectToAction(nameof(Index));
     }
 
@@ -124,8 +126,10 @@ public class AlojamientosController : Controller
         a.Activo = true;
         await _context.SaveChangesAsync();
 
-        TempData["Mensaje"]     = $"Alojamiento '{a.Nombre}' activado.";
-        TempData["MensajeTipo"] = "success";
+        TempData["MensajePrefijo"]   = $"Alojamiento '{a.Nombre}' ";
+        TempData["MensajeDestacado"] = "activado";
+        TempData["MensajeSufijo"]    = ".";
+        TempData["MensajeTipo"]      = "success";
         return RedirectToAction(nameof(Index));
     }
 }

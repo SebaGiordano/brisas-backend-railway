@@ -196,8 +196,10 @@ public class UsuariosController : Controller
         user.LockoutEnd     = DateTimeOffset.MaxValue;
         await _userManager.UpdateAsync(user);
 
-        TempData["Mensaje"]     = $"Usuario '{user.UserName}' desactivado.";
-        TempData["MensajeTipo"] = "warning";
+        TempData["MensajePrefijo"]   = $"Usuario '{user.UserName}' ";
+        TempData["MensajeDestacado"] = "desactivado";
+        TempData["MensajeSufijo"]    = ".";
+        TempData["MensajeTipo"]      = "warning";
         return RedirectToAction(nameof(Index));
     }
 
@@ -214,8 +216,64 @@ public class UsuariosController : Controller
         user.LockoutEnd     = null;
         await _userManager.UpdateAsync(user);
 
-        TempData["Mensaje"]     = $"Usuario '{user.UserName}' activado.";
-        TempData["MensajeTipo"] = "success";
+        TempData["MensajePrefijo"]   = $"Usuario '{user.UserName}' ";
+        TempData["MensajeDestacado"] = "activado";
+        TempData["MensajeSufijo"]    = ".";
+        TempData["MensajeTipo"]      = "success";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ── Eliminar POST ─────────────────────────────────────────────────────────
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Eliminar(string id)
+    {
+        if (id == _userManager.GetUserId(User))
+        {
+            TempData["Mensaje"]     = "No podés eliminar tu propia cuenta.";
+            TempData["MensajeTipo"] = "warning";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        bool desactivado = user.LockoutEnabled
+            && user.LockoutEnd.HasValue
+            && user.LockoutEnd > DateTimeOffset.UtcNow;
+        if (!desactivado)
+        {
+            TempData["Mensaje"]     = "Solo se pueden eliminar usuarios desactivados.";
+            TempData["MensajeTipo"] = "warning";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+        if (roles.Contains("Administrador"))
+        {
+            var administradores = await _userManager.GetUsersInRoleAsync("Administrador");
+            if (administradores.Count <= 1)
+            {
+                TempData["Mensaje"]     = "No se puede eliminar al único administrador del sistema.";
+                TempData["MensajeTipo"] = "warning";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        var nombreUsuario = user.UserName;
+        var result = await _userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            TempData["Mensaje"]     = string.Join(" ", result.Errors.Select(e => e.Description));
+            TempData["MensajeTipo"] = "danger";
+            return RedirectToAction(nameof(Index));
+        }
+
+        TempData["MensajePrefijo"]   = $"Usuario '{nombreUsuario}' ";
+        TempData["MensajeDestacado"] = "eliminado definitivamente";
+        TempData["MensajeSufijo"]    = ".";
+        TempData["MensajeTipo"]      = "success";
         return RedirectToAction(nameof(Index));
     }
 }

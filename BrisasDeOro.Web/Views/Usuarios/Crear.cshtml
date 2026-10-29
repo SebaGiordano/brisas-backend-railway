@@ -15,6 +15,11 @@
     @@media (min-width: 769px) {
         #btns-crear-usr { justify-content: center !important; }
     }
+    /* Modal de confirmación: mismo formato en todos los tamaños — campo en
+       semi-negrita, valor debajo con sangría. */
+    .modal-campo-usr + .modal-campo-usr { margin-top: .6rem; }
+    .modal-campo-usr .modal-campo-usr-label { font-weight: 600; }
+    .modal-campo-usr .modal-valor-usr { overflow-wrap: anywhere; }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -125,28 +130,30 @@
                 <h6 class="modal-title fw-semibold">Confirmar nuevo usuario</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body pb-2">
-                <table class="table table-sm table-borderless mb-0" style="font-size:.9rem;">
-                    <tr>
-                        <td class="text-muted pe-3" style="white-space:nowrap;">Nombre de usuario</td>
-                        <td class="fw-semibold" id="conf-username"></td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted pe-3">Rol</td>
-                        <td class="fw-semibold" id="conf-rol"></td>
-                    </tr>
-                    <tr id="conf-celular-row">
-                        <td class="text-muted pe-3">Celular</td>
-                        <td class="fw-semibold" id="conf-celular"></td>
-                    </tr>
-                </table>
+            <div class="modal-body pb-2" style="font-size:.9rem;">
+                <div class="modal-campo-usr">
+                    <div class="modal-campo-usr-label">Nombre de usuario</div>
+                    <div class="ps-3 modal-valor-usr" id="conf-username"></div>
+                </div>
+                <div class="modal-campo-usr">
+                    <div class="modal-campo-usr-label">Contraseña</div>
+                    <div class="ps-3">Definida</div>
+                </div>
+                <div class="modal-campo-usr">
+                    <div class="modal-campo-usr-label">Celular</div>
+                    <div class="ps-3 modal-valor-usr" id="conf-celular"></div>
+                </div>
+                <div class="modal-campo-usr">
+                    <div class="modal-campo-usr-label">Rol</div>
+                    <div class="ps-3 modal-valor-usr" id="conf-rol"></div>
+                </div>
             </div>
             <div class="modal-footer py-2 gap-2">
-                <button type="button" class="btn btn-modal-volver btn-sm" data-bs-dismiss="modal">
-                    Volver y corregir
+                <button type="button" class="btn btn-modal-cancelar btn-sm" data-bs-dismiss="modal">
+                    Cancelar
                 </button>
                 <button type="button" class="btn btn-primary btn-sm" id="btn-confirmar-crear">
-                    <i class="bi bi-check-lg me-1"></i>Sí, crear usuario
+                    <i class="bi bi-check-lg me-1"></i>Crear usuario
                 </button>
             </div>
         </div>
@@ -168,15 +175,8 @@
             document.getElementById('UserName').value.trim() || '—';
         document.getElementById('conf-rol').textContent =
             document.getElementById('Rol').value || '—';
-
-        const celular = document.getElementById('PhoneNumber').value.trim();
-        const fila = document.getElementById('conf-celular-row');
-        if (celular) {
-            document.getElementById('conf-celular').textContent = celular;
-            fila.style.display = '';
-        } else {
-            fila.style.display = 'none';
-        }
+        document.getElementById('conf-celular').textContent =
+            document.getElementById('PhoneNumber').value.trim() || 'No registrado';
 
         new bootstrap.Modal(document.getElementById('modal-confirmar-crear')).show();
     });
