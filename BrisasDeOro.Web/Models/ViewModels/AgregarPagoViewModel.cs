@@ -14,6 +14,11 @@ public class AgregarPagoViewModel
     public decimal TotalCobrado     { get; set; }
     public decimal SaldoPendiente   { get; set; }
 
+    // ── Origen de la navegación (calendario / saldos-pendientes / facturación),
+    // para volver al mismo lugar después de registrar el pago ────────────────
+    public string? From      { get; set; }
+    public string? ReturnUrl { get; set; }
+
     // ── Campos del nuevo pago ─────────────────────────────────────────────────
     [Required(ErrorMessage = "Seleccioná el concepto del pago.")]
     [Display(Name = "Concepto")]

@@ -34,8 +34,29 @@
     }
     @@media (max-width: 767.98px) {
         .tabla-aloj-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        /* Columnas ajustadas al contenido (no estiradas a todo el ancho), igual
+           criterio que #tabla-pagos en el detalle de reserva. */
+        .tabla-aloj-responsive table { width: max-content !important; min-width: 100% !important; }
         .tabla-aloj-responsive td,
-        .tabla-aloj-responsive th { white-space: nowrap; padding: 0.5rem 0.6rem; }
+        .tabla-aloj-responsive th { white-space: nowrap; padding: 0.5rem 0.325rem; }
+        /* Con columna Acciones (Administrador): la tabla mide el ancho visible del
+           contenedor + el ancho fijo de Acciones (100px), con table-layout:fixed.
+           Así las primeras 4 columnas (Nombre/Tipo/Capacidad/Estado) se reparten
+           exactamente el 100% visible y Acciones queda oculta hasta deslizar.
+           Los porcentajes de cada columna están calibrados según el contenido más
+           ancho de cada una (medido en el navegador): Nombre "Casa (Icho Cruz)",
+           Tipo "Habitación", Capacidad "10 personas", Estado "Inactivo". */
+        .tabla-aloj-responsive table.tabla-aloj-5col {
+            width: calc(100% + 100px) !important;
+            min-width: 0 !important;
+            table-layout: fixed;
+        }
+        /* Los anchos de columna se fijan en px por JS (ver @@section Scripts): bajo
+           table-layout:fixed, Chromium no respeta de forma confiable un calc() que
+           mezcle % y px para dimensionar columnas (solo valores en px puros). */
+        .tabla-aloj-5col thead th:nth-child(5) { width: 100px; }
+        .tabla-aloj-5col td,
+        .tabla-aloj-5col th { overflow: hidden; }
         /* Filtros: mismo criterio que .filtros-tipo-tarifas en Tarifas — título arriba,
            botones abajo repartiendo todo el ancho en partes iguales, sin scroll. */
         .filtros-aloj-sticky {
@@ -82,14 +103,17 @@
 <div class="card">
     <div class="card-body p-0">
         <div class="table-responsive tabla-aloj-responsive">
-            <table class="table table-sm table-hover align-middle mb-0">
+            <table class="table table-sm table-hover align-middle mb-0 @(User.IsInRole("Administrador") ? "tabla-aloj-5col" : "")">
                 <thead class="table-dark">
                     <tr>
                         <th>Nombre</th>
                         <th class="text-center">Tipo</th>
                         <th class="text-center">Capacidad</th>
                         <th class="text-center">Estado</th>
-                        <th class="text-center">Acciones</th>
+                        @if (User.IsInRole("Administrador"))
+                        {
+                            <th class="text-center">Acciones</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
@@ -111,33 +135,36 @@
                                     <span class="badge bg-danger">Inactivo</span>
                                 }
                             </td>
-                            <td class="text-center text-nowrap">
-                                <a asp-action="Editar" asp-route-id="@a.Id"
-                                   class="btn btn-outline-primary btn-sm" title="Editar">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                @if (a.Activo)
-                                {
-                                    <form asp-action="Desactivar" asp-route-id="@a.Id"
-                                          method="post" class="d-inline"
-                                          onsubmit="return confirm('¿Desactivar @Html.Raw(a.Nombre.Replace("'", "\\'"))? No aparecerá en el formulario de nueva reserva.')">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-outline-warning btn-sm" title="Desactivar">
-                                            <i class="bi bi-eye-slash"></i>
-                                        </button>
-                                    </form>
-                                }
-                                else
-                                {
-                                    <form asp-action="Activar" asp-route-id="@a.Id"
-                                          method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-outline-success btn-sm" title="Activar">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                    </form>
-                                }
-                            </td>
+                            @if (User.IsInRole("Administrador"))
+                            {
+                                <td class="text-center text-nowrap">
+                                    <a asp-action="Editar" asp-route-id="@a.Id"
+                                       class="btn btn-outline-primary btn-sm" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    @if (a.Activo)
+                                    {
+                                        <form asp-action="Desactivar" asp-route-id="@a.Id"
+                                              method="post" class="d-inline"
+                                              onsubmit="return confirm('¿Desactivar @Html.Raw(a.Nombre.Replace("'", "\\'"))? No aparecerá en el formulario de nueva reserva.')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-warning btn-sm" title="Desactivar">
+                                                <i class="bi bi-eye-slash"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="Activar" asp-route-id="@a.Id"
+                                              method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-success btn-sm" title="Activar">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            }
                         </tr>
                     }
                 </tbody>
@@ -166,6 +193,39 @@
                 tr.style.display = (!filtro || tr.dataset.tipo === filtro) ? '' : 'none';
             });
         });
+    });
+})();
+
+// ── Mobile: anchos de columna de la tabla de Alojamientos (con Acciones) ───────
+// Bajo table-layout:fixed, el navegador no reparte de forma confiable un calc()
+// que mezcle % y px al dimensionar columnas — se calculan y aplican en px puros.
+(function () {
+    const tabla = document.querySelector('table.tabla-aloj-5col');
+    if (!tabla) return;
+
+    const ANCHO_ACCIONES = 100; // px, fijo (botones Editar + Activar/Desactivar)
+    // Proporciones calibradas según el contenido más ancho de cada columna:
+    // Nombre "Casa (Icho Cruz)", Tipo "Habitación", Capacidad "10 personas",
+    // Estado "Inactivo" (ver comentario en el <style> de arriba).
+    const PROPORCIONES = [0.3258, 0.2308, 0.2534, 0.19];
+
+    function aplicarAnchos() {
+        if (window.innerWidth >= 768) return;
+        const contenedor = tabla.closest('.tabla-aloj-responsive');
+        if (!contenedor) return;
+        const anchoDisponible = contenedor.clientWidth;
+        const ths = tabla.querySelectorAll('thead th');
+        PROPORCIONES.forEach((p, i) => {
+            if (ths[i]) ths[i].style.width = Math.round(anchoDisponible * p) + 'px';
+        });
+        if (ths[4]) ths[4].style.width = ANCHO_ACCIONES + 'px';
+    }
+
+    aplicarAnchos();
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(aplicarAnchos, 100);
     });
 })();
 </script>

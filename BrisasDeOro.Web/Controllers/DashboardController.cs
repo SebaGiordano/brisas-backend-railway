@@ -28,13 +28,13 @@ public class DashboardController : Controller
 
         var (pDesde, pHasta) = ResolvePeriod(mes, anno, desde, hasta, hoy.Month, hoy.Year);
 
-        // Años disponibles para el desplegable
-        var annosList = await _context.Reservas
-            .Select(r => r.FechaIngreso.Year)
-            .Distinct()
+        // Años disponibles para el desplegable: rango continuo desde el primer año
+        // con reservas (o el actual si no hay ninguna) hasta el año siguiente al actual.
+        var primerAnno = await _context.Reservas.MinAsync(r => (int?)r.FechaIngreso.Year) ?? hoy.Year;
+        var ultimoAnno = hoy.Year + 1;
+        var annosList = Enumerable.Range(primerAnno, ultimoAnno - primerAnno + 1)
             .OrderByDescending(y => y)
-            .ToListAsync();
-        if (!annosList.Contains(hoy.Year)) annosList.Insert(0, hoy.Year);
+            .ToList();
 
         // Datos reutilizables entre períodos
         var alojamientos  = await _context.Alojamientos.Where(a => a.Activo).ToListAsync();

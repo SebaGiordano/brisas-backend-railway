@@ -3,8 +3,12 @@
     ViewData["Title"] = "Registrar pago";
     var noches     = (Model.FechaSalida - Model.FechaIngreso).Days;
     var tarifaDia  = (noches > 0) ? (decimal?)(Model.MontoTotal / noches) : null;
-    var fromCalendario       = Context.Request.Query["from"].ToString() == "calendario";
-    var fromSaldosPendientes = Context.Request.Query["from"].ToString() == "saldos-pendientes";
+    var fromCalendario       = Model.From == "calendario";
+    var fromSaldosPendientes = Model.From == "saldos-pendientes";
+    var fromFacturacion      = Model.From == "facturacion";
+    var facturacionReturnUrl = (fromFacturacion && Url.IsLocalUrl(Model.ReturnUrl))
+        ? Model.ReturnUrl
+        : Url.Action("Index", "Facturacion");
 }
 
 <style>
@@ -76,7 +80,8 @@
         else
         {
             <a asp-controller="Reservas" asp-action="Details" asp-route-id="@Model.ReservaId"
-               asp-route-from="@(fromCalendario ? "calendario" : null)"
+               asp-route-from="@(fromCalendario ? "calendario" : fromFacturacion ? "facturacion" : null)"
+               asp-route-returnUrl="@(fromFacturacion ? facturacionReturnUrl : null)"
                class="btn btn-outline-secondary btn-sm btn-volver-detalle btn-nav-pago" style="font-size: 13px !important; white-space: nowrap !important">
                 <i class="bi bi-arrow-left me-1"></i><span class="d-none d-md-inline">Ir al detalle de la reserva</span><span class="d-md-none">Ver detalle de reserva</span>
             </a>
@@ -219,6 +224,8 @@
         <form asp-action="AgregarPago" method="post" id="form-pago" novalidate>
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="ReservaId" />
+            <input type="hidden" asp-for="From" />
+            <input type="hidden" asp-for="ReturnUrl" />
 
             <div class="row g-3">
                 <div class="col-md-4">
@@ -279,7 +286,8 @@
                     <i class="bi bi-check-lg me-1"></i>Registrar pago
                 </button>
                 <a asp-controller="Reservas" asp-action="Details" asp-route-id="@Model.ReservaId"
-                   asp-route-from="@(fromCalendario ? "calendario" : null)"
+                   asp-route-from="@(fromCalendario ? "calendario" : fromFacturacion ? "facturacion" : null)"
+                   asp-route-returnUrl="@(fromFacturacion ? facturacionReturnUrl : null)"
                    class="btn btn-modal-cancelar btn-cancelar-pago">Cancelar</a>
                 @if (fromCalendario)
                 {

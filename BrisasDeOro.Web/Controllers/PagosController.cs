@@ -21,7 +21,7 @@ public class PagosController : Controller
     // ── AgregarPago GET ───────────────────────────────────────────────────────
 
     [HttpGet]
-    public async Task<IActionResult> AgregarPago(int reservaId)
+    public async Task<IActionResult> AgregarPago(int reservaId, string? from, string? returnUrl)
     {
         var reserva = await _context.Reservas
             .Include(r => r.Alojamiento)
@@ -54,6 +54,8 @@ public class PagosController : Controller
             TipoPago          = saldoPendiente < 0 ? TipoPago.Ajuste
                               : tienePagosPrevios  ? TipoPago.Cancelacion
                               :                      TipoPago.Sena,
+            From              = from,
+            ReturnUrl         = returnUrl,
         };
 
         return View(vm);
@@ -92,7 +94,15 @@ public class PagosController : Controller
         TempData["Mensaje"]     = $"Pago de {Formato.Moneda(model.Monto)} registrado correctamente.";
         TempData["MensajeTipo"] = "success";
 
-        return RedirectToAction("Details", "Reservas", new { id = model.ReservaId });
+        var routeValues = new Dictionary<string, string?> { ["id"] = model.ReservaId.ToString() };
+        if (!string.IsNullOrEmpty(model.From))
+        {
+            routeValues["from"] = model.From;
+            if (model.From == "facturacion" && Url.IsLocalUrl(model.ReturnUrl))
+                routeValues["returnUrl"] = model.ReturnUrl;
+        }
+
+        return RedirectToAction("Details", "Reservas", routeValues);
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

@@ -1,7 +1,12 @@
 @model Reserva
 @{
     ViewData["Title"] = $"Reserva #{Model.Id}";
-    var fromCalendario = Context.Request.Query["from"].ToString() == "calendario";
+    var fromCalendario  = Context.Request.Query["from"].ToString() == "calendario";
+    var fromFacturacion = Context.Request.Query["from"].ToString() == "facturacion";
+    var returnUrlRaw    = Context.Request.Query["returnUrl"].ToString();
+    var facturacionReturnUrl = (fromFacturacion && Url.IsLocalUrl(returnUrlRaw))
+        ? returnUrlRaw
+        : Url.Action("Index", "Facturacion");
 
     var totalCobrado   = Model.Pagos.Sum(p => p.Monto);
     var saldoPendiente = Model.MontoTotal - totalCobrado;
@@ -118,6 +123,23 @@
         #modal-cancelar-reserva .modal-dialog  { min-height: unset !important; }
         #modal-cancelar-reserva .modal-content { height: auto !important; min-height: unset !important; max-height: 90vh !important; }
         #modal-cancelar-reserva .modal-footer  { padding-bottom: .75rem !important; }
+        /* Resumen "Cap. máx: / Huéspedes registrados:" (reserva grupal): dos renglones,
+           etiqueta a la izquierda y valor a la derecha, sin centrado ni separador "·". */
+        .resumen-grupo-stats {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            justify-content: flex-start !important;
+            gap: .4rem !important;
+            padding-left: .75rem !important;
+            padding-right: .75rem !important;
+        }
+        .resumen-grupo-stats .resumen-grupo-stat-row {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            width: 100%;
+        }
+        .resumen-grupo-stats .resumen-grupo-sep { display: none !important; }
     }
     @@media (min-width: 769px) {
         /* Fecha de registro: ancho completo, línea arriba y abajo, fondo suave, título y fecha en línea */
@@ -136,13 +158,23 @@
     }
 </style>
 
-@* ── Barra de navegación superior mobile (solo cuando se viene del calendario) ── *@
-@if (fromCalendario)
+@* ── Barra de navegación superior mobile (solo cuando se viene del calendario o
+     de Facturación) ── *@
+@if (fromCalendario || fromFacturacion)
 {
     <div id="nav-bar-mobile" class="d-md-none d-flex gap-2 mb-3">
-        <a href="@Url.Action("Index", "Calendario")" class="btn btn-outline-secondary btn-sm btn-nav-mobile">
-            <i class="bi bi-arrow-left me-1"></i>Volver al calendario
-        </a>
+        @if (fromCalendario)
+        {
+            <a href="@Url.Action("Index", "Calendario")" class="btn btn-outline-secondary btn-sm btn-nav-mobile">
+                <i class="bi bi-arrow-left me-1"></i>Volver al calendario
+            </a>
+        }
+        else if (fromFacturacion)
+        {
+            <a href="@facturacionReturnUrl" class="btn btn-outline-secondary btn-sm btn-nav-mobile">
+                <i class="bi bi-arrow-left me-1"></i>Volver a Facturación
+            </a>
+        }
         <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-nav-mobile">
             <i class="bi bi-list me-1"></i>Ver listado de reservas
         </a>
@@ -162,16 +194,28 @@
             }
         </div>
     </div>
-    <div class="d-flex gap-2 @(fromCalendario ? "d-none d-md-flex" : "")">
+    <div class="d-flex gap-2 @((fromCalendario || fromFacturacion) ? "d-none d-md-flex" : "")">
         @if (fromCalendario)
         {
             <a href="@Url.Action("Index", "Calendario")" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-1"></i>Volver al calendario
             </a>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-listado-top">
+                <i class="bi bi-list me-1"></i>Ver listado de reservas
+            </a>
         }
-        <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-listado-top">
-            <i class="bi bi-list me-1"></i>Ver listado de reservas
-        </a>
+        else if (fromFacturacion)
+        {
+            <a href="@facturacionReturnUrl" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Volver a Facturación
+            </a>
+        }
+        else
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-listado-top">
+                <i class="bi bi-list me-1"></i>Ver listado de reservas
+            </a>
+        }
     </div>
 </div>
 
@@ -363,15 +407,18 @@
                                 </div>
                             }
                         </div>
-                        <div class="d-flex flex-wrap align-items-center justify-content-center gap-3 mt-3 px-4 py-2 rounded"
+                        <div class="d-flex flex-wrap align-items-center justify-content-center gap-3 mt-3 px-4 py-2 rounded resumen-grupo-stats"
                              style="background-color:#f8f9fa; border:1px solid #e9ecef;">
-                            <span>
-                                <span class="text-muted small fw-semibold">Cap. máx:</span>
+                            <span class="resumen-grupo-stat-row">
+                                <span class="text-muted small fw-semibold">
+                                    <span class="d-md-none">Capacidad máxima:</span>
+                                    <span class="d-none d-md-inline">Cap. máx:</span>
+                                </span>
                                 <span class="fw-bold ms-1" style="font-size:1rem;">@capacidadTotal PERSONAS</span>
                             </span>
-                            <span class="text-muted small">·</span>
-                            <span>
-                                <span class="text-muted small fw-semibold">Huéspedes registrados:</span>
+                            <span class="text-muted small resumen-grupo-sep">·</span>
+                            <span class="resumen-grupo-stat-row">
+                                <span class="text-muted small fw-semibold"><span>Huéspedes registrados:</span></span>
                                 <span class="fw-bold ms-1" style="font-size:1rem;">@Model.CantidadHuespedes PERSONAS</span>
                             </span>
                         </div>
@@ -691,7 +738,8 @@ else
         @if (User.IsInRole("Administrador"))
         {
             <a asp-controller="Pagos" asp-action="AgregarPago" asp-route-reservaId="@Model.Id"
-               asp-route-from="@(fromCalendario ? "calendario" : null)"
+               asp-route-from="@(fromCalendario ? "calendario" : fromFacturacion ? "facturacion" : null)"
+               asp-route-returnUrl="@(fromFacturacion ? facturacionReturnUrl : null)"
                class="btn btn-sm btn-outline-success btn-agregar-pago-card">
                 <i class="bi bi-plus-lg me-1"></i>Agregar pago
             </a>
@@ -773,7 +821,8 @@ else
             <span class="d-md-none">Editar</span>
         </a>
         <a asp-controller="Pagos" asp-action="AgregarPago" asp-route-reservaId="@Model.Id"
-           asp-route-from="@(fromCalendario ? "calendario" : null)"
+           asp-route-from="@(fromCalendario ? "calendario" : fromFacturacion ? "facturacion" : null)"
+           asp-route-returnUrl="@(fromFacturacion ? facturacionReturnUrl : null)"
            class="btn btn-outline-success btn-gestion">
             <i class="bi bi-plus-circle me-1"></i>
             <span class="d-none d-md-inline">Agregar pago</span>

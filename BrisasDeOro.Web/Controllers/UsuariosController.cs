@@ -11,10 +11,12 @@ namespace BrisasDeOro.Web.Controllers;
 public class UsuariosController : Controller
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
 
-    public UsuariosController(UserManager<ApplicationUser> userManager)
+    public UsuariosController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
     {
         _userManager = userManager;
+        _signInManager = signInManager;
     }
 
     // ── Index ─────────────────────────────────────────────────────────────────
@@ -116,6 +118,37 @@ public class UsuariosController : Controller
         var user = await _userManager.FindByIdAsync(model.Id);
         if (user == null) return NotFound();
 
+        bool esUsuarioActual = user.Id == _userManager.GetUserId(User);
+
+        // Cambio de nombre de usuario (si corresponde) primero: si falla (por
+        // ejemplo, nombre duplicado), no se guarda ningún otro cambio del formulario.
+        bool cambioUserName = !string.Equals(user.UserName, model.UserName, StringComparison.Ordinal);
+        if (cambioUserName)
+        {
+            var resultUserName = await _userManager.SetUserNameAsync(user, model.UserName);
+            if (!resultUserName.Succeeded)
+            {
+                foreach (var e in resultUserName.Errors)
+                    ModelState.AddModelError(string.Empty, e.Description);
+                return View(model);
+            }
+        }
+
+        // Cambio de contraseña (opcional) primero: si falla, no se guarda ningún
+        // otro cambio del formulario (celular/rol).
+        bool cambioPassword = !string.IsNullOrEmpty(model.NuevaPassword);
+        if (cambioPassword)
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var resultPassword = await _userManager.ResetPasswordAsync(user, token, model.NuevaPassword!);
+            if (!resultPassword.Succeeded)
+            {
+                foreach (var e in resultPassword.Errors)
+                    ModelState.AddModelError(string.Empty, e.Description);
+                return View(model);
+            }
+        }
+
         user.PhoneNumber = model.PhoneNumber;
         await _userManager.UpdateAsync(user);
 
@@ -126,7 +159,19 @@ public class UsuariosController : Controller
             await _userManager.AddToRoleAsync(user, model.Rol);
         }
 
-        TempData["Mensaje"]     = $"Usuario '{user.UserName}' actualizado correctamente.";
+        // Si el administrador se cambió a sí mismo el nombre de usuario y/o la
+        // contraseña, refrescar su sesión actual para que no quede invalidada y
+        // el nombre de arriba a la derecha se actualice.
+        if ((cambioUserName || cambioPassword) && esUsuarioActual)
+            await _signInManager.RefreshSignInAsync(user);
+
+        TempData["Mensaje"] = (cambioUserName, cambioPassword) switch
+        {
+            (true,  true ) => $"Usuario actualizado. El nombre de usuario ahora es '{user.UserName}' y la contraseña fue cambiada.",
+            (true,  false) => $"Usuario actualizado. El nombre de usuario ahora es '{user.UserName}'.",
+            (false, true ) => $"Usuario '{user.UserName}' actualizado. La contraseña fue cambiada.",
+            _              => $"Usuario '{user.UserName}' actualizado correctamente.",
+        };
         TempData["MensajeTipo"] = "success";
         return RedirectToAction(nameof(Index));
     }

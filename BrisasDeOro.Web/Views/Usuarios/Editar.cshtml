@@ -3,9 +3,19 @@
     ViewData["Title"] = $"Editar usuario — {Model.UserName}";
 }
 
+<style>
+    @@media (max-width: 767.98px) {
+        #btn-volver-editar-usr,
+        #btn-cancelar-editar-usr,
+        #btns-editar-usr .btn {
+            display: flex !important; align-items: center !important; justify-content: center !important;
+        }
+    }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Editar usuario</h2>
-    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+    <a id="btn-volver-editar-usr" asp-action="Index" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i>Volver al listado
     </a>
 </div>
@@ -29,13 +39,12 @@
         <form asp-action="Editar" method="post" novalidate>
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="Id" />
-            <input type="hidden" asp-for="UserName" />
 
             <div class="mb-3">
-                <label class="form-label">Nombre de usuario</label>
-                <input type="text" class="form-control" value="@Model.UserName"
-                       disabled style="background-color: #f8f9fa;" />
-                <div class="form-text text-muted">El nombre de usuario no se puede modificar.</div>
+                <label asp-for="UserName" class="form-label">Nombre de usuario</label>
+                <input asp-for="UserName" class="form-control" />
+                <div class="form-text text-muted">Es el nombre con el que se ingresa al sistema.</div>
+                <span asp-validation-for="UserName" class="text-danger small"></span>
             </div>
 
             <div class="mb-3">
@@ -67,11 +76,41 @@
                 <span asp-validation-for="Rol" class="text-danger small"></span>
             </div>
 
-            <div class="d-flex gap-2 justify-content-center">
+            <hr class="my-4" />
+
+            <h6 class="mb-3">Cambiar contraseña <span class="text-muted fw-normal">(opcional)</span></h6>
+
+            <div class="mb-3">
+                <label asp-for="NuevaPassword" class="form-label">Nueva contraseña</label>
+                <div class="input-group">
+                    <input asp-for="NuevaPassword" type="password" class="form-control" autocomplete="new-password" />
+                    <button type="button" class="btn btn-outline-secondary btn-toggle-password" tabindex="-1" aria-label="Mostrar contraseña">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                <span asp-validation-for="NuevaPassword" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-2">
+                <label asp-for="ConfirmarNuevaPassword" class="form-label">Confirmar nueva contraseña</label>
+                <div class="input-group">
+                    <input asp-for="ConfirmarNuevaPassword" type="password" class="form-control" autocomplete="new-password" />
+                    <button type="button" class="btn btn-outline-secondary btn-toggle-password" tabindex="-1" aria-label="Mostrar contraseña">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                <span asp-validation-for="ConfirmarNuevaPassword" class="text-danger small"></span>
+            </div>
+
+            <div class="form-text text-muted mb-4">
+                Dejalo vacío para mantener la contraseña actual. Mínimo 6 caracteres, con al menos un número y una letra minúscula.
+            </div>
+
+            <div id="btns-editar-usr" class="d-flex gap-2 justify-content-center">
                 <button type="submit" class="btn btn-primary px-4">
                     <i class="bi bi-check-lg me-1"></i>Guardar cambios
                 </button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                <a id="btn-cancelar-editar-usr" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
             </div>
         </form>
 

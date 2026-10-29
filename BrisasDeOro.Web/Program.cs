@@ -58,7 +58,13 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         options.Password.RequiredLength = 6;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    .AddErrorDescriber<IdentityErrorDescriberEs>();
+
+// Al cambiarle la contraseña a un usuario, sus sesiones abiertas en otros dispositivos
+// se cierran en ~1 minuto (por defecto Identity revalida el SecurityStamp cada 30 min).
+builder.Services.Configure<SecurityStampValidatorOptions>(o =>
+    o.ValidationInterval = TimeSpan.FromMinutes(1));
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

@@ -12,6 +12,31 @@
     string ordenar    = ViewBag.Ordenar ?? "recientes";
 }
 
+@functions {
+    // Paginación por ventana: 1, última, actual ± radio, y "…" en los saltos.
+    // Si totalPaginas <= 7, se muestran todas (sin ventana ni "…").
+    static List<int?> VentanaPaginas(int totalPaginas, int pagina, int radio)
+    {
+        if (totalPaginas <= 7)
+            return Enumerable.Range(1, totalPaginas).Select(i => (int?)i).ToList();
+
+        var paginas = new SortedSet<int> { 1, totalPaginas };
+        for (int i = pagina - radio; i <= pagina + radio; i++)
+            if (i >= 1 && i <= totalPaginas) paginas.Add(i);
+
+        var resultado = new List<int?>();
+        int? anterior = null;
+        foreach (var p in paginas)
+        {
+            if (anterior.HasValue && p - anterior.Value > 1)
+                resultado.Add(null);
+            resultado.Add(p);
+            anterior = p;
+        }
+        return resultado;
+    }
+}
+
 <style>
     .badge-pago { display: inline-block; padding: .3em .65em; font-size: .8em; font-weight: 600; border-radius: 4px; white-space: nowrap; }
     .pago-sin-sena   { background-color: #FFCCCC; color: #7A0000; }
@@ -39,8 +64,12 @@
         #filtros-reservas-row > div:nth-last-child(-n+2) .btn { width: 100% !important; display: flex !important; }
         /* Campos de filtro: texto más compacto en mobile */
         #filtros-reservas-row input, #filtros-reservas-row select { font-size: 13px !important; }
-        /* Campo de búsqueda: 16px para evitar zoom automático en iOS */
+        /* Campo de búsqueda: 16px para evitar zoom automático en iOS (el texto que
+           escribe el usuario queda en 16px; solo el placeholder se achica al tamaño
+           de los demás campos del filtro). */
         #filtros-reservas-row #input-busqueda-reservas { font-size: 16px !important; }
+        #filtros-reservas-row #input-busqueda-reservas::placeholder,
+        #filtros-reservas-row #input-busqueda-reservas::-webkit-input-placeholder { font-size: 13px !important; }
         /* Campos de fecha: centrar horizontal y vertical */
         #filtros-reservas-row input[type="date"],
         #filtros-reservas-row input[type="text"][placeholder="dd/mm/aaaa"] { text-align: center; }
@@ -76,7 +105,7 @@
         #filtros-reservas-row > div:not(.col-auto) { flex: 1 !important; min-width: 0 !important; }
     }
     @@media (min-width: 1400px) {
-        /* Buscar por nombre más ancho en desktop (fila única de 6 campos) para que los
+        /* Titular más ancho en desktop (fila única de 6 campos) para que los
            nombres entren en una línea. Restringido a >=1400px: por debajo de eso los
            filtros usan el layout de 2 filas de 3 campos iguales (ver regla siguiente),
            donde los 6 campos deben tener el mismo ancho para que ambas filas alineen. */
@@ -129,9 +158,12 @@
             <small class="text-muted">@totalItems resultado@(totalItems != 1 ? "s" : "")</small>
         }
     </div>
-    <a asp-action="Crear" asp-route-from="listado" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i>Nueva reserva
-    </a>
+    @if (User.IsInRole("Administrador"))
+    {
+        <a asp-action="Crear" asp-route-from="listado" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nueva reserva
+        </a>
+    }
 </div>
 
 @* ── Mensajes TempData ── *@
@@ -170,9 +202,9 @@
         }
         <div id="filtros-reservas-row" class="row g-2 align-items-end">
             <div class="col-4 col-md-2">
-                <label class="form-label small fw-semibold mb-1">Buscar por nombre</label>
+                <label class="form-label small fw-semibold mb-1">Titular</label>
                 <input type="text" id="input-busqueda-reservas" name="busqueda" value="@busqueda"
-                       class="form-control" placeholder="Titular..." autocomplete="off" />
+                       class="form-control" placeholder="Ej: Juan Pérez" autocomplete="off" />
             </div>
             <div class="col-4 col-md-2">
                 <label class="form-label small fw-semibold mb-1">Ingreso desde</label>
@@ -552,8 +584,10 @@ else
     @* ── Paginación ── *@
     @if (totalPaginas > 1)
     {
+        var ventanaDesktop = VentanaPaginas(totalPaginas, pagina, 2);
+        var ventanaMobile  = VentanaPaginas(totalPaginas, pagina, 1);
         <nav class="mt-3" aria-label="Páginas">
-            <ul class="pagination pagination-sm justify-content-center mb-0">
+            <ul class="pagination pagination-sm justify-content-center mb-0 d-none d-md-flex">
                 <li class="page-item @(pagina == 1 ? "disabled" : "")">
                     <a class="page-link" asp-action="Index"
                        asp-route-pagina="@(pagina - 1)"
@@ -564,18 +598,67 @@ else
                        asp-route-hasta="@hasta"
                        asp-route-ordenar="@ordenar">‹</a>
                 </li>
-                @for (int i = 1; i <= totalPaginas; i++)
+                @foreach (var p in ventanaDesktop)
                 {
-                    <li class="page-item @(i == pagina ? "active" : "")">
-                        <a class="page-link" asp-action="Index"
-                           asp-route-pagina="@i"
-                           asp-route-busqueda="@busqueda"
-                           asp-route-estado="@estado"
-                           asp-route-estadoPago="@estadoPago"
-                           asp-route-desde="@desde"
-                           asp-route-hasta="@hasta"
-                           asp-route-ordenar="@ordenar">@i</a>
-                    </li>
+                    if (p == null)
+                    {
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    }
+                    else
+                    {
+                        <li class="page-item @(p == pagina ? "active" : "")">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-pagina="@p"
+                               asp-route-busqueda="@busqueda"
+                               asp-route-estado="@estado"
+                               asp-route-estadoPago="@estadoPago"
+                               asp-route-desde="@desde"
+                               asp-route-hasta="@hasta"
+                               asp-route-ordenar="@ordenar">@p</a>
+                        </li>
+                    }
+                }
+                <li class="page-item @(pagina == totalPaginas ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-pagina="@(pagina + 1)"
+                       asp-route-busqueda="@busqueda"
+                       asp-route-estado="@estado"
+                       asp-route-estadoPago="@estadoPago"
+                       asp-route-desde="@desde"
+                       asp-route-hasta="@hasta"
+                       asp-route-ordenar="@ordenar">›</a>
+                </li>
+            </ul>
+            <ul class="pagination pagination-sm justify-content-center mb-0 d-flex d-md-none">
+                <li class="page-item @(pagina == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-pagina="@(pagina - 1)"
+                       asp-route-busqueda="@busqueda"
+                       asp-route-estado="@estado"
+                       asp-route-estadoPago="@estadoPago"
+                       asp-route-desde="@desde"
+                       asp-route-hasta="@hasta"
+                       asp-route-ordenar="@ordenar">‹</a>
+                </li>
+                @foreach (var p in ventanaMobile)
+                {
+                    if (p == null)
+                    {
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    }
+                    else
+                    {
+                        <li class="page-item @(p == pagina ? "active" : "")">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-pagina="@p"
+                               asp-route-busqueda="@busqueda"
+                               asp-route-estado="@estado"
+                               asp-route-estadoPago="@estadoPago"
+                               asp-route-desde="@desde"
+                               asp-route-hasta="@hasta"
+                               asp-route-ordenar="@ordenar">@p</a>
+                        </li>
+                    }
                 }
                 <li class="page-item @(pagina == totalPaginas ? "disabled" : "")">
                     <a class="page-link" asp-action="Index"

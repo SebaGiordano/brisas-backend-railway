@@ -32,10 +32,13 @@
                 var btnClass = esActiva ? "btn-primary" : "btn-outline-secondary";
                 <a href="?temporadaId=@t.Id" class="btn @btnClass btn-sm">@t.Nombre</a>
             }
-            <button type="button" class="btn btn-outline-secondary btn-sm"
-                    data-bs-toggle="modal" data-bs-target="#modal-temporadas">
-                Configurar
-            </button>
+            @if (User.IsInRole("Administrador"))
+            {
+                <button type="button" class="btn btn-outline-secondary btn-sm"
+                        data-bs-toggle="modal" data-bs-target="#modal-temporadas">
+                    Configurar
+                </button>
+            }
         </div>
     }
 
@@ -46,18 +49,20 @@
                 <i class="bi bi-percent me-1"></i>Gestión de precios
             </div>
             <div class="card-body py-2 px-3">
-                <div class="d-flex align-items-end gap-2 flex-wrap">
+                <div class="d-flex align-items-end gap-2 flex-wrap @(User.IsInRole("Administrador") ? "" : "gestion-precios-atenuada")">
                     <div>
                         <label for="aj-pct" class="form-label small mb-1">Valor</label>
                         <div class="input-group input-group-sm">
                             <input type="number" id="aj-pct" class="form-control" style="width:60px"
-                                   placeholder="10" step="1" min="-99" max="1000" />
+                                   placeholder="10" step="1" min="-99" max="1000"
+                                   disabled="@(!User.IsInRole("Administrador"))" />
                             <span class="input-group-text">%</span>
                         </div>
                     </div>
                     <div>
                         <label for="aj-tipo" class="form-label small mb-1">Aplicar a</label>
-                        <select id="aj-tipo" class="form-select form-select-sm" style="width:auto">
+                        <select id="aj-tipo" class="form-select form-select-sm" style="width:auto"
+                                disabled="@(!User.IsInRole("Administrador"))">
                             <option value="todos">Todos</option>
                             <option value="habitacion">Habitaciones</option>
                             <option value="cabaña">Cabañas</option>
@@ -67,16 +72,23 @@
                     </div>
                     <div>
                         <label for="aj-servicio" class="form-label small mb-1">Servicio</label>
-                        <select id="aj-servicio" class="form-select form-select-sm" style="width:auto">
+                        <select id="aj-servicio" class="form-select form-select-sm" style="width:auto"
+                                disabled="@(!User.IsInRole("Administrador"))">
                             <option value="ambos">Ambos</option>
                             <option value="con-desayuno">Con desayuno</option>
                             <option value="sin-desayuno">Sin desayuno</option>
                         </select>
                     </div>
                     <div class="pb-1 col-aj-accion">
-                        <button type="button" id="btn-aj-aplicar" class="btn btn-warning btn-sm">Aplicar</button>
+                        <button type="button" id="btn-aj-aplicar" class="btn btn-warning btn-sm"
+                                disabled="@(!User.IsInRole("Administrador"))">Aplicar</button>
                     </div>
                 </div>
+
+                @if (!User.IsInRole("Administrador"))
+                {
+                    <div class="text-muted small mt-2">Solo el administrador puede modificar precios.</div>
+                }
 
                 @if (Model.UltimoAjusteResumen != null)
                 {
@@ -116,6 +128,7 @@
      en la página (bug detectado: bloque de texto entre los filtros y la tabla). ── *@
 <style>
     .filtro-tipo { transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
+    .gestion-precios-atenuada { opacity: .55; }
     .gestion-precios-tarifas .card-header { font-weight: 700 !important; }
     .gestion-precios-tarifas .card-header {
         background-color: #e7f1ff !important;
@@ -554,56 +567,59 @@
     </div>
 }
 
-@* ── Modal de configuración de temporadas ── *@
-<div class="modal fade" id="modal-temporadas" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
-        <div class="modal-content">
-            <div class="modal-header py-2">
-                <h6 class="modal-title fw-semibold">
-                    <i class="bi bi-calendar-range me-1"></i>Configurar temporadas
-                </h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form asp-action="GuardarTemporadas" method="post">
-                @Html.AntiForgeryToken()
-                <div class="modal-body py-3">
-                    @for (int i = 0; i < Model.Temporadas.Count; i++)
-                    {
-                        var temp = Model.Temporadas[i];
-                        <input type="hidden" name="items[@i].Id" value="@temp.Id" />
-                        <div class="mb-3">
-                            <div class="fw-semibold mb-2">@temp.Nombre</div>
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <label class="form-label small mb-1">Fecha inicio</label>
-                                    <input type="date" name="items[@i].FechaInicio"
-                                           value="@temp.FechaInicio.ToString("yyyy-MM-dd")"
-                                           class="form-control form-control-sm" />
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small mb-1">Fecha fin</label>
-                                    <input type="date" name="items[@i].FechaFin"
-                                           value="@temp.FechaFin.ToString("yyyy-MM-dd")"
-                                           class="form-control form-control-sm" />
+@if (User.IsInRole("Administrador"))
+{
+    @* ── Modal de configuración de temporadas ── *@
+    <div class="modal fade" id="modal-temporadas" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title fw-semibold">
+                        <i class="bi bi-calendar-range me-1"></i>Configurar temporadas
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form asp-action="GuardarTemporadas" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body py-3">
+                        @for (int i = 0; i < Model.Temporadas.Count; i++)
+                        {
+                            var temp = Model.Temporadas[i];
+                            <input type="hidden" name="items[@i].Id" value="@temp.Id" />
+                            <div class="mb-3">
+                                <div class="fw-semibold mb-2">@temp.Nombre</div>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label small mb-1">Fecha inicio</label>
+                                        <input type="date" name="items[@i].FechaInicio"
+                                               value="@temp.FechaInicio.ToString("yyyy-MM-dd")"
+                                               class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small mb-1">Fecha fin</label>
+                                        <input type="date" name="items[@i].FechaFin"
+                                               value="@temp.FechaFin.ToString("yyyy-MM-dd")"
+                                               class="form-control form-control-sm" />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        @if (i < Model.Temporadas.Count - 1)
-                        {
-                            <hr class="my-2" />
+                            @if (i < Model.Temporadas.Count - 1)
+                            {
+                                <hr class="my-2" />
+                            }
                         }
-                    }
-                </div>
-                <div class="modal-footer py-2 gap-2">
-                    <button type="button" class="btn btn-modal-cancelar btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="bi bi-check-lg me-1"></i>Guardar fechas
-                    </button>
-                </div>
-            </form>
+                    </div>
+                    <div class="modal-footer py-2 gap-2">
+                        <button type="button" class="btn btn-modal-cancelar btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-check-lg me-1"></i>Guardar fechas
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
+}
 
 @* ── Modal edición de grupo ── *@
 <div class="modal fade" id="modal-editar-grupo" tabindex="-1" aria-hidden="true">
@@ -956,7 +972,10 @@ else
                             <th style="font-size: 13px; font-weight: bold;"><span class="d-none d-md-inline">Personas</span><span class="d-md-none">Pers.</span></th>
                             <th style="font-size: 13px; font-weight: bold;"><span class="d-none d-md-inline">Con desayuno</span><span class="d-md-none">C/D</span></th>
                             <th style="font-size: 13px; font-weight: bold;"><span class="d-none d-md-inline">Sin desayuno</span><span class="d-md-none">S/D</span></th>
-                            <th style="font-size: 13px; font-weight: bold;">Acciones</th>
+                            @if (User.IsInRole("Administrador"))
+                            {
+                                <th style="font-size: 13px; font-weight: bold;">Acciones</th>
+                            }
                         </tr>
                     </thead>
                     @foreach (var g in tablaGrupos.Where(g => g.Activo))
@@ -991,15 +1010,18 @@ else
                                         @if (row.SD > 0) { <text>$@Formato.Numero(row.SD)</text> }
                                         else             { <span class="text-muted">—</span> }
                                     </td>
-                                    <td>
-                                        <button type="button" class="btn btn-outline-primary btn-sm tar-edit-btn"
-                                                title="Editar"
-                                                data-label="@g.Label"
-                                                data-pers="@row.Pers"
-                                                data-filas="@row.FilasJson">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                    </td>
+                                    @if (User.IsInRole("Administrador"))
+                                    {
+                                        <td>
+                                            <button type="button" class="btn btn-outline-primary btn-sm tar-edit-btn"
+                                                    title="Editar"
+                                                    data-label="@g.Label"
+                                                    data-pers="@row.Pers"
+                                                    data-filas="@row.FilasJson">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </td>
+                                    }
                                 </tr>
                             }
                         </tbody>

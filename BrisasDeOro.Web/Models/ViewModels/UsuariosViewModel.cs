@@ -48,6 +48,7 @@ public class EditarUsuarioViewModel
 {
     public string  Id       { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "El nombre de usuario es obligatorio.")]
     [Display(Name = "Nombre de usuario")]
     public string  UserName { get; set; } = string.Empty;
 
@@ -57,4 +58,13 @@ public class EditarUsuarioViewModel
     [Required(ErrorMessage = "Seleccioná un rol.")]
     [Display(Name = "Rol")]
     public string Rol { get; set; } = string.Empty;
+
+    [DataType(DataType.Password)]
+    [Display(Name = "Nueva contraseña")]
+    public string? NuevaPassword { get; set; }
+
+    [DataType(DataType.Password)]
+    [Display(Name = "Confirmar nueva contraseña")]
+    [Compare("NuevaPassword", ErrorMessage = "Las contraseñas no coinciden.")]
+    public string? ConfirmarNuevaPassword { get; set; }
 }

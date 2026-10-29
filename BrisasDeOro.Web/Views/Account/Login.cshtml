@@ -111,6 +111,51 @@
         .login-alert:empty {
             display: none;
         }
+        /* Grupo input + botón "ojito": el input mantiene su aspecto .login-input
+           pero solo redondeado del lado izquierdo; el botón completa el conjunto
+           redondeado del lado derecho, con el mismo borde y altura. */
+        .login-input-group .login-input {
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            border-right: 0 !important;
+        }
+        .login-input-group .btn-toggle-password {
+            border: 1px solid #ded7c8 !important;
+            border-top-right-radius: 8px !important;
+            border-bottom-right-radius: 8px !important;
+            background-color: #fff !important;
+            color: #5c5548 !important;
+        }
+        @@media (hover: hover) {
+            .login-input-group .btn-toggle-password:hover {
+                background-color: #f5f2ec !important;
+                color: #171512 !important;
+            }
+        }
+        .login-input-group:focus-within .login-input,
+        .login-input-group:focus-within .btn-toggle-password {
+            border-color: #c19a44 !important;
+        }
+        /* El botón del ojito no debe quedar "marcado" (ni anillo de foco ni borde
+           dorado pegado) después de hacer clic; el único cambio visible al
+           alternarlo es el ícono. */
+        .login-input-group .btn-toggle-password:focus,
+        .login-input-group .btn-toggle-password:focus-visible,
+        .login-input-group .btn-toggle-password:active,
+        .login-input-group .btn-toggle-password:active:focus {
+            box-shadow: none !important;
+            outline: none !important;
+            border-color: #ded7c8 !important;
+            background-color: #fff !important;
+            color: #5c5548 !important;
+        }
+        @@media (hover: none) {
+            .login-input-group .btn-toggle-password:hover {
+                background-color: #fff !important;
+                color: #5c5548 !important;
+                border-color: #ded7c8 !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -128,7 +173,12 @@
 
             <div class="mb-3">
                 <label asp-for="Password" class="login-label">Contraseña</label>
-                <input asp-for="Password" class="form-control login-input" autocomplete="current-password" />
+                <div class="input-group login-input-group">
+                    <input asp-for="Password" class="form-control login-input" autocomplete="current-password" />
+                    <button type="button" class="btn btn-outline-secondary btn-toggle-password" tabindex="-1" aria-label="Mostrar contraseña">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
                 <span asp-validation-for="Password" class="text-danger small"></span>
             </div>
 
@@ -165,6 +215,7 @@
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @if (!ViewData.ModelState.IsValid)
     {
         <script>

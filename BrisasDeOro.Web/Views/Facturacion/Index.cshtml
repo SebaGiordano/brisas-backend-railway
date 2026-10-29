@@ -1,6 +1,27 @@
 @model FacturacionViewModel
 @{
     ViewData["Title"] = "Facturación";
+
+    // URL para volver desde el detalle de una reserva ("Volver a Facturación"),
+    // con la pestaña activa y los filtros aplicados en ese momento.
+    var returnUrlMovimientos = Url.Action("Index", "Facturacion", new
+    {
+        tab        = "movimientos",
+        titular    = Model.FiltroTitular,
+        desde      = Model.FiltroDesde,
+        hasta      = Model.FiltroHasta,
+        metodoPago = Model.FiltroMetodo,
+        concepto   = Model.FiltroConcepto,
+        orden      = Model.FiltroOrden
+    });
+    var returnUrlSaldos = Url.Action("Index", "Facturacion", new
+    {
+        tab           = "saldos",
+        titularSaldos = Model.FiltroTitularSaldos,
+        desdeSaldos   = Model.FiltroDesdeSaldos,
+        hastaSaldos   = Model.FiltroHastaSaldos,
+        ordenSaldos   = Model.FiltroOrdenSaldos
+    });
 }
 
 <style>
@@ -67,11 +88,19 @@
         #pane-saldos form .row > div:first-child { flex: 0 0 100% !important; width: 100% !important; max-width: 100% !important; }
         #input-titular-saldos { font-size: 16px !important; }
         #pane-saldos form input:not(#input-titular-saldos), #pane-saldos form select { font-size: 13px !important; }
+        /* Placeholders de los campos de titular: mismo tamaño que los demás campos
+           del filtro (13px). El texto que escribe el usuario queda en 16px (evita
+           el zoom automático de iOS al enfocar el campo). */
+        #input-titular-mov::placeholder, #input-titular-saldos::placeholder,
+        #input-titular-mov::-webkit-input-placeholder, #input-titular-saldos::-webkit-input-placeholder {
+            font-size: 13px !important;
+        }
         #pane-saldos form .row > div:not(:first-child):not(.col-auto):not(.filtro-break-fact) { flex: 0 0 33.33% !important; max-width: 33.33% !important; }
         #pane-saldos form .row > div:nth-last-child(-n+2) { flex: 1 !important; }
         #pane-saldos form .row > div:nth-last-child(-n+2) .btn { width: 100% !important; display: flex !important; }
         /* Formulario Movimientos: 2 filas de 3 filtros + botones al 50% */
-        #pane-movimientos form input, #pane-movimientos form select { font-size: 13px !important; }
+        #pane-movimientos form input:not(#input-titular-mov), #pane-movimientos form select { font-size: 13px !important; }
+        #input-titular-mov { font-size: 16px !important; }
         #pane-movimientos form .row > div:not(.col-auto):not(.filtro-break-fact) { flex: 0 0 33.33% !important; max-width: 33.33% !important; }
         #pane-movimientos form .row > div:nth-last-child(-n+2) { flex: 1 !important; }
         #pane-movimientos form .row > div:nth-last-child(-n+2) .btn { width: 100% !important; display: flex !important; }
@@ -93,6 +122,13 @@
         /* Botón "Descargar PDF" + texto en una sola línea, centrado (Movimientos y Saldos) */
         .descarga-pdf-row { display: flex !important; align-items: center !important; justify-content: center !important; flex-wrap: nowrap !important; gap: .5rem !important; }
         .texto-pdf-corto { white-space: nowrap !important; }
+        /* Pie de tabla (resumen "N movimientos"/"N reservas..."): alineado a la
+           izquierda, con separación respecto de "Deslizá para ver más". */
+        #pane-movimientos .scroll-hint + .text-muted.small,
+        #pane-saldos .scroll-hint + .text-muted.small {
+            text-align: left !important;
+            margin-top: .5rem !important;
+        }
     }
     @@media (max-width: 360px) {
         .texto-pdf-corto { font-size: 12px !important; }
@@ -204,7 +240,7 @@
                 <div class="col-4 col-md-auto">
                     <label class="form-label small fw-semibold mb-1">Titular</label>
                     <input type="text" id="input-titular-mov" name="titular" value="@Model.FiltroTitular"
-                           class="form-control form-control-sm" placeholder="Nombre del titular..."
+                           class="form-control form-control-sm" placeholder="Ej: Juan Pérez"
                            autocomplete="off" />
                 </div>
                 <div class="col-4 col-md-auto">
@@ -281,10 +317,10 @@
             </div>
             <hr class="my-2" style="border-color: #dee2e6; opacity: 0.6;">
             <div class="mt-2 descarga-pdf-row">
-                <button type="submit" formaction="@Url.Action("DescargarMovimientosPdf")" class="btn btn-outline-danger btn-sm">
-                    Descargar PDF
+                <button type="submit" formaction="@Url.Action("DescargarMovimientosPdf")" class="btn btn-outline-danger btn-sm px-md-3">
+                    <i class="bi bi-file-earmark-pdf me-1 d-none d-md-inline"></i>Descargar PDF
                 </button>
-                <span class="text-muted small ms-2 d-none d-md-inline">Se descarga con los filtros actuales aplicados.</span>
+                <span class="text-muted small ms-2 d-none d-md-inline">Descarga el listado de movimientos en PDF, con los filtros aplicados.</span>
                 <span class="text-muted small d-md-none texto-pdf-corto">Incluye los filtros aplicados.</span>
             </div>
         </form>
@@ -325,6 +361,8 @@
                                     {
                                         <a asp-controller="Reservas" asp-action="Details"
                                            asp-route-id="@mov.ReservaId"
+                                           asp-route-from="facturacion"
+                                           asp-route-returnUrl="@returnUrlMovimientos"
                                            class="text-decoration-none fw-bold">
                                             @mov.NombreHuesped
                                         </a>
@@ -400,7 +438,7 @@
                 <div class="col-4 col-md-auto">
                     <label class="form-label small fw-semibold mb-1">Titular</label>
                     <input type="text" id="input-titular-saldos" name="titularSaldos" value="@Model.FiltroTitularSaldos"
-                           class="form-control form-control-sm" placeholder="Nombre del titular..."
+                           class="form-control form-control-sm" placeholder="Ej: Juan Pérez"
                            autocomplete="off" />
                 </div>
                 <div class="col-4 col-md-auto">
@@ -444,10 +482,10 @@
             </div>
             <hr class="my-2" style="border-color: #dee2e6; opacity: 0.6;">
             <div class="mt-2 descarga-pdf-row">
-                <button type="submit" formaction="@Url.Action("DescargarSaldosPdf")" class="btn btn-outline-danger btn-sm">
-                    Descargar PDF
+                <button type="submit" formaction="@Url.Action("DescargarSaldosPdf")" class="btn btn-outline-danger btn-sm px-md-3">
+                    <i class="bi bi-file-earmark-pdf me-1 d-none d-md-inline"></i>Descargar PDF
                 </button>
-                <span class="text-muted small ms-2 d-none d-md-inline">Se descarga con los filtros actuales aplicados.</span>
+                <span class="text-muted small ms-2 d-none d-md-inline">Descarga el listado de saldos pendientes en PDF, con los filtros aplicados.</span>
                 <span class="text-muted small d-md-none texto-pdf-corto">Incluye los filtros aplicados.</span>
             </div>
         </form>
@@ -483,7 +521,10 @@
                             <th class="text-end d-mobile-none">Cobrado</th>
                             <th class="text-end">Saldo pendiente</th>
                             <th class="text-center d-mobile-none">Estado pago</th>
-                            <th class="text-center">Acción</th>
+                            @if (User.IsInRole("Administrador"))
+                            {
+                                <th class="text-center">Acción</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
@@ -491,7 +532,20 @@
                         {
                             <tr>
                                 <td class="fw-bold col-titular-saldos">
-                                    @s.NombreHuesped
+                                    @if (User.IsInRole("Administrador"))
+                                    {
+                                        <a asp-controller="Reservas" asp-action="Details"
+                                           asp-route-id="@s.ReservaId"
+                                           asp-route-from="facturacion"
+                                           asp-route-returnUrl="@returnUrlSaldos"
+                                           class="text-decoration-none fw-bold">
+                                            @s.NombreHuesped
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="fw-bold text-dark">@s.NombreHuesped</span>
+                                    }
                                     @if (s.VinculadaConNombre != null)
                                     {
                                         <br /><small class="text-primary d-block fw-normal"><i class="bi bi-link-45deg me-1"></i>Vinculada con:</small>
@@ -535,17 +589,17 @@
                                 <td class="text-center d-mobile-none">
                                     <span class="badge-pago @s.EstadoPagoClase">@s.EstadoPagoTexto</span>
                                 </td>
-                                <td class="text-center">
-                                    @if (User.IsInRole("Administrador"))
-                                    {
+                                @if (User.IsInRole("Administrador"))
+                                {
+                                    <td class="text-center">
                                         <a asp-controller="Pagos" asp-action="AgregarPago"
                                            asp-route-reservaId="@s.ReservaId"
                                            asp-route-from="saldos-pendientes"
                                            class="btn btn-outline-success btn-sm text-nowrap">
                                             <i class="bi bi-plus-circle me-1"></i>Agregar Pago
                                         </a>
-                                    }
-                                </td>
+                                    </td>
+                                }
                             </tr>
                         }
                     </tbody>
@@ -558,7 +612,10 @@
                                 $@Formato.Numero(Model.SaldosPendientes.Sum(s => s.SaldoPendiente))
                             </td>
                             <td class="d-mobile-none"></td>
-                            <td></td>
+                            @if (User.IsInRole("Administrador"))
+                            {
+                                <td></td>
+                            }
                         </tr>
                     </tfoot>
                 </table>

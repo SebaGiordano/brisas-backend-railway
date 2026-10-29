@@ -38,18 +38,32 @@
         #tabla-ingresos-wrap th:first-child { width: 180px !important; min-width: 180px !important; }
         /* Celda Variante: una sola línea en mobile */
         #tabla-ingresos-wrap td:first-child { white-space: nowrap !important; }
-        /* Campos de fecha: centrar horizontal y vertical */
-        #form-filtro input[type="date"] { text-align: center !important; display: flex !important; align-items: center !important; }
+        /* Campos de fecha: fecha alineada a la izquierda, ícono del calendario fijo
+           contra el borde derecho (mismo criterio que Reservas/Crear.cshtml para
+           FechaIngreso/FechaSalida). */
+        #form-filtro input[type="date"] {
+            display: flex !important; align-items: center !important;
+            position: relative; padding-right: 2.5rem !important;
+        }
         #form-filtro input[type="date"]::-webkit-datetime-edit,
         #form-filtro input[type="date"]::-webkit-datetime-edit-fields-wrapper { padding: 0 !important; }
+        #form-filtro input[type="date"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            right: .75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: 0;
+            cursor: pointer;
+        }
         /* Tabla ocupación de unidades: scroll horizontal, sin quiebre */
         #tabla-ocu-un-wrap table { min-width: 400px !important; }
         #tabla-ocu-un-wrap td, #tabla-ocu-un-wrap th { white-space: nowrap !important; }
         /* Tabla ocupación de plazas: scroll horizontal, sin quiebre */
         #tabla-ocu-pl-wrap table { min-width: 400px !important; }
         #tabla-ocu-pl-wrap td, #tabla-ocu-pl-wrap th { white-space: nowrap !important; }
-        /* Subtítulos de ocupación: una sola línea */
-        #subtit-ocu-un, #subtit-ocu-pl { white-space: nowrap !important; font-size: .7rem !important; }
+        /* Subtítulo de los card-header ("Hotel y Cabañas..." x2, Casa): renglón propio
+           completo debajo del título, en vez de partirse a la mitad. */
+        .card-header-subtitulo { display: block !important; margin-left: 0 !important; }
         /* Tabla ingresos: quitar mb-3 para igualar distancia al hint de scroll */
         #tabla-ingresos-wrap { margin-bottom: 0 !important; }
         /* Modales de gráficos: altura auto, padding-bottom igual al lateral */
@@ -117,6 +131,29 @@
         border-color: #0b5ed7 !important;
         color: #fff !important;
     }
+    /* Leyenda HTML de los gráficos de torta (modales): un ítem por renglón,
+       lista centrada como bloque, cada ítem con su texto alineado a la izquierda. */
+    .pie-legend-html {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .35rem;
+        margin-top: .75rem;
+        font-size: 12px;
+    }
+    .pie-legend-html .pie-legend-item {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        text-align: left;
+    }
+    .pie-legend-html .pie-legend-swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        flex-shrink: 0;
+        display: inline-block;
+    }
     @@media (min-width: 769px) {
         /* Hint text: línea propia debajo de los filtros, alineada a la izquierda */
         #filtro-hint { flex: 0 0 100% !important; }
@@ -167,7 +204,7 @@
                    value="@(Model.Hasta?.ToString("yyyy-MM-dd") ?? "")" />
         </div>
         <div id="filtro-btns" class="col-auto d-flex gap-2">
-            <button type="submit" class="btn btn-primary btn-sm">
+            <button type="submit" class="btn btn-outline-primary btn-sm">
                 <i class="bi bi-funnel me-1"></i>Filtrar
             </button>
             <a href="@Url.Action("Index","Dashboard")" class="btn btn-outline-secondary btn-sm btn-hover-gris-claro">
@@ -278,7 +315,7 @@
 <div class="card mb-4">
     <div class="card-header fw-semibold bg-light">
         <i class="bi bi-cash-stack me-1"></i>Ingresos por método de pago
-        <span class="text-muted fw-normal small ms-2">(Hotel y Cabañas Brisas de Oro — excluye invitaciones)</span>
+        <span class="text-muted fw-normal small ms-2 card-header-subtitulo">(Hotel y Cabañas Brisas de Oro — excluye invitaciones)</span>
     </div>
     <div class="card-body">
         <div id="tabla-ingresos-wrap" class="table-responsive mb-3">
@@ -336,14 +373,15 @@
 <div class="card mb-4">
     <div class="card-header fw-semibold bg-light">
         <i class="bi bi-building me-1"></i>Porcentaje de ocupación
-        <span class="text-muted fw-normal small ms-2">(Hotel y Cabañas Brisas de Oro — excluye invitaciones)</span>
+        <span class="text-muted fw-normal small ms-2 card-header-subtitulo">(Hotel y Cabañas Brisas de Oro — excluye invitaciones)</span>
     </div>
     <div class="card-body">
 
         @* ── Bloque 1: Ocupación de unidades ── *@
         <div class="fw-semibold mb-1">Ocupación de unidades</div>
         <div id="subtit-ocu-un" class="text-muted mb-2" style="font-size:.78rem;">
-            <span class="d-none d-md-inline">Porcentaje</span><span class="d-md-none">%</span> de instalaciones ocupadas sobre el total disponible del período
+            <span class="d-none d-md-inline">Porcentaje de instalaciones ocupadas sobre el total disponible del período</span>
+            <span class="d-md-none">Unidades ocupadas sobre el total disponible</span>
         </div>
         <div id="tabla-ocu-un-wrap" class="table-responsive">
             <table class="table table-sm table-bordered align-middle mb-0" style="font-size:.85rem;">
@@ -390,7 +428,8 @@
         @* ── Bloque 2: Ocupación de plazas ── *@
         <div class="fw-semibold mb-1">Ocupación de plazas</div>
         <div id="subtit-ocu-pl" class="text-muted mb-2" style="font-size:.78rem;">
-            <span class="d-none d-md-inline">Porcentaje</span><span class="d-md-none">%</span> de personas reales sobre la capacidad máxima total del período
+            <span class="d-none d-md-inline">Porcentaje de personas reales sobre la capacidad máxima total del período</span>
+            <span class="d-md-none">Personas alojadas sobre la capacidad total</span>
         </div>
         <div id="tabla-ocu-pl-wrap" class="table-responsive">
             <table class="table table-sm table-bordered align-middle mb-0" style="font-size:.85rem;">
@@ -438,7 +477,7 @@
 <div class="card mb-4">
     <div class="card-header fw-semibold bg-light">
         <i class="bi bi-house-door me-1"></i>Ocupación — Casa (Icho Cruz)
-        <span class="text-muted fw-normal small ms-2">(estadística exclusiva, no incluida en los totales de arriba)</span>
+        <span class="text-muted fw-normal small ms-2 card-header-subtitulo">(Estadística independiente — excluye invitaciones)</span>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -651,7 +690,16 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    @if (modalId == "modal-chart-ing")
+                    {
+                        <div class="text-muted small text-center mb-2">Según fecha de ingreso de la reserva</div>
+                    }
                     <canvas id="@canvasId" style="max-height:60vh;"></canvas>
+                    <div id="@(canvasId)-legend" class="pie-legend-html"></div>
+                    @if (modalId == "modal-chart-ocu-un" || modalId == "modal-chart-ocu-pl")
+                    {
+                        <div id="@(canvasId)-total" class="text-center fw-bold mt-2" style="color:#212529;"></div>
+                    }
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-outline-primary btn-sm" data-bs-dismiss="modal">Cerrar</button>
@@ -741,6 +789,12 @@ document.querySelectorAll('.modal-grafico .modal-footer button[data-bs-dismiss="
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script>
+// ── Formato es-AR (coma decimal, punto de miles) para todos los gráficos ──────
+Chart.defaults.locale = 'es-AR';
+const fmtPct   = v => (+v).toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+const fmtPctEj = v => (+v).toLocaleString('es-AR') + '%';
+const fmtMoney = v => '$' + Math.round(+v).toLocaleString('es-AR');
+
 // ── Datos del período principal ───────────────────────────────────────────────
 const D = {
     ing: {
@@ -809,13 +863,13 @@ function mkIng(id, data, small) {
                 const total = ds.data.reduce((a, b) => a + b, 0);
                 meta.data.forEach((bar, j) => {
                     if (!ds.data[j]) return;
-                    const pct = total > 0 ? (ds.data[j] / total * 100).toFixed(1) : '0';
+                    const pct = fmtPct(total > 0 ? ds.data[j] / total * 100 : 0);
                     ctx.save();
                     ctx.fillStyle = '#555';
                     ctx.font = `bold ${small ? 9 : 11}px sans-serif`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
-                    ctx.fillText(pct + '%', bar.x, bar.y - 1);
+                    ctx.fillText(pct, bar.x, bar.y - 1);
                     ctx.restore();
                 });
             });
@@ -830,8 +884,11 @@ function mkIng(id, data, small) {
             ]},
         options:{ responsive:true, maintainAspectRatio:false,
             layout:{ padding:{ top: small ? 12 : 16 } },
-            plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{size: small?10:12} }}},
-            scales:{ y:{ beginAtZero:true, ticks:{ font:{size: small?10:11} }}}}
+            plugins:{
+                legend:{ position:'bottom', labels:{ boxWidth:12, font:{size: small?10:12} }},
+                tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmtMoney(ctx.parsed.y)}` } }
+            },
+            scales:{ y:{ beginAtZero:true, ticks:{ callback: v => fmtMoney(v), font:{size: small?10:11} }}}}
     });
 }
 function mkOcuBlock(id, slices, colors) {
@@ -841,7 +898,7 @@ function mkOcuBlock(id, slices, colors) {
             datasets:[{ data: slices, backgroundColor: colors }]},
         options:{ responsive:true, maintainAspectRatio:false,
             plugins:{ legend:{ display:false } },
-            scales:{ y:{ beginAtZero:true, max:100, ticks:{ callback: v=>v+'%', font:{size:11} }}}}
+            scales:{ y:{ beginAtZero:true, max:100, ticks:{ callback: v=>fmtPctEj(v), font:{size:11} }}}}
     });
 }
 function mkCan(id, labels, data, small) {
@@ -861,43 +918,36 @@ mkCan('chart-can', D.can.labels, D.can.data, false);
 
 // ── Charts mobile (se inicializan al abrir el modal) ─────────────────────────
 
-// Variante de mkPie para gráficos de ocupación: agrega línea informativa "Total ocupado — X%"
-// después de la entrada de Cabañas (índice 1). No representa ninguna porción del gráfico.
+// Leyenda HTML (lista vertical, un ítem por renglón) para los gráficos de torta
+// de los modales — reemplaza la leyenda nativa de Chart.js (mkPie y mkPieOcu).
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function renderPieLegend(targetId, labels, data, colors) {
+    const el = document.getElementById(targetId); if (!el) return;
+    const sum = data.reduce((a, b) => a + b, 0);
+    el.innerHTML = labels.map((lbl, i) => {
+        const color = colors[i % colors.length];
+        const pct   = fmtPct(sum > 0 ? data[i] / sum * 100 : 0);
+        return `<div class="pie-legend-item"><span class="pie-legend-swatch" style="background:${color}"></span>${escHtml(lbl)} — ${pct}</div>`;
+    }).join('');
+}
+
+// Variante de mkPie para gráficos de ocupación: debajo del gráfico (fuera de la
+// leyenda) muestra un texto destacado "Total ocupado: X,X%" (suma hab + cab).
 function mkPieOcu(id, labels, data, colors) {
     const el = document.getElementById(id); if (!el) return;
     if (el._chartInst) el._chartInst.destroy();
     el._chartInst = new Chart(el, {
         type: 'pie',
-        data: { labels, datasets: [{ data, backgroundColor: colors }] },
+        data: { labels, datasets: [{ data, backgroundColor: labels.map((_, i) => colors[i % colors.length]) }] },
         options: { responsive: true, maintainAspectRatio: true,
-            plugins: { legend: { position: 'bottom',
-                labels: { font: { size: 12 },
-                    generateLabels(chart) {
-                        const ds  = chart.data.datasets[0];
-                        const sum = ds.data.reduce((a, b) => a + b, 0);
-                        const items = chart.data.labels.map((lbl, i) => ({
-                            text:        `${lbl} — ${sum > 0 ? (ds.data[i] / sum * 100).toFixed(1) : '0.0'}%`,
-                            fillStyle:   Array.isArray(ds.backgroundColor) ? ds.backgroundColor[i] : ds.backgroundColor,
-                            strokeStyle: 'transparent',
-                            lineWidth:   0,
-                            hidden:      false,
-                            index:       i
-                        }));
-                        // Línea informativa: suma hab + cab (= 100 - disponible, ya que la suma total = 100)
-                        const totPct = sum > 0 ? (ds.data[0] + ds.data[1]).toFixed(1) : '0.0';
-                        items.splice(2, 0, {
-                            text:        `Total ocupado — ${totPct}%`,
-                            fillStyle:   'rgba(80,80,80,0.15)',
-                            strokeStyle: 'transparent',
-                            lineWidth:   0,
-                            hidden:      false,
-                            index:       -1
-                        });
-                        return items;
-                    }
-                }
-            }}}
+            plugins: { legend: { display: false } }}
     });
+    renderPieLegend(id + '-legend', labels, data, colors);
+    const totalEl = document.getElementById(id + '-total');
+    if (totalEl) {
+        // data = [habPct, cabPct, librePct] (ocuSlices), suman 100 entre sí.
+        totalEl.textContent = `Total ocupado: ${fmtPct(data[0] + data[1])}`;
+    }
 }
 
 function mkPie(id, labels, data, colors) {
@@ -905,27 +955,18 @@ function mkPie(id, labels, data, colors) {
     if (el._chartInst) el._chartInst.destroy();
     el._chartInst = new Chart(el, {
         type: 'pie',
-        data: { labels, datasets: [{ data, backgroundColor: colors }] },
+        data: { labels, datasets: [{ data, backgroundColor: labels.map((_, i) => colors[i % colors.length]) }] },
         options: { responsive: true, maintainAspectRatio: true,
-            plugins: { legend: { position: 'bottom',
-                labels: { font: { size: 12 },
-                    generateLabels(chart) {
-                        const ds  = chart.data.datasets[0];
-                        const sum = ds.data.reduce((a, b) => a + b, 0);
-                        return chart.data.labels.map((lbl, i) => ({
-                            text:        `${lbl} — ${sum > 0 ? (ds.data[i] / sum * 100).toFixed(1) : '0.0'}%`,
-                            fillStyle:   Array.isArray(ds.backgroundColor) ? ds.backgroundColor[i] : ds.backgroundColor,
-                            strokeStyle: 'transparent',
-                            lineWidth:   0,
-                            hidden:      false,
-                            index:       i
-                        }));
-                    }
-                }
-            }}}
+            plugins: { legend: { display: false } }}
     });
+    renderPieLegend(id + '-legend', labels, data, colors);
 }
-const PIE_COLORS = ['rgba(54,162,235,.8)','rgba(75,192,192,.8)','rgba(255,99,132,.8)','rgba(255,205,86,.8)'];
+// Paleta para gráficos de torta (hasta 8 canales bien diferenciados; si hubiera
+// más, se reutilizan en ciclo — ver mkPie/mkPieOcu).
+const PIE_COLORS = [
+    'rgba(54,162,235,.8)','rgba(75,192,192,.8)','rgba(255,99,132,.8)','rgba(255,205,86,.8)',
+    'rgba(153,102,255,.8)','rgba(255,159,64,.8)','rgba(76,175,80,.8)','rgba(121,85,72,.8)'
+];
 
 document.getElementById('modal-chart-ing')?.addEventListener('shown.bs.modal', () => {
     mkPie('chart-ing-m', METODOS,

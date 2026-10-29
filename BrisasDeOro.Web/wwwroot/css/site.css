@@ -319,6 +319,32 @@ header .navbar .navbar-nav .nav-link {
   color: #495057 !important;
 }
 
+/* ── Botón "ojito" de mostrar/ocultar contraseña: el único cambio visible al
+   alternarlo debe ser el ícono, sin anillo de foco ni aspecto "activo" que
+   quede pegado después del clic. ── */
+.btn-toggle-password:focus,
+.btn-toggle-password:focus-visible,
+.btn-toggle-password:active,
+.btn-toggle-password:active:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+.btn-toggle-password.btn-outline-secondary:focus,
+.btn-toggle-password.btn-outline-secondary:focus-visible,
+.btn-toggle-password.btn-outline-secondary:active,
+.btn-toggle-password.btn-outline-secondary:active:focus {
+  color: #6c757d !important;
+  background-color: transparent !important;
+  border-color: #6c757d !important;
+}
+@media (hover: none) {
+  .btn-toggle-password.btn-outline-secondary:hover {
+    color: #6c757d !important;
+    background-color: transparent !important;
+    border-color: #6c757d !important;
+  }
+}
+
 /* ── Utilidades responsive para tablas ──────────────────────────────────────── */
 @media (max-width: 767.98px) {
     .d-mobile-none       { display: none !important; }
