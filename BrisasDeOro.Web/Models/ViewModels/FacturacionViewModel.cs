@@ -8,8 +8,19 @@ public class FacturacionViewModel
     public List<MovimientoViewModel>     Movimientos      { get; set; } = new();
     public decimal                       TotalPeriodo     { get; set; }
 
+    // Tab 1: Paginación (lista ya paginada arriba; estos totales son sobre todo lo filtrado)
+    public int PaginaMovimientos       { get; set; } = 1;
+    public int TotalPaginasMovimientos { get; set; }
+    public int TotalMovimientos        { get; set; }
+
     // Tab 2: Saldos pendientes
     public List<SaldoPendienteViewModel> SaldosPendientes { get; set; } = new();
+
+    // Tab 2: Paginación (lista ya paginada arriba; estos totales son sobre todo lo filtrado)
+    public int     PaginaSaldos       { get; set; } = 1;
+    public int     TotalPaginasSaldos { get; set; }
+    public int     TotalSaldos        { get; set; }
+    public decimal TotalSaldoPendiente { get; set; }
 
     // Filtros activos (Tab 1)
     public string? FiltroTitular  { get; set; }

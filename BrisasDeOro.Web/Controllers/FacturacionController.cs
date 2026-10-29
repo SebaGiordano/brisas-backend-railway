@@ -29,8 +29,12 @@ public class FacturacionController : Controller
         string? metodoPago, string? concepto,
         string orden = "desc",
         string ordenSaldos = "asc",
-        string tab = "movimientos")
+        string tab = "movimientos",
+        int pagina = 1,
+        int paginaSaldos = 1)
     {
+        const int porPagina = 50;
+
         var vm = new FacturacionViewModel
         {
             FiltroTitular       = titular,
@@ -46,11 +50,35 @@ public class FacturacionController : Controller
             TabActiva           = tab
         };
 
+        // ── Movimientos ───────────────────────────────────────────────────────
         var (movimientos, totalPeriodo) = await ObtenerMovimientosFiltrados(titular, desde, hasta, metodoPago, concepto, orden);
-        vm.Movimientos  = movimientos;
-        vm.TotalPeriodo = totalPeriodo;
+        vm.TotalPeriodo     = totalPeriodo;
+        vm.TotalMovimientos = movimientos.Count;
 
-        vm.SaldosPendientes = await ObtenerSaldosFiltrados(titularSaldos, desdeSaldos, hastaSaldos, ordenSaldos);
+        var totalPaginasMovimientos = (int)Math.Ceiling(vm.TotalMovimientos / (double)porPagina);
+        pagina = Math.Clamp(pagina, 1, Math.Max(1, totalPaginasMovimientos));
+        vm.PaginaMovimientos      = pagina;
+        vm.TotalPaginasMovimientos = totalPaginasMovimientos;
+
+        vm.Movimientos = movimientos
+            .Skip((pagina - 1) * porPagina)
+            .Take(porPagina)
+            .ToList();
+
+        // ── Saldos pendientes ─────────────────────────────────────────────────
+        var saldos = await ObtenerSaldosFiltrados(titularSaldos, desdeSaldos, hastaSaldos, ordenSaldos);
+        vm.TotalSaldos          = saldos.Count;
+        vm.TotalSaldoPendiente  = saldos.Sum(s => s.SaldoPendiente);
+
+        var totalPaginasSaldos = (int)Math.Ceiling(vm.TotalSaldos / (double)porPagina);
+        paginaSaldos = Math.Clamp(paginaSaldos, 1, Math.Max(1, totalPaginasSaldos));
+        vm.PaginaSaldos       = paginaSaldos;
+        vm.TotalPaginasSaldos = totalPaginasSaldos;
+
+        vm.SaldosPendientes = saldos
+            .Skip((paginaSaldos - 1) * porPagina)
+            .Take(porPagina)
+            .ToList();
 
         return View(vm);
     }

@@ -1,6 +1,24 @@
 @model FacturacionViewModel
+@using Microsoft.AspNetCore.Routing
 @{
     ViewData["Title"] = "Facturación";
+
+    // Arma la URL de un link de paginación conservando TODOS los parámetros
+    // actuales de la URL (filtros de ambas pestañas + la página de la otra
+    // pestaña), cambiando solo el parámetro de página indicado y fijando "tab".
+    string UrlPagina(string paramPagina, int numeroPagina, string tabDestino)
+    {
+        var route = new RouteValueDictionary();
+        foreach (var kv in Context.Request.Query)
+        {
+            if (string.Equals(kv.Key, "tab", StringComparison.OrdinalIgnoreCase)) continue;
+            if (string.Equals(kv.Key, paramPagina, StringComparison.OrdinalIgnoreCase)) continue;
+            route[kv.Key] = kv.Value.ToString();
+        }
+        route["tab"] = tabDestino;
+        route[paramPagina] = numeroPagina;
+        return Url.Action("Index", "Facturacion", route) ?? "#";
+    }
 
     // URL para volver desde el detalle de una reserva ("Volver a Facturación"),
     // con la pestaña activa y los filtros aplicados en ese momento.
@@ -22,6 +40,32 @@
         hastaSaldos   = Model.FiltroHastaSaldos,
         ordenSaldos   = Model.FiltroOrdenSaldos
     });
+}
+
+@functions {
+    // Paginación por ventana: 1, última, actual ± radio, y "…" en los saltos.
+    // Si totalPaginas <= 7, se muestran todas (sin ventana ni "…").
+    // (Copia local de la misma función en Views/Reservas/Index.cshtml.)
+    static List<int?> VentanaPaginas(int totalPaginas, int pagina, int radio)
+    {
+        if (totalPaginas <= 7)
+            return Enumerable.Range(1, totalPaginas).Select(i => (int?)i).ToList();
+
+        var paginas = new SortedSet<int> { 1, totalPaginas };
+        for (int i = pagina - radio; i <= pagina + radio; i++)
+            if (i >= 1 && i <= totalPaginas) paginas.Add(i);
+
+        var resultado = new List<int?>();
+        int? anterior = null;
+        foreach (var p in paginas)
+        {
+            if (anterior.HasValue && p - anterior.Value > 1)
+                resultado.Add(null);
+            resultado.Add(p);
+            anterior = p;
+        }
+        return resultado;
+    }
 }
 
 <style>
@@ -208,7 +252,7 @@
                 data-bs-toggle="tab" data-bs-target="#pane-movimientos"
                 type="button" role="tab">
             <i class="bi bi-arrow-left-right me-1"></i>Movimientos
-            <span class="badge bg-secondary ms-1">@Model.Movimientos.Count</span>
+            <span class="badge bg-secondary ms-1">@Model.TotalMovimientos</span>
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -217,9 +261,9 @@
                 data-bs-toggle="tab" data-bs-target="#pane-saldos"
                 type="button" role="tab">
             <i class="bi bi-exclamation-circle me-1"></i>Saldos pendientes
-            @if (Model.SaldosPendientes.Any())
+            @if (Model.TotalSaldos > 0)
             {
-                <span class="badge bg-danger ms-1">@Model.SaldosPendientes.Count</span>
+                <span class="badge bg-danger ms-1">@Model.TotalSaldos</span>
             }
         </button>
     </li>
@@ -326,7 +370,7 @@
         </form>
 
         @* ── Tabla de movimientos ── *@
-        @if (!Model.Movimientos.Any())
+        @if (Model.TotalMovimientos == 0)
         {
             <div class="text-center text-muted py-5">
                 <i class="bi bi-inbox fs-2 d-block mb-2 opacity-50"></i>
@@ -420,8 +464,70 @@
             </div>
             <div class="d-md-none text-center text-muted scroll-hint" style="font-size:11px;">← Deslizá para ver más →</div>
             <div class="text-muted small mt-2">
-                @Model.Movimientos.Count movimiento@(Model.Movimientos.Count != 1 ? "s" : "")
+                @{
+                    var desdeMov = (Model.PaginaMovimientos - 1) * 50 + 1;
+                    var hastaMov = desdeMov + Model.Movimientos.Count - 1;
+                }
+                @if (Model.TotalPaginasMovimientos > 1)
+                {
+                    <text>Mostrando @Formato.Numero(desdeMov)–@Formato.Numero(hastaMov) de @Formato.Numero(Model.TotalMovimientos) movimiento@(Model.TotalMovimientos != 1 ? "s" : "")</text>
+                }
+                else
+                {
+                    <text>@Model.TotalMovimientos movimiento@(Model.TotalMovimientos != 1 ? "s" : "")</text>
+                }
             </div>
+
+            @* ── Paginación ── *@
+            @if (Model.TotalPaginasMovimientos > 1)
+            {
+                var ventanaDesktopMov = VentanaPaginas(Model.TotalPaginasMovimientos, Model.PaginaMovimientos, 2);
+                var ventanaMobileMov  = VentanaPaginas(Model.TotalPaginasMovimientos, Model.PaginaMovimientos, 1);
+                <nav class="mt-3" aria-label="Páginas de movimientos">
+                    <ul class="pagination pagination-sm justify-content-center mb-0 d-none d-md-flex">
+                        <li class="page-item @(Model.PaginaMovimientos == 1 ? "disabled" : "")">
+                            <a class="page-link" href="@UrlPagina("pagina", Model.PaginaMovimientos - 1, "movimientos")">‹</a>
+                        </li>
+                        @foreach (var p in ventanaDesktopMov)
+                        {
+                            if (p == null)
+                            {
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            }
+                            else
+                            {
+                                <li class="page-item @(p == Model.PaginaMovimientos ? "active" : "")">
+                                    <a class="page-link" href="@UrlPagina("pagina", p.Value, "movimientos")">@p</a>
+                                </li>
+                            }
+                        }
+                        <li class="page-item @(Model.PaginaMovimientos == Model.TotalPaginasMovimientos ? "disabled" : "")">
+                            <a class="page-link" href="@UrlPagina("pagina", Model.PaginaMovimientos + 1, "movimientos")">›</a>
+                        </li>
+                    </ul>
+                    <ul class="pagination pagination-sm justify-content-center mb-0 d-flex d-md-none">
+                        <li class="page-item @(Model.PaginaMovimientos == 1 ? "disabled" : "")">
+                            <a class="page-link" href="@UrlPagina("pagina", Model.PaginaMovimientos - 1, "movimientos")">‹</a>
+                        </li>
+                        @foreach (var p in ventanaMobileMov)
+                        {
+                            if (p == null)
+                            {
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            }
+                            else
+                            {
+                                <li class="page-item @(p == Model.PaginaMovimientos ? "active" : "")">
+                                    <a class="page-link" href="@UrlPagina("pagina", p.Value, "movimientos")">@p</a>
+                                </li>
+                            }
+                        }
+                        <li class="page-item @(Model.PaginaMovimientos == Model.TotalPaginasMovimientos ? "disabled" : "")">
+                            <a class="page-link" href="@UrlPagina("pagina", Model.PaginaMovimientos + 1, "movimientos")">›</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
         }
     </div>
 
@@ -490,7 +596,7 @@
             </div>
         </form>
 
-        @if (!Model.SaldosPendientes.Any())
+        @if (Model.TotalSaldos == 0)
         {
             @if (string.IsNullOrEmpty(Model.FiltroTitularSaldos))
             {
@@ -609,7 +715,7 @@
                             <td colspan="2" class="d-mobile-none"></td>
                             <td colspan="4" class="text-end d-mobile-none">Total saldo pendiente:</td>
                             <td class="text-end text-nowrap" style="background-color:#f8d7da;color:#721c24;font-weight:bold;">
-                                $@Formato.Numero(Model.SaldosPendientes.Sum(s => s.SaldoPendiente))
+                                $@Formato.Numero(Model.TotalSaldoPendiente)
                             </td>
                             <td class="d-mobile-none"></td>
                             @if (User.IsInRole("Administrador"))
@@ -622,8 +728,70 @@
             </div>
             <div class="d-md-none text-center text-muted scroll-hint" style="font-size:11px;">← Deslizá para ver más →</div>
             <div class="text-muted small mt-2">
-                @Model.SaldosPendientes.Count reserva@(Model.SaldosPendientes.Count != 1 ? "s" : "") con saldo pendiente
+                @{
+                    var desdeSal = (Model.PaginaSaldos - 1) * 50 + 1;
+                    var hastaSal = desdeSal + Model.SaldosPendientes.Count - 1;
+                }
+                @if (Model.TotalPaginasSaldos > 1)
+                {
+                    <text>Mostrando @Formato.Numero(desdeSal)–@Formato.Numero(hastaSal) de @Formato.Numero(Model.TotalSaldos) reserva@(Model.TotalSaldos != 1 ? "s" : "") con saldo pendiente</text>
+                }
+                else
+                {
+                    <text>@Model.TotalSaldos reserva@(Model.TotalSaldos != 1 ? "s" : "") con saldo pendiente</text>
+                }
             </div>
+
+            @* ── Paginación ── *@
+            @if (Model.TotalPaginasSaldos > 1)
+            {
+                var ventanaDesktopSal = VentanaPaginas(Model.TotalPaginasSaldos, Model.PaginaSaldos, 2);
+                var ventanaMobileSal  = VentanaPaginas(Model.TotalPaginasSaldos, Model.PaginaSaldos, 1);
+                <nav class="mt-3" aria-label="Páginas de saldos pendientes">
+                    <ul class="pagination pagination-sm justify-content-center mb-0 d-none d-md-flex">
+                        <li class="page-item @(Model.PaginaSaldos == 1 ? "disabled" : "")">
+                            <a class="page-link" href="@UrlPagina("paginaSaldos", Model.PaginaSaldos - 1, "saldos")">‹</a>
+                        </li>
+                        @foreach (var p in ventanaDesktopSal)
+                        {
+                            if (p == null)
+                            {
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            }
+                            else
+                            {
+                                <li class="page-item @(p == Model.PaginaSaldos ? "active" : "")">
+                                    <a class="page-link" href="@UrlPagina("paginaSaldos", p.Value, "saldos")">@p</a>
+                                </li>
+                            }
+                        }
+                        <li class="page-item @(Model.PaginaSaldos == Model.TotalPaginasSaldos ? "disabled" : "")">
+                            <a class="page-link" href="@UrlPagina("paginaSaldos", Model.PaginaSaldos + 1, "saldos")">›</a>
+                        </li>
+                    </ul>
+                    <ul class="pagination pagination-sm justify-content-center mb-0 d-flex d-md-none">
+                        <li class="page-item @(Model.PaginaSaldos == 1 ? "disabled" : "")">
+                            <a class="page-link" href="@UrlPagina("paginaSaldos", Model.PaginaSaldos - 1, "saldos")">‹</a>
+                        </li>
+                        @foreach (var p in ventanaMobileSal)
+                        {
+                            if (p == null)
+                            {
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            }
+                            else
+                            {
+                                <li class="page-item @(p == Model.PaginaSaldos ? "active" : "")">
+                                    <a class="page-link" href="@UrlPagina("paginaSaldos", p.Value, "saldos")">@p</a>
+                                </li>
+                            }
+                        }
+                        <li class="page-item @(Model.PaginaSaldos == Model.TotalPaginasSaldos ? "disabled" : "")">
+                            <a class="page-link" href="@UrlPagina("paginaSaldos", Model.PaginaSaldos + 1, "saldos")">›</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
         }
     </div>
 
