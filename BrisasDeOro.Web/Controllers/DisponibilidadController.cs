@@ -122,6 +122,23 @@ public class DisponibilidadController : ControllerBase
         var casa = alojamientos.FirstOrDefault(a => a.Tipo == TipoAlojamiento.Casa);
         int casaDisponibles = EsDisponible(casa) ? 1 : 0;
 
+        // ── Libres por categoría (sin filtro de capacidad, para sugerir combinaciones) ──
+        List<int> LibresDeCategoria(IEnumerable<string> nombres) =>
+            nombres
+                .Select(ByNombre)
+                .Where(a => a is not null && !ocupados.Contains(a.Id))
+                .Select(a => a!.Capacidad)
+                .ToList();
+
+        var libresHabitaciones = LibresDeCategoria(habNombres);
+        var libresAparts = LibresDeCategoria(new[] { "Apart 1", "Apart 2" });
+        var libresCabanaChica = LibresDeCategoria(new[] { "Cabaña 7" });
+        var libresCabanaMediana = LibresDeCategoria(cabMedianaNombres);
+        var libresCabanaGrande = LibresDeCategoria(new[] { "Cabaña 8" });
+        var libresCasa = casa is not null && !ocupados.Contains(casa.Id)
+            ? new List<int> { casa.Capacidad }
+            : new List<int>();
+
         return Ok(new
         {
             habitaciones = new
@@ -153,6 +170,15 @@ public class DisponibilidadController : ControllerBase
             {
                 disponible        = casaDisponibles > 0,
                 unidadesDisponibles = casaDisponibles
+            },
+            libres = new
+            {
+                habitaciones  = libresHabitaciones,
+                aparts        = libresAparts,
+                cabanaChica   = libresCabanaChica,
+                cabanaMediana = libresCabanaMediana,
+                cabanaGrande  = libresCabanaGrande,
+                casa          = libresCasa
             }
         });
     }
