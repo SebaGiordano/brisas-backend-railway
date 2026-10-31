@@ -85,42 +85,58 @@ public class DisponibilidadController : ControllerBase
         bool EsDisponible(Alojamiento? a) =>
             a is not null && !ocupados.Contains(a.Id) && a.Capacidad >= cantidadPersonas;
 
+        // ── Regla de oferta por tamaño de grupo: qué unidades se ofrecen como
+        // opción individual según cantidadPersonas (no afecta a `libres`, que
+        // alimenta las combinaciones y siempre incluye todas las unidades libres).
+        bool Ofrecible(string categoria, int n) => categoria switch
+        {
+            "habitaciones"  => true,
+            "aparts"        => n >= 3 && n <= 5,
+            "cabanaChica"   => n >= 1 && n <= 3,
+            "cabanaMediana" => n >= 1 && n <= 6,
+            "cabanaGrande"  => n >= 4 && n <= 8,
+            "casa"          => n >= 4 && n <= 10,
+            _ => false
+        };
+
         // ── Habitaciones (Hab. 4-11) ──────────────────────────────────────────
+        bool ofrecibleHabitaciones = Ofrecible("habitaciones", cantidadPersonas);
         var habNombres = new[] {
             "Habitación 4", "Habitación 5", "Habitación 6", "Habitación 7",
             "Habitación 8", "Habitación 9", "Habitación 10", "Habitación 11"
         };
-        int habDisponibles = habNombres
+        int habDisponibles = !ofrecibleHabitaciones ? 0 : habNombres
             .Select(n => ByNombre(n))
             .Count(EsDisponible);
 
-        // ── Aparts (Apart 1 y 2) — solo válidos para 3 a 5 personas ──────────
-        int apartDisponibles = 0;
-        if (cantidadPersonas >= 3 && cantidadPersonas <= 5)
-        {
-            apartDisponibles = new[] { "Apart 1", "Apart 2" }
-                .Select(n => ByNombre(n))
-                .Count(EsDisponible);
-        }
+        // ── Aparts (Apart 1 y 2) — solo ofrecibles de 3 a 5 personas ──────────
+        bool ofrecibleAparts = Ofrecible("aparts", cantidadPersonas);
+        int apartDisponibles = !ofrecibleAparts ? 0 : new[] { "Apart 1", "Apart 2" }
+            .Select(n => ByNombre(n))
+            .Count(EsDisponible);
 
         // ── Cabaña chica (Cabaña 7) ───────────────────────────────────────────
-        int cabChicaDisponibles = EsDisponible(ByNombre("Cabaña 7")) ? 1 : 0;
+        bool ofrecibleCabanaChica = Ofrecible("cabanaChica", cantidadPersonas);
+        int cabChicaDisponibles = ofrecibleCabanaChica && EsDisponible(ByNombre("Cabaña 7")) ? 1 : 0;
 
         // ── Cabaña mediana (Cabañas 1-6) ──────────────────────────────────────
+        bool ofrecibleCabanaMediana = Ofrecible("cabanaMediana", cantidadPersonas);
         var cabMedianaNombres = new[] {
             "Cabaña 1", "Cabaña 2", "Cabaña 3",
             "Cabaña 4", "Cabaña 5", "Cabaña 6"
         };
-        int cabMedianaDisponibles = cabMedianaNombres
+        int cabMedianaDisponibles = !ofrecibleCabanaMediana ? 0 : cabMedianaNombres
             .Select(n => ByNombre(n))
             .Count(EsDisponible);
 
         // ── Cabaña grande (Cabaña 8) ──────────────────────────────────────────
-        int cabGrandeDisponibles = EsDisponible(ByNombre("Cabaña 8")) ? 1 : 0;
+        bool ofrecibleCabanaGrande = Ofrecible("cabanaGrande", cantidadPersonas);
+        int cabGrandeDisponibles = ofrecibleCabanaGrande && EsDisponible(ByNombre("Cabaña 8")) ? 1 : 0;
 
         // ── Casa (Icho Cruz) ───────────────────────────────────────────────────
+        bool ofrecibleCasa = Ofrecible("casa", cantidadPersonas);
         var casa = alojamientos.FirstOrDefault(a => a.Tipo == TipoAlojamiento.Casa);
-        int casaDisponibles = EsDisponible(casa) ? 1 : 0;
+        int casaDisponibles = ofrecibleCasa && EsDisponible(casa) ? 1 : 0;
 
         // ── Libres por categoría (sin filtro de capacidad, para sugerir combinaciones) ──
         List<int> LibresDeCategoria(IEnumerable<string> nombres) =>
@@ -144,32 +160,38 @@ public class DisponibilidadController : ControllerBase
             habitaciones = new
             {
                 disponible        = habDisponibles > 0,
-                unidadesDisponibles = habDisponibles
+                unidadesDisponibles = habDisponibles,
+                ofrecible         = ofrecibleHabitaciones
             },
             aparts = new
             {
                 disponible        = apartDisponibles > 0,
-                unidadesDisponibles = apartDisponibles
+                unidadesDisponibles = apartDisponibles,
+                ofrecible         = ofrecibleAparts
             },
             cabanaChica = new
             {
                 disponible        = cabChicaDisponibles > 0,
-                unidadesDisponibles = cabChicaDisponibles
+                unidadesDisponibles = cabChicaDisponibles,
+                ofrecible         = ofrecibleCabanaChica
             },
             cabanaMediana = new
             {
                 disponible        = cabMedianaDisponibles > 0,
-                unidadesDisponibles = cabMedianaDisponibles
+                unidadesDisponibles = cabMedianaDisponibles,
+                ofrecible         = ofrecibleCabanaMediana
             },
             cabanaGrande = new
             {
                 disponible        = cabGrandeDisponibles > 0,
-                unidadesDisponibles = cabGrandeDisponibles
+                unidadesDisponibles = cabGrandeDisponibles,
+                ofrecible         = ofrecibleCabanaGrande
             },
             casa = new
             {
                 disponible        = casaDisponibles > 0,
-                unidadesDisponibles = casaDisponibles
+                unidadesDisponibles = casaDisponibles,
+                ofrecible         = ofrecibleCasa
             },
             libres = new
             {
