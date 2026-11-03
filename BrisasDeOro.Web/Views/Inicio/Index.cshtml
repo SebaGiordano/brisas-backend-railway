@@ -4,6 +4,12 @@
 
     string FmtFecha(DateOnly d) => d.ToString("dd/MM/yyyy");
 
+    // Nombre del día en español, con mayúscula inicial (lista propia: no depende de la configuración regional del servidor)
+    string[] DiasSemana = { "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado" };
+    string DiaNombre(DateOnly d)   => DiasSemana[(int)d.DayOfWeek];
+    string FmtFechaDia(DateOnly d) => $"{DiaNombre(d)} {FmtFecha(d)}";
+    string FmtDiaCorto(DateOnly d) => $"{DiaNombre(d)} {d:dd/MM}";
+
     string AbrevAloj(string n) =>
         n.StartsWith("Habitación ") ? "Hab. " + n.Substring("Habitación ".Length) :
         n.StartsWith("Apart ")      ? "Ap. "  + n.Substring("Apart ".Length) :
@@ -222,7 +228,7 @@
    SECCIÓN HOY
    ══════════════════════════════════════════════════════════════ *@
 <h5 class="text-uppercase text-muted fw-semibold mb-3" style="letter-spacing:.06em; font-size:1.1rem;">
-    <i class="bi bi-calendar3 me-1" style="color:#212529;"></i><strong>Hoy</strong> — @FmtFecha(Model.Hoy)
+    <i class="bi bi-calendar3 me-1" style="color:#212529;"></i><strong>Hoy</strong> — @FmtFechaDia(Model.Hoy)
 </h5>
 
 @* ── Fila 1: Check-ins / Check-outs hoy ── *@
@@ -344,8 +350,8 @@
                     <div class="card-body py-3 d-flex flex-column justify-content-center">
                         <div class="display-6 fw-bold text-primary">@Model.PlazasOcupadasHoy</div>
                         <div class="text-muted small mt-1">
-                            <span class="d-none d-lg-block">Plazas ocupadas<br><strong>HOY</strong><br><span class="fst-italic">(Sin invitaciones)</span></span>
-                            <span class="d-lg-none">Plazas ocupadas <strong>HOY</strong><br><span class="fst-italic">(sin invitaciones)</span></span>
+                            <span class="d-none d-lg-block">Plazas ocupadas<br><strong>HOY</strong><br><span class="fst-italic">(@FmtDiaCorto(Model.Hoy) · sin invitaciones)</span></span>
+                            <span class="d-lg-none">Plazas ocupadas <strong>HOY</strong><br><span class="fst-italic">(@FmtDiaCorto(Model.Hoy) · sin invitaciones)</span></span>
                         </div>
                     </div>
                 </div>
@@ -356,7 +362,7 @@
                         <div class="display-6 fw-bold text-success">@Model.ComensalesDesayunoHoy</div>
                         <div class="text-muted small mt-1">
                             Huéspedes para desayuno <strong>HOY</strong><br>
-                            <span class="fst-italic">(@FmtFecha(Model.Hoy))</span>
+                            <span class="fst-italic">(@FmtFechaDia(Model.Hoy))</span>
                         </div>
                     </div>
                 </div>
@@ -367,7 +373,7 @@
                         <div class="display-6 fw-bold text-info">@Model.ComensalesDesayunoManana</div>
                         <div class="text-muted small mt-1">
                             Huéspedes para desayuno <strong>MAÑANA</strong><br>
-                            <span class="fst-italic">(@FmtFecha(Model.Manana))</span>
+                            <span class="fst-italic">(@FmtFechaDia(Model.Manana))</span>
                         </div>
                     </div>
                 </div>
@@ -377,7 +383,7 @@
         @* Limpieza (ocupa el espacio restante de la columna) *@
         <div class="card flex-grow-1">
             <div class="card-header fw-semibold bg-light">
-                <i class="bi bi-stars me-1"></i>Limpieza del día — @FmtFecha(Model.Hoy) <span class="text-muted fw-normal">(hoy)</span>
+                <i class="bi bi-stars me-1"></i>Limpieza del día — @FmtFechaDia(Model.Hoy) <span class="text-muted fw-normal">(hoy)</span>
             </div>
             <div class="card-body p-0">
                 @if (!Model.LimpiezaDelDia.Any())
@@ -483,7 +489,7 @@
     <div class="col-lg-6">
         <div class="card h-100">
             <div class="card-header fw-semibold bg-light">
-                <i class="bi bi-building me-1"></i>Estado de unidades hoy
+                <i class="bi bi-building me-1"></i>Estado de unidades — @FmtFechaDia(Model.Hoy) <span class="text-muted fw-normal">(hoy)</span>
             </div>
             <div class="card-body p-0">
                 <div class="row g-0 h-100">
@@ -643,7 +649,7 @@
 <div class="card mb-4" id="card-aires-acondicionados">
     <div class="card-header fw-semibold bg-light" id="header-aires-acondicionados">
         <i class="bi bi-snow2 me-1"></i>Aires acondicionados <strong class="text-uppercase">CABAÑAS</strong>
-        <span class="d-block d-aire-fecha-inline"> — @FmtFecha(Model.Hoy) <span class="text-muted fw-normal">(hoy)</span></span>
+        <span class="d-block d-aire-fecha-inline"> — @FmtFechaDia(Model.Hoy) <span class="text-muted fw-normal">(hoy)</span></span>
     </div>
     <div class="card-body p-0">
         @{
@@ -733,7 +739,7 @@
    SECCIÓN MAÑANA
    ══════════════════════════════════════════════════════════════ *@
 <h5 class="text-uppercase text-muted fw-semibold mb-3" style="letter-spacing:.06em; font-size:1.1rem;">
-    <i class="bi bi-calendar3 me-1" style="color:#212529;"></i><strong>Mañana</strong> — @FmtFecha(Model.Manana)
+    <i class="bi bi-calendar3 me-1" style="color:#212529;"></i><strong>Mañana</strong> — @FmtFechaDia(Model.Manana)
 </h5>
 
 <div class="row g-3 mb-3">
