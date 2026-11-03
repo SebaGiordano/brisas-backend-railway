@@ -10,13 +10,12 @@
     string FmtFechaDia(DateOnly d) => $"{DiaNombre(d)} {FmtFecha(d)}";
     string FmtDiaCorto(DateOnly d) => $"{DiaNombre(d)} {d:dd/MM}";
 
-    // Mantiene juntos el sufijo "(...)" o " — ..." de una tarea para que, si no entra,
+    // Mantiene juntos el sufijo "(...)" de una tarea para que, si no entra,
     // baje entero al renglón siguiente (ej.: "Preparación para ingreso" / "(check-in)").
     Microsoft.AspNetCore.Html.IHtmlContent FmtTarea(string t)
     {
         string enc(string s) => System.Net.WebUtility.HtmlEncode(s);
         int i = t.IndexOf(" (");
-        if (i < 0) i = t.IndexOf(" — ");
         if (i < 0) return new Microsoft.AspNetCore.Html.HtmlString(enc(t));
         return new Microsoft.AspNetCore.Html.HtmlString(
             $"{enc(t.Substring(0, i))} <span class=\"text-nowrap\">{enc(t.Substring(i + 1))}</span>");
@@ -112,6 +111,9 @@
         .btn-outline-danger.btn-sm.py-0 { font-weight: bold !important; }
         /* Badges numéricos de encabezados: centrado vertical */
         .badge { display: inline-flex !important; align-items: center !important; vertical-align: middle !important; }
+        /* Tareas de limpieza: texto normal; el sufijo entre paréntesis baja entero solo si no entra */
+        #tabla-limpieza .badge { display: inline-block !important; vertical-align: top !important; text-align: center; }
+        #tabla-limpieza .badge .text-nowrap { font-size: inherit !important; font-weight: inherit !important; }
         /* Todas las secciones con botón "Ver": padding-right igualado al de Pendientes (.25rem) */
         .lista-ver-items .list-group-item { padding-right: .25rem !important; }
         /* Pendientes: padding-left del titular igualado al de las demás secciones (1rem) */
@@ -362,19 +364,25 @@
                     <div class="card-body py-3 d-flex flex-column justify-content-center">
                         <div class="display-6 fw-bold text-primary">@Model.PlazasOcupadasHoy</div>
                         <div class="text-muted small mt-1">
+                            @{ var inv = Model.PlazasInvitacionHoy; }
                             <span class="d-none d-lg-block">
                                 Plazas ocupadas <strong>HOY</strong><br>
                                 <span class="fst-italic">(@FmtFechaDia(Model.Hoy))</span><br>
-                                <span class="fst-italic">(sin invitaciones)</span>
+                                @if (inv > 0)
+                                { <span class="fst-italic" style="color:#7c4dbb;">(no incluye @inv por invitación)</span> }
+                                else
+                                { <span class="fst-italic text-nowrap">(sin invitaciones)</span> }
                             </span>
                             <span class="d-lg-none">
                                 Plazas ocupadas <strong>HOY</strong><br>
-                                <span class="fst-italic">(@FmtFechaDia(Model.Hoy) · sin invitaciones)</span>
+                                @if (inv > 0)
+                                {
+                                    <span class="fst-italic">(@FmtFechaDia(Model.Hoy))</span><br>
+                                    <span class="fst-italic" style="color:#7c4dbb;">(no incluye @inv por invitación)</span>
+                                }
+                                else
+                                { <span class="fst-italic">(@FmtFechaDia(Model.Hoy) · sin invitaciones)</span> }
                             </span>
-                            @if (Model.PlazasInvitacionHoy > 0)
-                            {
-                                <span class="d-block fst-italic fw-semibold" style="color:#7c4dbb;">(+@Model.PlazasInvitacionHoy por invitación)</span>
-                            }
                         </div>
                     </div>
                 </div>
@@ -386,6 +394,8 @@
                         <div class="text-muted small mt-1">
                             Huéspedes para desayuno <strong>HOY</strong><br>
                             <span class="fst-italic">(@FmtFechaDia(Model.Hoy))</span>
+                            @if (Model.ComensalesInvitacionHoy > 0)
+                            { <br><span class="fst-italic" style="color:#7c4dbb;">(incluye @Model.ComensalesInvitacionHoy por invitación)</span> }
                         </div>
                     </div>
                 </div>
@@ -397,6 +407,8 @@
                         <div class="text-muted small mt-1">
                             Huéspedes para desayuno <strong>MAÑANA</strong><br>
                             <span class="fst-italic">(@FmtFechaDia(Model.Manana))</span>
+                            @if (Model.ComensalesInvitacionManana > 0)
+                            { <br><span class="fst-italic" style="color:#7c4dbb;">(incluye @Model.ComensalesInvitacionManana por invitación)</span> }
                         </div>
                     </div>
                 </div>

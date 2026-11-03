@@ -372,7 +372,13 @@
         data.forEach(({ td, text, avail, nights }) => {
             if (avail < 4 || !text) return;
             const fs = bsFont(text, getTargetPx(avail, nights), family);
-            td.style.fontSize     = fs.toFixed(1) + 'px';
+            let fsFinal = fs;
+            if (!isMobile) {
+                const filas = td.rowSpan || 1;
+                const maxFs = filas > 1 ? 20 : 15; // tope: 15 px una fila, 20 px reservas de dos filas (aparts)
+                fsFinal = Math.min(fs, maxFs);
+            }
+            td.style.fontSize     = fsFinal.toFixed(1) + 'px';
             td.style.whiteSpace   = 'nowrap';
             td.style.textOverflow = 'ellipsis';
             td.style.textAlign    = 'center';

@@ -12,6 +12,8 @@ public class InicioViewModel
     public int                      PlazasInvitacionHoy      { get; init; }
     public int                      ComensalesDesayunoHoy    { get; init; }
     public int                      ComensalesDesayunoManana { get; init; }
+    public int                      ComensalesInvitacionHoy    { get; init; }
+    public int                      ComensalesInvitacionManana { get; init; }
     public List<string>             UnidadesLibresHoy      { get; init; } = new();
     public List<string>             UnidadesOcupadasHoy    { get; init; } = new();
     public List<LimpiezaItem>       LimpiezaDelDia         { get; init; } = new();

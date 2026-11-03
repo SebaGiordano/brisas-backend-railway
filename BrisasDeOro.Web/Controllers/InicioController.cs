@@ -121,6 +121,13 @@ public class InicioController : Controller
             .Where(r => FI(r) < manana && FS(r) >= manana && r.IncluyeDesayuno)
             .Sum(r => r.CantidadHuespedes);
 
+        var comensalesInvHoy = reservas
+            .Where(r => FI(r) < hoy && FS(r) >= hoy && r.IncluyeDesayuno && r.EsInvitacion)
+            .Sum(r => r.CantidadHuespedes);
+        var comensalesInvManana = reservas
+            .Where(r => FI(r) < manana && FS(r) >= manana && r.IncluyeDesayuno && r.EsInvitacion)
+            .Sum(r => r.CantidadHuespedes);
+
         // ── Unidades libres / ocupadas hoy ────────────────────────────────────
         // Si un Apart está ocupado, sus habitaciones componentes se marcan como ocupadas.
         // Reserva grupal: TODAS sus unidades (no solo la representativa) cuentan como
@@ -384,6 +391,8 @@ public class InicioController : Controller
             PlazasInvitacionHoy      = plazasInvitacion,
             ComensalesDesayunoHoy    = comensalesHoy,
             ComensalesDesayunoManana = comensales,
+            ComensalesInvitacionHoy    = comensalesInvHoy,
+            ComensalesInvitacionManana = comensalesInvManana,
             UnidadesLibresHoy        = unidadesLibres,
             UnidadesOcupadasHoy      = unidadesOcupadas,
             LimpiezaDelDia           = limpiezaItems,
