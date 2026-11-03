@@ -468,8 +468,7 @@ public class ReservasController : Controller
                 excludeReservaId: model.Id);
 
             if (noDisponibles.Any())
-                ModelState.AddModelError("",
-                    $"Estas unidades ya no están disponibles en las fechas elegidas: {string.Join(", ", noDisponibles)}. Actualizá la lista y elegí otras.");
+                ModelState.AddModelError("", MensajeNoDisponibles(noDisponibles));
         }
 
         if (!ModelState.IsValid)
@@ -752,6 +751,16 @@ public class ReservasController : Controller
             .ToListAsync();
     }
 
+    // Mensaje de unidades no disponibles, adaptado a singular/plural.
+    private static string MensajeNoDisponibles(List<string> nombres)
+    {
+        if (nombres.Count == 1)
+            return $"La unidad {nombres[0]} ya no está disponible para las fechas solicitadas. Revisá la disponibilidad y seleccioná otra unidad.";
+
+        var lista = string.Join(", ", nombres.Take(nombres.Count - 1)) + " y " + nombres.Last();
+        return $"Las unidades {lista} ya no están disponibles para las fechas solicitadas. Revisá la disponibilidad y seleccioná otras unidades.";
+    }
+
     // ── ObtenerPrecioSugerido (AJAX) ──────────────────────────────────────────
     // Detecta la temporada según fechaIngreso y devuelve los precios de la tarifa
     // configurada para esa temporada. Fallback a Temporada Baja si no hay match.
@@ -906,8 +915,7 @@ public class ReservasController : Controller
                 excludeReservaId: null);
 
             if (noDisponibles.Any())
-                ModelState.AddModelError("",
-                    $"Estas unidades ya no están disponibles en las fechas elegidas: {string.Join(", ", noDisponibles)}. Actualizá la lista y elegí otras.");
+                ModelState.AddModelError("", MensajeNoDisponibles(noDisponibles));
         }
 
         if (!ModelState.IsValid)
