@@ -241,6 +241,15 @@
             display: inline !important;
         }
     }
+    /* Separación entre reservas en Limpieza del día: gris más marcado (antes #dee2e6, casi invisible).
+       Cada fila del tbody es una reserva (individual o grupo completo), así que la línea
+       marca dónde termina una reserva y empieza la siguiente. */
+    #tabla-limpieza > tbody > tr > td {
+        border-bottom: 1px solid #b5bcc4 !important;
+    }
+    #tabla-limpieza > tbody > tr:last-child > td {
+        border-bottom: 0 !important;
+    }
 </style>
 
 @* ── Encabezado ── *@
