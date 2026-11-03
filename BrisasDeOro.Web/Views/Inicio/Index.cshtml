@@ -456,14 +456,14 @@
                                 else
                                 {
                                     <tr>
-                                        <td class="fw-semibold td-nombre-individual">
+                                        <td class="fw-semibold td-nombre-individual @(item.HabitacionesApart.Any() ? "align-top" : "")">
                                             @item.NombreAlojamiento
                                             @foreach (var hab in item.HabitacionesApart)
                                             {
                                                 <div class="small text-muted fw-normal">↳ @hab</div>
                                             }
                                         </td>
-                                        <td class="ps-3">
+                                        <td class="ps-3 @(item.HabitacionesApart.Any() ? "align-top" : "")">
                                             @foreach (var tarea in item.Tareas)
                                             {
                                                 <span class="badge bg-primary me-1 mb-1 fw-bold" style="font-size:.78rem;">@tarea</span>
