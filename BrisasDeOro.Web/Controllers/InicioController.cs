@@ -104,6 +104,9 @@ public class InicioController : Controller
         // ── Plazas ocupadas hoy (sin invitaciones) ────────────────────────────
         var plazas = activasHoy.Where(r => !r.EsInvitacion).Sum(r => r.CantidadHuespedes);
 
+        // Plazas de estadías de invitación activas hoy (no se suman al total comercial; se informan aparte)
+        var plazasInvitacion = activasHoy.Where(r => r.EsInvitacion).Sum(r => r.CantidadHuespedes);
+
         // ── Comensales desayuno hoy ───────────────────────────────────────────
         // FI < hoy: excluye quien ingresa hoy (no desayuna el día de llegada)
         // FS >= hoy: incluye quien hace checkout hoy (desayuna antes de irse)
@@ -378,6 +381,7 @@ public class InicioController : Controller
             CheckInsHoy              = checkInsHoy,
             CheckOutsHoy             = checkOutsHoy,
             PlazasOcupadasHoy        = plazas,
+            PlazasInvitacionHoy      = plazasInvitacion,
             ComensalesDesayunoHoy    = comensalesHoy,
             ComensalesDesayunoManana = comensales,
             UnidadesLibresHoy        = unidadesLibres,

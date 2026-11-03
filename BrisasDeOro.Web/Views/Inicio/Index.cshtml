@@ -10,6 +10,18 @@
     string FmtFechaDia(DateOnly d) => $"{DiaNombre(d)} {FmtFecha(d)}";
     string FmtDiaCorto(DateOnly d) => $"{DiaNombre(d)} {d:dd/MM}";
 
+    // Mantiene juntos el sufijo "(...)" o " — ..." de una tarea para que, si no entra,
+    // baje entero al renglón siguiente (ej.: "Preparación para ingreso" / "(check-in)").
+    Microsoft.AspNetCore.Html.IHtmlContent FmtTarea(string t)
+    {
+        string enc(string s) => System.Net.WebUtility.HtmlEncode(s);
+        int i = t.IndexOf(" (");
+        if (i < 0) i = t.IndexOf(" — ");
+        if (i < 0) return new Microsoft.AspNetCore.Html.HtmlString(enc(t));
+        return new Microsoft.AspNetCore.Html.HtmlString(
+            $"{enc(t.Substring(0, i))} <span class=\"text-nowrap\">{enc(t.Substring(i + 1))}</span>");
+    }
+
     string AbrevAloj(string n) =>
         n.StartsWith("Habitación ") ? "Hab. " + n.Substring("Habitación ".Length) :
         n.StartsWith("Apart ")      ? "Ap. "  + n.Substring("Apart ".Length) :
@@ -350,8 +362,19 @@
                     <div class="card-body py-3 d-flex flex-column justify-content-center">
                         <div class="display-6 fw-bold text-primary">@Model.PlazasOcupadasHoy</div>
                         <div class="text-muted small mt-1">
-                            <span class="d-none d-lg-block">Plazas ocupadas<br><strong>HOY</strong><br><span class="fst-italic">(@FmtDiaCorto(Model.Hoy) · sin invitaciones)</span></span>
-                            <span class="d-lg-none">Plazas ocupadas <strong>HOY</strong><br><span class="fst-italic">(@FmtDiaCorto(Model.Hoy) · sin invitaciones)</span></span>
+                            <span class="d-none d-lg-block">
+                                Plazas ocupadas <strong>HOY</strong><br>
+                                <span class="fst-italic">(@FmtFechaDia(Model.Hoy))</span><br>
+                                <span class="fst-italic">(sin invitaciones)</span>
+                            </span>
+                            <span class="d-lg-none">
+                                Plazas ocupadas <strong>HOY</strong><br>
+                                <span class="fst-italic">(@FmtFechaDia(Model.Hoy) · sin invitaciones)</span>
+                            </span>
+                            @if (Model.PlazasInvitacionHoy > 0)
+                            {
+                                <span class="d-block fst-italic fw-semibold" style="color:#7c4dbb;">(+@Model.PlazasInvitacionHoy por invitación)</span>
+                            }
                         </div>
                     </div>
                 </div>
@@ -418,7 +441,7 @@
                                                             <span class="small text-muted fst-italic">@u.NombreAlojamiento</span>
                                                             @foreach (var tarea in u.Tareas)
                                                             {
-                                                                <span class="badge bg-primary ms-1 mb-1 fw-bold" style="font-size:.78rem;">@tarea</span>
+                                                                <span class="badge bg-primary ms-1 mb-1 fw-bold" style="font-size:.78rem;">@FmtTarea(tarea)</span>
                                                             }
                                                         </div>
                                                     }
@@ -428,7 +451,7 @@
                                                         <div>
                                                             @foreach (var tarea in u.Tareas)
                                                             {
-                                                                <span class="badge bg-primary me-1 mb-1 fw-bold" style="font-size:.78rem;">@tarea</span>
+                                                                <span class="badge bg-primary me-1 mb-1 fw-bold" style="font-size:.78rem;">@FmtTarea(tarea)</span>
                                                             }
                                                         </div>
                                                     }
@@ -444,7 +467,7 @@
                                                         <div>
                                                             @foreach (var tarea in u.Tareas)
                                                             {
-                                                                <span class="badge bg-primary me-1 mb-1 fw-bold" style="font-size:.78rem;">@tarea</span>
+                                                                <span class="badge bg-primary me-1 mb-1 fw-bold" style="font-size:.78rem;">@FmtTarea(tarea)</span>
                                                             }
                                                         </div>
                                                     }
@@ -466,7 +489,7 @@
                                         <td class="ps-3 @(item.HabitacionesApart.Any() ? "align-top" : "")">
                                             @foreach (var tarea in item.Tareas)
                                             {
-                                                <span class="badge bg-primary me-1 mb-1 fw-bold" style="font-size:.78rem;">@tarea</span>
+                                                <span class="badge bg-primary me-1 mb-1 fw-bold" style="font-size:.78rem;">@FmtTarea(tarea)</span>
                                             }
                                         </td>
                                     </tr>

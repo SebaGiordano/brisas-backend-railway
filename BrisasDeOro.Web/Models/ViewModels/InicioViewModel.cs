@@ -9,6 +9,7 @@ public class InicioViewModel
     public List<MovimientoItem>     CheckInsHoy            { get; init; } = new();
     public List<MovimientoItem>     CheckOutsHoy           { get; init; } = new();
     public int                      PlazasOcupadasHoy        { get; init; }
+    public int                      PlazasInvitacionHoy      { get; init; }
     public int                      ComensalesDesayunoHoy    { get; init; }
     public int                      ComensalesDesayunoManana { get; init; }
     public List<string>             UnidadesLibresHoy      { get; init; } = new();
