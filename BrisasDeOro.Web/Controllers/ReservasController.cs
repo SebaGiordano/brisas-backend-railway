@@ -426,6 +426,16 @@ public class ReservasController : Controller
         {
             if (model.UnidadesGrupales.Count < 2)
                 ModelState.AddModelError("", "Una reserva grupal debe incluir al menos 2 unidades.");
+
+            if (model.EsGrupal && model.UnidadesGrupales.Any())
+            {
+                var idsGrupo = model.UnidadesGrupales.Select(u => u.AlojamientoId).ToHashSet();
+                var detallesApart = await _context.ApartDetalles.ToListAsync();
+                if (detallesApart.Any(d => idsGrupo.Contains(d.AlojamientoApartId)
+                                        && (idsGrupo.Contains(d.AlojamientoHab1Id) || idsGrupo.Contains(d.AlojamientoHab2Id))))
+                    ModelState.AddModelError("", "Un Apart y las habitaciones que lo forman no pueden estar en la misma reserva grupal. Elegí el Apart o las habitaciones por separado.");
+            }
+
             if (model.UnidadesGrupales.Any(u => u.CantidadHuespedes < 1))
                 ModelState.AddModelError("", "Cada unidad debe tener al menos 1 persona asignada.");
         }
@@ -649,6 +659,10 @@ public class ReservasController : Controller
                 d => $"Hab. {d.AlojamientoHab1.Nombre.Split(' ').Last()}" +
                      $" y {d.AlojamientoHab2.Nombre.Split(' ').Last()}");
 
+        var habsPorApart = apDetalles.ToDictionary(
+            d => d.AlojamientoApartId,
+            d => new[] { d.AlojamientoHab1Id, d.AlojamientoHab2Id });
+
         var result = alojamientos
             .OrderBy(a => a.Tipo == TipoAlojamiento.Habitacion ? 0
                         : a.Tipo == TipoAlojamiento.Apart      ? 1
@@ -665,7 +679,8 @@ public class ReservasController : Controller
                             apartDetalles.TryGetValue(a.Id, out var det)
                                 ? $"{a.Nombre} ({det})" : a.Nombre,
                 capacidad = a.Capacidad,
-                tipo      = a.Tipo.ToString()
+                tipo      = a.Tipo.ToString(),
+                habs      = habsPorApart.TryGetValue(a.Id, out var hs) ? hs : Array.Empty<int>()
             })
             .ToList();
 
@@ -793,6 +808,16 @@ public class ReservasController : Controller
         {
             if (model.UnidadesGrupales.Count < 2)
                 ModelState.AddModelError("", "Una reserva grupal debe incluir al menos 2 unidades.");
+
+            if (model.EsGrupal && model.UnidadesGrupales.Any())
+            {
+                var idsGrupo = model.UnidadesGrupales.Select(u => u.AlojamientoId).ToHashSet();
+                var detallesApart = await _context.ApartDetalles.ToListAsync();
+                if (detallesApart.Any(d => idsGrupo.Contains(d.AlojamientoApartId)
+                                        && (idsGrupo.Contains(d.AlojamientoHab1Id) || idsGrupo.Contains(d.AlojamientoHab2Id))))
+                    ModelState.AddModelError("", "Un Apart y las habitaciones que lo forman no pueden estar en la misma reserva grupal. Elegí el Apart o las habitaciones por separado.");
+            }
+
             if (model.UnidadesGrupales.Any(u => u.CantidadHuespedes < 1))
                 ModelState.AddModelError("", "Cada unidad debe tener al menos 1 persona asignada.");
         }

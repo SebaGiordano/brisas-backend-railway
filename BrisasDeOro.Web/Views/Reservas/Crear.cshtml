@@ -1190,6 +1190,46 @@
         const cantUnidades = data.filter(a => !a.nombre.startsWith('Apart') && !a.nombre.startsWith('Casa')).length;
         gid('disponibilidad-msg-grupal').textContent = `${cantUnidades} de ${TOTAL_UNIDADES_GRUPAL} unidades disponibles.`;
         renderCalendariosAire();
+        actualizarBloqueoApartGrupal();
+    }
+
+    // Apart y sus habitaciones se excluyen entre sí dentro de una reserva grupal.
+    function actualizarBloqueoApartGrupal() {
+        const data = _datosDisponibles || [];
+        const aparts = data.filter(a => a.tipo === 'Apart' && Array.isArray(a.habs) && a.habs.length);
+        const nombrePorId = {};
+        data.forEach(a => nombrePorId[a.id] = a.nombre);
+
+        // Primero habilitar todo y limpiar aclaraciones
+        document.querySelectorAll('#lista-checkboxes-grupal .chk-aloj').forEach(chk => {
+            chk.disabled = false;
+            const nota = document.getElementById(`nota-bloqueo-${chk.dataset.id}`);
+            if (nota) nota.remove();
+        });
+
+        const marcar = (id, texto) => {
+            const chk = document.getElementById(`chk-aloj-${id}`);
+            if (!chk || chk.checked) return; // nunca deshabilitar algo ya tildado (permite destildar)
+            chk.disabled = true;
+            const span = document.createElement('span');
+            span.id = `nota-bloqueo-${id}`;
+            span.className = 'text-muted small fst-italic ms-2';
+            span.textContent = texto;
+            chk.closest('.form-check')?.appendChild(span);
+        };
+
+        aparts.forEach(ap => {
+            const apartSel = !!unidadesGrupales[ap.id];
+            const habSel   = ap.habs.filter(h => !!unidadesGrupales[h]);
+            if (apartSel) {
+                const nombreApart = ap.nombre.split(' (')[0];
+                ap.habs.forEach(h => marcar(h, `(incluida en ${nombreApart})`));
+            }
+            if (habSel.length) {
+                const nums = habSel.map(h => (nombrePorId[h] || '').split(' ').pop()).join(' y ');
+                marcar(ap.id, `(incluye Hab. ${nums}, ya seleccionada)`);
+            }
+        });
     }
 
     // ── Modal personas por unidad ─────────────────────────────────────────────
@@ -1274,6 +1314,7 @@
         gid('resumen-grupal').classList.toggle('d-none', cantUnidades === 0);
 
         actualizarPrecioState();
+        actualizarBloqueoApartGrupal();
     }
 
     // ── Disponibilidad (AJAX) ────────────────────────────────────────────────
@@ -1787,6 +1828,12 @@
                 errores.push('Reserva grupal — Seleccioná al menos 2 unidades');
             else if (ids.some(id => !unidadesGrupales[id]?.personas))
                 errores.push('Reserva grupal — Todas las unidades deben tener personas asignadas');
+
+            const idsNum = ids.map(id => parseInt(id));
+            const apartsSeleccionados = (_datosDisponibles || [])
+                .filter(a => a.tipo === 'Apart' && Array.isArray(a.habs) && a.habs.length && idsNum.includes(a.id));
+            if (apartsSeleccionados.some(ap => ap.habs.some(h => idsNum.includes(h))))
+                errores.push('Reserva grupal — Un Apart y sus habitaciones no pueden estar en la misma reserva grupal.');
         } else {
             if (!gid('AlojamientoId').value)
                 errores.push('Alojamiento — Obligatorio');
