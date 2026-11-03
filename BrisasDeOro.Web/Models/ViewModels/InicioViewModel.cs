@@ -45,6 +45,9 @@ public class LimpiezaItem
     public bool                      EsGrupo                { get; init; }
     public int                       CantUnidadesOriginales { get; init; }
     public List<LimpiezaUnidadItem>  Unidades               { get; init; } = new();
+
+    // Solo para Apart: nombres de las habitaciones que lo forman (se muestran como referencia, sin tareas)
+    public List<string> HabitacionesApart { get; init; } = new();
 }
 
 public class LimpiezaUnidadItem
@@ -57,6 +60,9 @@ public class LimpiezaUnidadItem
     // EsHabDeApart = habitación física indentada bajo ese Apart.
     public bool EsSubtituloApart { get; init; }
     public bool EsHabDeApart     { get; init; }
+
+    // Solo para Apart: nombres de las habitaciones que lo forman (se muestran como referencia, sin tareas)
+    public List<string> HabitacionesApart { get; init; } = new();
 }
 
 public class PendienteCobroItem

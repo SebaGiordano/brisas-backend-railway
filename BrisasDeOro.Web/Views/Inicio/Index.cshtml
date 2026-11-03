@@ -428,7 +428,13 @@
                                                     }
                                                     else
                                                     {
-                                                        <div class="align-self-start ps-3">@u.NombreAlojamiento</div>
+                                                        <div class="align-self-start ps-3">
+                                                            @u.NombreAlojamiento
+                                                            @foreach (var hab in u.HabitacionesApart)
+                                                            {
+                                                                <div class="small text-muted">↳ @hab</div>
+                                                            }
+                                                        </div>
                                                         <div>
                                                             @foreach (var tarea in u.Tareas)
                                                             {
@@ -444,7 +450,13 @@
                                 else
                                 {
                                     <tr>
-                                        <td class="fw-semibold td-nombre-individual">@item.NombreAlojamiento</td>
+                                        <td class="fw-semibold td-nombre-individual">
+                                            @item.NombreAlojamiento
+                                            @foreach (var hab in item.HabitacionesApart)
+                                            {
+                                                <div class="small text-muted fw-normal">↳ @hab</div>
+                                            }
+                                        </td>
                                         <td class="ps-3">
                                             @foreach (var tarea in item.Tareas)
                                             {

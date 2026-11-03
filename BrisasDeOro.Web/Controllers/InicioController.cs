@@ -163,12 +163,38 @@ public class InicioController : Controller
         }
 
         // ── Limpieza del día ──────────────────────────────────────────────────
+        // Habitaciones que forman un Apart con reserva vigente hoy (incluye check-in y check-out del día).
+        // Esas habitaciones no se listan por separado: sus tareas se muestran en la línea del Apart.
+        var habsDeApartReservado = new HashSet<int>();
+        foreach (var det in apartDetalles)
+        {
+            if (reservas.Any(r => PerteneceAReserva(r, det.AlojamientoApartId) && FI(r) <= hoy && FS(r) >= hoy))
+            {
+                habsDeApartReservado.Add(det.AlojamientoHab1Id);
+                habsDeApartReservado.Add(det.AlojamientoHab2Id);
+            }
+        }
+
+        List<string> NombresHabsDeApart(int apartId)
+        {
+            var det = apartDetalles.FirstOrDefault(d => d.AlojamientoApartId == apartId);
+            if (det == null) return new List<string>();
+            return new[] { det.AlojamientoHab1Id, det.AlojamientoHab2Id }
+                .Select(id => alojamientos.FirstOrDefault(a => a.Id == id)?.Nombre)
+                .Where(n => n != null)
+                .Select(n => n!)
+                .ToList();
+        }
+
         // Primera pasada: tareas por unidad individual, detectando además a qué
         // reserva grupal (si la hay) pertenece esa unidad.
         var tareasPorUnidad = new List<(Alojamiento Aloj, List<string> Tareas, Reserva? ReservaGrupal)>();
 
         foreach (var aloj in alojamientos)
         {
+            if (aloj.Tipo == TipoAlojamiento.Habitacion && habsDeApartReservado.Contains(aloj.Id))
+                continue;
+
             var tareas = new List<string>();
 
             var checkOut = reservas.FirstOrDefault(r => PerteneceAReserva(r, aloj.Id) && FS(r) == hoy);
@@ -183,23 +209,25 @@ public class InicioController : Controller
 
             if (activa != null)
             {
-                var dias = (hoy.ToDateTime(TimeOnly.MinValue) - activa.FechaIngreso.Date).Days;
+                var dias            = (hoy.ToDateTime(TimeOnly.MinValue) - activa.FechaIngreso.Date).Days;
+                var diaEstadia      = dias + 1; // el día del check-in es el día 1
+                var noches          = (activa.FechaSalida.Date - activa.FechaIngreso.Date).Days;
+                var nochesRestantes = noches - dias; // incluye la noche de hoy
+                bool esHotel        = aloj.Tipo == TipoAlojamiento.Habitacion || aloj.Tipo == TipoAlojamiento.Apart;
 
-                if (dias == 6 && aloj.Tipo != TipoAlojamiento.Casa)
-                    tareas.Add("Cambio de sábanas (día 6)");
-
-                if (aloj.Tipo == TipoAlojamiento.Habitacion && checkOut == null && checkIn == null)
+                // Limpiezas regulares
+                if (esHotel && checkOut == null && checkIn == null)
                     tareas.Add("Limpieza regular diaria");
 
-                if (aloj.Tipo == TipoAlojamiento.Cabaña && dias > 0 && (dias + 1) % 3 == 0)
-                    tareas.Add($"Limpieza regular (día {dias + 1})");
-            }
-            else if (aloj.Tipo == TipoAlojamiento.Habitacion
-                     && checkOut == null
-                     && habToApartActiva.ContainsKey(aloj.Id))
-            {
-                // Habitación componente de un Apart con reserva activa hoy
-                tareas.Add("Limpieza regular diaria");
+                if (aloj.Tipo == TipoAlojamiento.Cabaña && dias > 0 && diaEstadia % 3 == 0)
+                    tareas.Add($"Limpieza regular (día {diaEstadia})");
+
+                // Cambio de sábanas (reglamento del complejo)
+                if (esHotel && dias > 0 && diaEstadia % 3 == 0 && nochesRestantes >= 4)
+                    tareas.Add($"Consultar cambio de sábanas (día {diaEstadia})");
+
+                if (aloj.Tipo == TipoAlojamiento.Cabaña && dias > 0 && diaEstadia % 6 == 0 && nochesRestantes >= 5)
+                    tareas.Add($"Cambio de sábanas (día {diaEstadia})");
             }
 
             if (tareas.Count > 0)
@@ -242,30 +270,15 @@ public class InicioController : Controller
 
                     if (det != null) // la unidad original es un Apart
                     {
-                        bool hasApart = unidadesDelGrupo.Any(x => x.Aloj.Id == alojOrig.Id);
-                        var apartTareas = hasApart
-                            ? unidadesDelGrupo.First(x => x.Aloj.Id == alojOrig.Id).Tareas
-                            : new List<string>();
-                        var habEntries = new[] { det.AlojamientoHab1Id, det.AlojamientoHab2Id }
-                            .Where(hId => unidadesDelGrupo.Any(x => x.Aloj.Id == hId))
-                            .Select(hId => unidadesDelGrupo.First(x => x.Aloj.Id == hId))
-                            .ToList();
-
-                        if (hasApart || habEntries.Any())
+                        if (unidadesDelGrupo.Any(x => x.Aloj.Id == alojOrig.Id))
                         {
+                            var entryApart = unidadesDelGrupo.First(x => x.Aloj.Id == alojOrig.Id);
                             unidades.Add(new LimpiezaUnidadItem
                             {
                                 NombreAlojamiento = alojOrig.Nombre,
-                                Tareas            = apartTareas,
-                                EsSubtituloApart  = true,
+                                Tareas            = entryApart.Tareas,
+                                HabitacionesApart = NombresHabsDeApart(alojOrig.Id),
                             });
-                            foreach (var habEntry in habEntries)
-                                unidades.Add(new LimpiezaUnidadItem
-                                {
-                                    NombreAlojamiento = habEntry.Aloj.Nombre,
-                                    Tareas            = habEntry.Tareas,
-                                    EsHabDeApart      = true,
-                                });
                         }
                     }
                     else
@@ -291,7 +304,12 @@ public class InicioController : Controller
             }
             else
             {
-                limpiezaItems.Add(new LimpiezaItem { NombreAlojamiento = aloj.Nombre, Tareas = tareas });
+                limpiezaItems.Add(new LimpiezaItem
+                {
+                    NombreAlojamiento = aloj.Nombre,
+                    Tareas            = tareas,
+                    HabitacionesApart = aloj.Tipo == TipoAlojamiento.Apart ? NombresHabsDeApart(aloj.Id) : new List<string>()
+                });
                 unidadesAgrupadas.Add(aloj.Id);
             }
         }
