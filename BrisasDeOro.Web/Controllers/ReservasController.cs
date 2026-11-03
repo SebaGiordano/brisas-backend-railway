@@ -456,6 +456,22 @@ public class ReservasController : Controller
         if (!model.EsInvitacion && (!model.MontoTotal.HasValue || model.MontoTotal <= 0))
             ModelState.AddModelError("MontoTotal", "El total de la estadía es obligatorio.");
 
+        if (model.FechaIngreso.HasValue && model.FechaSalida.HasValue
+            && model.FechaSalida.Value > model.FechaIngreso.Value)
+        {
+            var idsSolicitados = model.EsGrupal
+                ? model.UnidadesGrupales.Select(u => u.AlojamientoId).ToList()
+                : (model.AlojamientoId.HasValue ? new List<int> { model.AlojamientoId.Value } : new List<int>());
+
+            var noDisponibles = await UnidadesNoDisponiblesAsync(
+                idsSolicitados, model.FechaIngreso.Value, model.FechaSalida.Value,
+                excludeReservaId: model.Id);
+
+            if (noDisponibles.Any())
+                ModelState.AddModelError("",
+                    $"Estas unidades ya no están disponibles en las fechas elegidas: {string.Join(", ", noDisponibles)}. Actualizá la lista y elegí otras.");
+        }
+
         if (!ModelState.IsValid)
         {
             await PopularViewModel(model);
@@ -687,6 +703,55 @@ public class ReservasController : Controller
         return Json(result);
     }
 
+    // Devuelve los nombres de las unidades solicitadas que NO están libres en [fi, fe).
+    // Misma regla que AlojamientosDisponibles: reservas no canceladas que se solapan,
+    // unidades de reservas grupales (ReservaAlojamientos) y bloqueo Apart ↔ habitaciones.
+    // Al editar se excluye la propia reserva.
+    private async Task<List<string>> UnidadesNoDisponiblesAsync(
+        IEnumerable<int> idsSolicitados, DateTime fi, DateTime fe, int? excludeReservaId)
+    {
+        var solicitados = idsSolicitados.Distinct().ToList();
+        if (!solicitados.Any()) return new List<string>();
+
+        var reservasEnRango = await _context.Reservas
+            .Where(r => r.Estado != EstadoReserva.Cancelada
+                     && r.FechaIngreso < fe
+                     && r.FechaSalida  > fi
+                     && (excludeReservaId == null || r.Id != excludeReservaId.Value))
+            .Select(r => new { r.Id, r.AlojamientoId, r.EsGrupal })
+            .ToListAsync();
+
+        var idsReservas = reservasEnRango.Select(r => r.Id).ToList();
+        var ocupadosGrupales = await _context.ReservaAlojamientos
+            .Where(ra => idsReservas.Contains(ra.ReservaId))
+            .Select(ra => ra.AlojamientoId)
+            .ToListAsync();
+
+        var ocupadosBase = reservasEnRango
+            .Where(r => !r.EsGrupal)
+            .Select(r => r.AlojamientoId)
+            .Concat(ocupadosGrupales)
+            .ToHashSet();
+
+        var ocupados = new HashSet<int>(ocupadosBase);
+        var detalles = await _context.ApartDetalles.ToListAsync();
+        foreach (var d in detalles)
+        {
+            if (ocupadosBase.Contains(d.AlojamientoApartId))
+            { ocupados.Add(d.AlojamientoHab1Id); ocupados.Add(d.AlojamientoHab2Id); }
+            if (ocupadosBase.Contains(d.AlojamientoHab1Id) || ocupadosBase.Contains(d.AlojamientoHab2Id))
+                ocupados.Add(d.AlojamientoApartId);
+        }
+
+        var conflictivos = solicitados.Where(id => ocupados.Contains(id)).ToList();
+        if (!conflictivos.Any()) return new List<string>();
+
+        return await _context.Alojamientos
+            .Where(a => conflictivos.Contains(a.Id))
+            .Select(a => a.Nombre)
+            .ToListAsync();
+    }
+
     // ── ObtenerPrecioSugerido (AJAX) ──────────────────────────────────────────
     // Detecta la temporada según fechaIngreso y devuelve los precios de la tarifa
     // configurada para esa temporada. Fallback a Temporada Baja si no hay match.
@@ -828,6 +893,22 @@ public class ReservasController : Controller
 
         if (!model.EsInvitacion && (!model.MontoTotal.HasValue || model.MontoTotal <= 0))
             ModelState.AddModelError("MontoTotal", "El total de la estadía es obligatorio.");
+
+        if (model.FechaIngreso.HasValue && model.FechaSalida.HasValue
+            && model.FechaSalida.Value > model.FechaIngreso.Value)
+        {
+            var idsSolicitados = model.EsGrupal
+                ? model.UnidadesGrupales.Select(u => u.AlojamientoId).ToList()
+                : (model.AlojamientoId.HasValue ? new List<int> { model.AlojamientoId.Value } : new List<int>());
+
+            var noDisponibles = await UnidadesNoDisponiblesAsync(
+                idsSolicitados, model.FechaIngreso.Value, model.FechaSalida.Value,
+                excludeReservaId: null);
+
+            if (noDisponibles.Any())
+                ModelState.AddModelError("",
+                    $"Estas unidades ya no están disponibles en las fechas elegidas: {string.Join(", ", noDisponibles)}. Actualizá la lista y elegí otras.");
+        }
 
         if (!ModelState.IsValid)
         {
