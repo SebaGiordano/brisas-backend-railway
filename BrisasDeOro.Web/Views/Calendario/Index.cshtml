@@ -375,7 +375,7 @@
             let fsFinal = fs;
             if (!isMobile) {
                 const filas = td.rowSpan || 1;
-                const maxFs = filas > 1 ? 20 : 15; // tope: 15 px una fila, 20 px reservas de dos filas (aparts)
+                const maxFs = filas > 1 ? 22 : 17; // tope: 17 px una fila, 22 px reservas de dos filas (aparts)
                 fsFinal = Math.min(fs, maxFs);
             }
             td.style.fontSize     = fsFinal.toFixed(1) + 'px';

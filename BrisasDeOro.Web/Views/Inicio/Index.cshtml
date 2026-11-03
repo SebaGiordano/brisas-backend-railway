@@ -141,6 +141,16 @@
         /* Extender el ocultamiento de columnas d-mobile-none hasta 991px en este módulo */
         .d-mobile-none { display: none !important; }
     }
+    @@media (max-width: 767.98px) {
+        /* Celular: cada tarea ocupa todo el ancho de la columna, con texto centrado */
+        #tabla-limpieza .badge {
+            display: block !important;
+            width: 100% !important;
+            text-align: center !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+    }
     /* Padding-bottom ampliado en el bloque de grupo para separarlo del siguiente */
     .td-limpieza-grupo { padding-bottom: .85rem !important; }
     @@media (min-width: 992px) {
