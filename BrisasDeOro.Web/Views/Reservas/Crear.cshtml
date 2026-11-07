@@ -512,24 +512,6 @@
         #modal-confirmar-reserva .modal-footer { padding-bottom: 1rem !important; }
         /* Modal de personas por unidad: altura adaptada al contenido */
         #modal-personas-unidad .modal-content { height: auto !important; min-height: unset !important; max-height: 90vh !important; }
-        /* Campos de fecha de estadía: centrar verticalmente */
-        #FechaIngreso, #FechaSalida {
-            display: flex !important; align-items: center !important;
-            position: relative; padding-right: 2.5rem !important;
-        }
-        #FechaIngreso::-webkit-datetime-edit, #FechaSalida::-webkit-datetime-edit,
-        #FechaIngreso::-webkit-datetime-edit-fields-wrapper, #FechaSalida::-webkit-datetime-edit-fields-wrapper { padding: 0 !important; }
-        /* Ícono del calendario fijo contra el borde derecho del campo (el enfoque
-           anterior con flex + margin-left:auto no tenía efecto real en mobile). */
-        #FechaIngreso::-webkit-calendar-picker-indicator,
-        #FechaSalida::-webkit-calendar-picker-indicator {
-            position: absolute;
-            right: .75rem;
-            top: 50%;
-            transform: translateY(-50%);
-            margin: 0;
-            cursor: pointer;
-        }
         /* "(N días)" en su propio renglón, debajo del título, solo en mobile */
         .desglose-dias-cero { display: block; }
         /* Columna Cabañas: separación superior en mobile (modo apilado) */
@@ -627,6 +609,11 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
+    <script src="~/lib/flatpickr/flatpickr.min.js"></script>
+    <script src="~/lib/flatpickr/l10n/es.js"></script>
+    <script src="~/js/calendario-estadia.js" asp-append-version="true"></script>
 
     <script>
     // ── Datos del servidor ────────────────────────────────────────────────────
@@ -1588,16 +1575,16 @@
     gid('FechaIngreso').addEventListener('change', function () {
         const egresoInput = gid('FechaSalida');
         if (this.value) {
-            const minDate = new Date(this.value + 'T00:00:00');
-            minDate.setDate(minDate.getDate() + 1);
-            egresoInput.min = minDate.toISOString().split('T')[0];
+            // La salida NO se completa sola: solo se vacía si quedó igual o anterior a la nueva llegada
             if (egresoInput.value && egresoInput.value <= this.value)
-                egresoInput.value = '';
-            egresoInput.disabled = false;
+                CalEstadia.limpiarSalida();
+            CalEstadia.setMinSalida(this.value);
+            CalEstadia.setSalidaHabilitada(true);
             gid('egreso-hint').textContent = '';
         } else {
-            egresoInput.disabled = true;
-            egresoInput.value    = '';
+            CalEstadia.limpiarSalida();
+            CalEstadia.setMinSalida(null);
+            CalEstadia.setSalidaHabilitada(false);
             gid('egreso-hint').textContent = 'Seleccioná la fecha de ingreso primero';
         }
         const select = gid('AlojamientoId');
@@ -1888,6 +1875,7 @@
 
     // ── Inicialización ────────────────────────────────────────────────────────
     (function init() {
+        CalEstadia.init();
         if (gid('EsInvitacion').checked) aplicarModoInvitacion(true);
         if (gid('EsGrupal').checked)     toggleModoGrupal(true);
 
@@ -1895,12 +1883,9 @@
         const egreso  = gid('FechaSalida').value;
 
         if (ingreso) {
-            const egresoInput = gid('FechaSalida');
-            egresoInput.disabled = false;
+            CalEstadia.setSalidaHabilitada(true);
             gid('egreso-hint').textContent = '';
-            const minDate = new Date(ingreso + 'T00:00:00');
-            minDate.setDate(minDate.getDate() + 1);
-            egresoInput.min = minDate.toISOString().split('T')[0];
+            CalEstadia.setMinSalida(ingreso);
         }
 
         if (ingreso && egreso) buscarDisponibles();

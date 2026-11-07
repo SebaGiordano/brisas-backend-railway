@@ -498,24 +498,6 @@
         /* Modal de confirmación: altura adaptada al contenido */
         #modal-confirmar-guardado .modal-content { height: auto !important; min-height: unset !important; }
         #modal-confirmar-guardado .modal-footer { padding-bottom: 1rem !important; }
-        /* Campos de fecha de estadía: centrar verticalmente */
-        #FechaIngreso, #FechaSalida {
-            display: flex !important; align-items: center !important;
-            position: relative; padding-right: 2.5rem !important;
-        }
-        #FechaIngreso::-webkit-datetime-edit, #FechaSalida::-webkit-datetime-edit,
-        #FechaIngreso::-webkit-datetime-edit-fields-wrapper, #FechaSalida::-webkit-datetime-edit-fields-wrapper { padding: 0 !important; }
-        /* Ícono del calendario fijo contra el borde derecho del campo (el enfoque
-           anterior con flex + margin-left:auto no tenía efecto real en mobile). */
-        #FechaIngreso::-webkit-calendar-picker-indicator,
-        #FechaSalida::-webkit-calendar-picker-indicator {
-            position: absolute;
-            right: .75rem;
-            top: 50%;
-            transform: translateY(-50%);
-            margin: 0;
-            cursor: pointer;
-        }
         /* "(N días)" en su propio renglón, debajo del título, solo en mobile */
         .desglose-dias-cero { display: block; }
         /* Grilla de días de aire: 5 columnas iguales, sin espacio vacío a la derecha */
@@ -560,6 +542,11 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
+    <script src="~/lib/flatpickr/flatpickr.min.js"></script>
+    <script src="~/lib/flatpickr/l10n/es.js"></script>
+    <script src="~/js/calendario-estadia.js" asp-append-version="true"></script>
 
     <script>
     // ── Datos del servidor ────────────────────────────────────────────────────
@@ -1449,11 +1436,9 @@
 
     gid('FechaIngreso').addEventListener('change', function () {
         if (this.value) {
-            const minDate = new Date(this.value + 'T00:00:00');
-            minDate.setDate(minDate.getDate() + 1);
-            gid('FechaSalida').min = minDate.toISOString().split('T')[0];
             if (gid('FechaSalida').value && gid('FechaSalida').value <= this.value)
-                gid('FechaSalida').value = '';
+                CalEstadia.limpiarSalida();
+            CalEstadia.setMinSalida(this.value);
             gid('egreso-hint').textContent = '';
         } else {
             gid('egreso-hint').textContent = 'Seleccioná la fecha de ingreso primero';
@@ -1589,6 +1574,7 @@
 
     // ── Inicialización ────────────────────────────────────────────────────────
     (function init() {
+        CalEstadia.init();
         const preAireDias = @Html.Raw(ViewBag.AireDiasJson ?? "[]");
         preAireDias.forEach(d => {
             const key = String(d.alojamientoId);
@@ -1622,11 +1608,7 @@
             actualizarPrecioState();
         }
 
-        if (gid('FechaIngreso').value) {
-            const minDate = new Date(gid('FechaIngreso').value + 'T00:00:00');
-            minDate.setDate(minDate.getDate() + 1);
-            gid('FechaSalida').min = minDate.toISOString().split('T')[0];
-        }
+        if (gid('FechaIngreso').value) CalEstadia.setMinSalida(gid('FechaIngreso').value);
 
         const noches = calcularNoches();
         if (noches != null)

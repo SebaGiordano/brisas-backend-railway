@@ -58,6 +58,9 @@ public class PagosController : Controller
             ReturnUrl         = returnUrl,
         };
 
+        // La seña casi siempre se paga por transferencia (el cliente no está en el complejo)
+        vm.MetodoPago = vm.TipoPago == TipoPago.Sena ? MetodoPago.Transferencia : MetodoPago.Efectivo;
+
         return View(vm);
     }
 

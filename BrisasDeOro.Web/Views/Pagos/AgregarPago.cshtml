@@ -58,6 +58,15 @@
         /* Saldo pendiente: monto y leyenda alineados a la derecha */
         #resumen-row > div:nth-child(10) .detalle-valor { text-align: right !important; }
     }
+    /* Modales de esta pantalla: en mobile, alto según el contenido (anula la regla global de site.css) */
+    @@media (max-width: 767.98px) {
+        #modal-confirmar-pago .modal-content,
+        #modal-sin-excedente .modal-content { min-height: unset !important; height: auto !important; }
+        #modal-confirmar-pago .modal-dialog,
+        #modal-sin-excedente .modal-dialog { margin: auto 0.75rem !important; max-width: calc(100vw - 1.5rem) !important; }
+        #modal-confirmar-pago .modal-footer,
+        #modal-sin-excedente .modal-footer { padding-bottom: 1rem !important; }
+    }
 </style>
 
 @* ── Encabezado ── *@
@@ -304,14 +313,17 @@
 <div class="modal fade" id="modal-confirmar-pago" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
         <div class="modal-content">
-            <div class="modal-header py-2">
-                <h6 class="modal-title fw-semibold">Confirmar registro de pago</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header py-2 justify-content-center position-relative">
+                <h6 class="modal-title fw-bold text-center">Confirmar registro de pago</h6>
+                <button type="button" class="btn-close position-absolute end-0 me-3" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body pb-2">
-                <div id="modal-pago-resumen" class="mb-3"></div>
-                <p class="mb-0" style="font-size:.9rem;">
-                    ¿Confirmás el registro de este pago? <strong>Esta acción no se puede deshacer.</strong>
+                <div id="modal-pago-resumen" class="mb-3 p-2 rounded" style="background:#f6f7f9;"></div>
+                <p class="mb-1 text-center fw-semibold" style="font-size:.95rem;">
+                    ¿Confirmás el registro de este pago?
+                </p>
+                <p class="mb-0 text-center text-danger" style="font-size:.85rem;">
+                    <i class="bi bi-exclamation-circle me-1"></i>Esta acción no se puede deshacer.
                 </p>
             </div>
             <div class="modal-footer py-2 gap-2">
