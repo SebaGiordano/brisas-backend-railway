@@ -137,10 +137,16 @@
                         <label class="form-label">
                             Alojamiento <span class="text-muted fw-normal small">(reserva individual)</span> <span class="text-danger">*</span>
                         </label>
-                        <select asp-for="AlojamientoId" asp-items="Model.Alojamientos"
-                                class="form-select" id="AlojamientoId">
-                            <option value="">— Seleccioná un alojamiento —</option>
-                        </select>
+                        <div class="position-relative" id="AlojamientoId-wrapper">
+                            <button type="button" class="form-select text-start" id="AlojamientoId-btn">
+                                — Seleccioná un alojamiento —
+                            </button>
+                            <div class="custom-select-menu d-none" id="AlojamientoId-menu"></div>
+                            <select asp-for="AlojamientoId" asp-items="Model.Alojamientos"
+                                    class="d-none" id="AlojamientoId">
+                                <option value="">— Seleccioná un alojamiento —</option>
+                            </select>
+                        </div>
                         <div id="disponibilidad-msg" class="form-text"></div>
                         <span asp-validation-for="AlojamientoId" class="text-danger small"></span>
                     </div>
@@ -432,6 +438,38 @@
 </div>
 
 <style>
+    #AlojamientoId-btn {
+        cursor: pointer;
+    }
+    #AlojamientoId-btn:disabled {
+        cursor: not-allowed;
+    }
+    .custom-select-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        max-height: 240px;
+        overflow-y: auto;
+        background: #fff;
+        border: 1px solid #ced4da;
+        border-radius: .375rem;
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+        margin-top: 2px;
+    }
+    .custom-select-menu .custom-select-item {
+        padding: .5rem .75rem;
+        cursor: pointer;
+        font-size: .95rem;
+    }
+    .custom-select-menu .custom-select-item:hover,
+    .custom-select-menu .custom-select-item.active {
+        background-color: #e9ecef;
+    }
+    .custom-select-menu .custom-select-item.placeholder {
+        color: #6c757d;
+    }
     .campo-inactivo {
         background-color: #e9ecef !important;
         cursor: not-allowed;
@@ -577,6 +615,67 @@
 
     // ── Helpers ───────────────────────────────────────────────────────────────
     function gid(id) { return document.getElementById(id); }
+
+    // ── Dropdown personalizado de Alojamiento (igual que en Nueva Reserva) ───
+    // El <select id="AlojamientoId"> oculto sigue siendo la fuente de datos (lo arma buscarDisponibles).
+    function sincronizarBotonAlojamiento() {
+        const select = gid('AlojamientoId');
+        const btn    = gid('AlojamientoId-btn');
+        if (!select || !btn) return;
+        const opt    = select.options[select.selectedIndex];
+        btn.textContent = opt ? opt.textContent : '— Seleccioná un alojamiento —';
+        btn.disabled = select.disabled;
+        if (select.disabled) cerrarMenuAlojamiento();
+    }
+
+    function poblarMenuAlojamiento() {
+        const select = gid('AlojamientoId');
+        const menu   = gid('AlojamientoId-menu');
+        menu.innerHTML = '';
+        Array.from(select.options).forEach(opt => {
+            const item = document.createElement('div');
+            item.className = 'custom-select-item' + (opt.value === select.value ? ' active' : '')
+                            + (opt.value === '' ? ' placeholder' : '');
+            item.textContent = opt.textContent;
+            item.addEventListener('click', function () {
+                select.value = opt.value;
+                select.dispatchEvent(new Event('change'));
+                sincronizarBotonAlojamiento();
+                cerrarMenuAlojamiento();
+            });
+            menu.appendChild(item);
+        });
+    }
+
+    function abrirMenuAlojamiento() {
+        if (gid('AlojamientoId-btn').disabled) return;
+        poblarMenuAlojamiento();   // siempre con la lista vigente en ese momento
+        gid('AlojamientoId-menu').classList.remove('d-none');
+    }
+
+    function cerrarMenuAlojamiento() {
+        const menu = gid('AlojamientoId-menu');
+        if (menu) menu.classList.add('d-none');
+    }
+
+    gid('AlojamientoId-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (gid('AlojamientoId-menu').classList.contains('d-none')) abrirMenuAlojamiento();
+        else cerrarMenuAlojamiento();
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('#AlojamientoId-wrapper')) cerrarMenuAlojamiento();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') cerrarMenuAlojamiento();
+    });
+
+    // Mantener el botón sincronizado cuando el select cambia de valor, de opciones o de estado
+    gid('AlojamientoId').addEventListener('change', sincronizarBotonAlojamiento);
+    new MutationObserver(sincronizarBotonAlojamiento)
+        .observe(gid('AlojamientoId'), { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled'] });
 
     function getCapacidad() {
         const id = gid('AlojamientoId').value;
@@ -953,6 +1052,7 @@
             gid('container-unidades-grupales').innerHTML = '';
             actualizarResumenGrupal();
             gid('AlojamientoId').value    = '';
+            sincronizarBotonAlojamiento();
             gid('CantidadHuespedes').value = '';
             gid('capacidad-hint').textContent = 'Seleccioná un alojamiento primero';
             totalFijo = false;
@@ -1209,6 +1309,7 @@
             let opt = gid('AlojamientoId').querySelector(`option[value="${firstId}"]`);
             if (!opt) { opt = document.createElement('option'); opt.value = firstId; gid('AlojamientoId').appendChild(opt); }
             gid('AlojamientoId').value        = firstId;
+            sincronizarBotonAlojamiento();
             gid('CantidadHuespedes').disabled = false;
             gid('CantidadHuespedes').value    = totalPers;
         }
@@ -1269,8 +1370,10 @@
             } else {
                 if (curVal && select.querySelector(`option[value="${curVal}"]`)) {
                     select.value = curVal;
+                    sincronizarBotonAlojamiento();
                 } else if (curVal) {
                     select.value = '';
+                    sincronizarBotonAlojamiento();
                     msg.className   = 'form-text text-warning fw-semibold';
                     msg.textContent = 'El alojamiento anterior no está disponible en las nuevas fechas.';
                 }
@@ -1630,6 +1733,7 @@
             buscarDisponibles(esGrupal ? null : gid('AlojamientoId').value);
 
         actualizarTotalFinalUI();
+        sincronizarBotonAlojamiento();
     })();
 
     // ── Confirmación modal → submit ───────────────────────────────────────────
