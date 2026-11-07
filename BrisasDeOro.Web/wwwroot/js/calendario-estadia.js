@@ -18,8 +18,19 @@
         altFormat: 'd/m/Y',
         altInputClass: 'form-control fecha-estadia',
         disableMobile: true,   // clave: sin esto, en celulares vuelve a usar el calendario nativo
-        allowInput: false
+        allowInput: false,
+        clickOpens: false,     // la apertura la manejamos nosotros
     };
+
+    // El campo funciona como interruptor: tocar abre, tocar de nuevo cierra.
+    // Se sigue cerrando al elegir un día o al tocar fuera del calendario.
+    function activarToggle(fp) {
+        if (!fp || !fp.altInput) return;
+        fp.altInput.addEventListener('click', function () {
+            if (fp.altInput.disabled) return;
+            if (fp.isOpen) fp.close(); else fp.open();
+        });
+    }
 
     function init() {
         const ing = document.getElementById('FechaIngreso');
@@ -40,6 +51,9 @@
                     dayElem.classList.add('primer-dia-disponible');
             }
         });
+
+        activarToggle(fpIngreso);
+        activarToggle(fpSalida);
 
         fpIngreso.altInput.placeholder = 'dd/mm/aaaa';
         fpSalida.altInput.placeholder  = 'dd/mm/aaaa';

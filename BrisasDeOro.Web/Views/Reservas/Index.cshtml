@@ -160,7 +160,7 @@
     </div>
     @if (User.IsInRole("Administrador"))
     {
-        <a asp-action="Crear" asp-route-from="listado" class="btn btn-primary">
+        <a asp-action="Crear" asp-route-from="listado" class="btn btn-primary btn-top-nav">
             <i class="bi bi-plus-lg me-1"></i>Nueva reserva
         </a>
     }
@@ -464,13 +464,15 @@ else
                     <th>Alojamiento</th>
                     <th class="text-center">Ingreso</th>
                     <th class="text-center">Egreso</th>
+                    <th class="text-end d-desktop-none">Saldo pendiente</th>
+                    <th class="text-center d-desktop-none">Estado pago</th>
                     <th class="text-center">Noches</th>
                     <th class="text-center">Pers.</th>
                     <th class="text-center">Desayuno</th>
                     <th class="text-end">Total</th>
                     <th class="text-end">Cobrado</th>
-                    <th class="text-end">Saldo pendiente</th>
-                    <th class="text-center">Estado pago</th>
+                    <th class="text-end d-mobile-none">Saldo pendiente</th>
+                    <th class="text-center d-mobile-none">Estado pago</th>
                     <th class="text-center">Estado</th>
                     <th class="text-center">Acciones</th>
                 </tr>
@@ -503,6 +505,12 @@ else
                         </td>
                         <td class="text-center text-nowrap">@item.FechaIngreso.ToString("dd/MM/yyyy")</td>
                         <td class="text-center text-nowrap">@item.FechaSalida.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end text-nowrap col-saldo-res@(item.SaldoPendiente < 0 ? " col-saldo-negativo" : "") d-desktop-none">
+                            $@Formato.Numero(item.SaldoPendiente)
+                        </td>
+                        <td class="text-center d-desktop-none">
+                            <span class="badge-pago @item.EstadoPagoClase">@item.EstadoPagoTexto</span>
+                        </td>
                         <td class="text-center">@item.CantidadNoches</td>
                         <td class="text-center">@item.CantidadHuespedes</td>
                         <td class="text-center">
@@ -516,11 +524,11 @@ else
                             }
                         </td>
                         <td class="text-end text-nowrap">$@Formato.Numero(item.MontoTotal)</td>
-                        <td class="text-end text-nowrap">$@Formato.Numero(item.TotalCobrado)</td>
-                        <td class="text-end text-nowrap col-saldo-res@(item.SaldoPendiente < 0 ? " col-saldo-negativo" : "")">
+                        <td class="text-end text-nowrap text-success">$@Formato.Numero(item.TotalCobrado)</td>
+                        <td class="text-end text-nowrap col-saldo-res@(item.SaldoPendiente < 0 ? " col-saldo-negativo" : "") d-mobile-none">
                             $@Formato.Numero(item.SaldoPendiente)
                         </td>
-                        <td class="text-center">
+                        <td class="text-center d-mobile-none">
                             <span class="badge-pago @item.EstadoPagoClase">@item.EstadoPagoTexto</span>
                         </td>
                         <td class="text-center">

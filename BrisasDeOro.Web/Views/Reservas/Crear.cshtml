@@ -9,14 +9,14 @@
     <h2 class="mb-0">Nueva Reserva</h2>
     @if (fromCrear == "listado")
     {
-        <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-nav-crear">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-nav-crear btn-top-nav">
             <span class="d-none d-md-inline">← Volver al listado de reservas</span>
             <span class="d-md-none">← Volver al listado</span>
         </a>
     }
     else
     {
-        <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-nav-crear">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-nav-crear btn-top-nav">
             Ir al listado de reservas →
         </a>
     }
@@ -498,9 +498,6 @@
     .custom-select-menu .custom-select-item.active {
         background-color: #e9ecef;
     }
-    .custom-select-menu .custom-select-item.placeholder {
-        color: #6c757d;
-    }
     @@media (max-width: 767.98px) {
         /* Botón superior: contenido centrado */
         .btn-nav-crear { display: flex !important; align-items: center !important; justify-content: center !important; }
@@ -647,9 +644,9 @@
         const menu   = gid('AlojamientoId-menu');
         menu.innerHTML = '';
         Array.from(select.options).forEach(opt => {
+            if (opt.value === '') return;
             const item = document.createElement('div');
-            item.className = 'custom-select-item' + (opt.value === select.value ? ' active' : '')
-                            + (opt.value === '' ? ' placeholder' : '');
+            item.className = 'custom-select-item' + (opt.value === select.value ? ' active' : '');
             item.textContent = opt.textContent;
             item.addEventListener('click', function () {
                 select.value = opt.value;

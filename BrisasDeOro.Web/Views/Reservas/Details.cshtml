@@ -187,17 +187,17 @@
     <div id="nav-bar-mobile" class="d-md-none d-flex gap-2 mb-3">
         @if (fromCalendario)
         {
-            <a href="@Url.Action("Index", "Calendario")" class="btn btn-outline-secondary btn-sm btn-nav-mobile">
+            <a href="@Url.Action("Index", "Calendario")" class="btn btn-outline-secondary btn-sm btn-nav-mobile btn-top-nav">
                 <i class="bi bi-arrow-left me-1"></i>Volver al calendario
             </a>
         }
         else if (fromFacturacion)
         {
-            <a href="@facturacionReturnUrl" class="btn btn-outline-secondary btn-sm btn-nav-mobile">
+            <a href="@facturacionReturnUrl" class="btn btn-outline-secondary btn-sm btn-nav-mobile btn-top-nav">
                 <i class="bi bi-arrow-left me-1"></i>Volver a Facturación
             </a>
         }
-        <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-nav-mobile">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-nav-mobile btn-top-nav">
             <i class="bi bi-list me-1"></i>Ver listado de reservas
         </a>
     </div>
@@ -219,22 +219,22 @@
     <div class="d-flex gap-2 @((fromCalendario || fromFacturacion) ? "d-none d-md-flex" : "")">
         @if (fromCalendario)
         {
-            <a href="@Url.Action("Index", "Calendario")" class="btn btn-outline-secondary btn-sm">
+            <a href="@Url.Action("Index", "Calendario")" class="btn btn-outline-secondary btn-sm btn-top-nav">
                 <i class="bi bi-arrow-left me-1"></i>Volver al calendario
             </a>
-            <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-listado-top">
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-listado-top btn-top-nav">
                 <i class="bi bi-list me-1"></i>Ver listado de reservas
             </a>
         }
         else if (fromFacturacion)
         {
-            <a href="@facturacionReturnUrl" class="btn btn-outline-secondary btn-sm">
+            <a href="@facturacionReturnUrl" class="btn btn-outline-secondary btn-sm btn-top-nav">
                 <i class="bi bi-arrow-left me-1"></i>Volver a Facturación
             </a>
         }
         else
         {
-            <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-listado-top">
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-listado-top btn-top-nav">
                 <i class="bi bi-list me-1"></i>Ver listado de reservas
             </a>
         }

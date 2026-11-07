@@ -8,7 +8,7 @@
     <h2 class="mb-0">Editar Reserva <span class="text-muted fw-normal">#@Model.Id</span></h2>
     @if (fromEditar == "listado")
     {
-        <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-volver-editar">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm btn-volver-editar btn-top-nav">
             <i class="bi bi-arrow-left me-1"></i>
             <span class="d-none d-md-inline">Volver al listado de reservas</span>
             <span class="d-md-none">Volver al listado</span>
@@ -16,7 +16,7 @@
     }
     else
     {
-        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-sm btn-volver-editar">
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-sm btn-volver-editar btn-top-nav">
             <i class="bi bi-arrow-left me-1"></i>Volver al detalle
         </a>
     }
@@ -148,6 +148,11 @@
                             </select>
                         </div>
                         <div id="disponibilidad-msg" class="form-text"></div>
+                        <div id="aviso-reserva-comenzada" class="alert alert-warning py-2 px-3 mt-2 mb-0 small d-none">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Esta reserva ya comenzó. Cambiar el alojamiento modifica la estadía completa, desde el primer día.
+                            Si el huésped se cambia de unidad durante la estadía, usá una <strong>reserva vinculada</strong>.
+                        </div>
                         <span asp-validation-for="AlojamientoId" class="text-danger small"></span>
                     </div>
                     <div class="col-md-5">
@@ -169,6 +174,11 @@
                 </div>
                 <div id="disponibilidad-msg-grupal" class="form-text mb-2"></div>
                 <div id="lista-checkboxes-grupal"></div>
+                <div id="aviso-reserva-comenzada-grupal" class="alert alert-warning py-2 px-3 mt-2 mb-0 small d-none">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Esta reserva ya comenzó. Cambiar, agregar o quitar unidades modifica la estadía completa, desde el primer día.
+                    Si una parte del grupo se cambia de unidad durante la estadía, usá una <strong>reserva vinculada</strong>.
+                </div>
                 <div id="resumen-grupal" class="mt-3 d-none">
                     <div class="d-flex gap-3 flex-wrap">
                         <span class="text-muted small">
@@ -426,6 +436,10 @@
             </div>
             <div class="modal-body" style="font-size:.92rem;">
                 ¿Confirmás que querés guardar los cambios en esta reserva? Si la reserva tiene pagos registrados, modificar fechas o montos puede afectar el saldo pendiente.
+                <div id="aviso-comenzada-modal" class="alert alert-warning py-2 px-3 mt-2 mb-0 small d-none">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Esta reserva ya comenzó y cambiaste unidades: el cambio aplica a toda la estadía. Si fue un cambio durante la estadía, conviene usar una reserva vinculada.
+                </div>
             </div>
             <div class="modal-footer py-2 gap-2">
                 <button type="button" class="btn btn-modal-cancelar btn-sm" data-bs-dismiss="modal">Cancelar</button>
@@ -466,9 +480,6 @@
     .custom-select-menu .custom-select-item:hover,
     .custom-select-menu .custom-select-item.active {
         background-color: #e9ecef;
-    }
-    .custom-select-menu .custom-select-item.placeholder {
-        color: #6c757d;
     }
     .campo-inactivo {
         background-color: #e9ecef !important;
@@ -594,6 +605,8 @@
     const preVinculadas   = @Html.Raw(ViewBag.ReservasVinculadasJson ?? "[]");
     const TOTAL_UNIDADES_NO_APART = @ViewBag.TotalUnidadesNoApart;
     const TOTAL_UNIDADES_GRUPAL = @ViewBag.TotalUnidadesGrupal;
+    const RESERVA_YA_COMENZO = @(Model.FechaIngreso.HasValue && Model.FechaIngreso.Value.Date < DateTime.Today ? "true" : "false");
+    const ALOJ_ORIGINAL      = '@(Model.AlojamientoId)';
 
     // Capacidades iniciales — se actualizan tras AJAX
     let capacidades = Object.fromEntries(allAlojamientos.map(a => [String(a.id), a.capacidad]));
@@ -607,6 +620,25 @@
 
     // IDs de unidades originalmente en la reserva (para confirmar antes de quitar)
     const unidadesOriginales = new Set(preUnidades.map(u => String(u.id)));
+
+    // ¿Se cambiaron las unidades de una reserva que ya comenzó?
+    function hayCambioDeUnidadEnReservaComenzada() {
+        if (!RESERVA_YA_COMENZO) return false;
+        if (esGrupal) {
+            const actuales = new Set(Object.keys(unidadesGrupales).map(String));
+            if (actuales.size !== unidadesOriginales.size) return true;
+            for (const id of actuales) if (!unidadesOriginales.has(id)) return true;
+            return false;
+        }
+        const sel = gid('AlojamientoId');
+        return !!sel && sel.value !== '' && sel.value !== ALOJ_ORIGINAL;
+    }
+
+    function actualizarAvisoReservaComenzada() {
+        const cambio = hayCambioDeUnidadEnReservaComenzada();
+        gid('aviso-reserva-comenzada')?.classList.toggle('d-none', !(cambio && !esGrupal));
+        gid('aviso-reserva-comenzada-grupal')?.classList.toggle('d-none', !(cambio && esGrupal));
+    }
 
     // Pre-cargar estado grupal desde servidor
     preUnidades.forEach(u => {
@@ -626,6 +658,7 @@
         btn.textContent = opt ? opt.textContent : '— Seleccioná un alojamiento —';
         btn.disabled = select.disabled;
         if (select.disabled) cerrarMenuAlojamiento();
+        actualizarAvisoReservaComenzada();
     }
 
     function poblarMenuAlojamiento() {
@@ -633,9 +666,9 @@
         const menu   = gid('AlojamientoId-menu');
         menu.innerHTML = '';
         Array.from(select.options).forEach(opt => {
+            if (opt.value === '') return;
             const item = document.createElement('div');
-            item.className = 'custom-select-item' + (opt.value === select.value ? ' active' : '')
-                            + (opt.value === '' ? ' placeholder' : '');
+            item.className = 'custom-select-item' + (opt.value === select.value ? ' active' : '');
             item.textContent = opt.textContent;
             item.addEventListener('click', function () {
                 select.value = opt.value;
@@ -1065,6 +1098,7 @@
                 buscarDisponibles(gid('AlojamientoId').value);
         }
         renderCalendariosAire();
+        actualizarAvisoReservaComenzada();
     }
 
     function crearItemCheckboxGrupal(a) {
@@ -1287,6 +1321,7 @@
         gid('resumen-grupal').classList.toggle('d-none', cantUnidades === 0);
         actualizarPrecioState();
         actualizarBloqueoApartGrupal();
+        actualizarAvisoReservaComenzada();
     }
 
     function prepararCamposGrupal() {
@@ -1667,6 +1702,7 @@
             e.preventDefault();
             gid('PrecioPorDia').readOnly = false;
             gid('MontoTotal').readOnly   = false;
+            gid('aviso-comenzada-modal').classList.toggle('d-none', !hayCambioDeUnidadEnReservaComenzada());
             new bootstrap.Modal(document.getElementById('modal-confirmar-guardado')).show();
             return;
         }
@@ -1734,6 +1770,7 @@
 
         actualizarTotalFinalUI();
         sincronizarBotonAlojamiento();
+        actualizarAvisoReservaComenzada();
     })();
 
     // ── Confirmación modal → submit ───────────────────────────────────────────

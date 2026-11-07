@@ -155,7 +155,8 @@ header .navbar .navbar-nav .nav-link {
 /* Bloque 1: Reglas del menú colapsado, aplican desde 1449.98px hacia abajo */
 @media (max-width: 1449.98px) {
   .navbar { overflow: visible !important; }
-  .navbar-collapse.show {
+  .navbar-collapse.show,
+  .navbar-collapse.collapsing {
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
@@ -165,7 +166,8 @@ header .navbar .navbar-nav .nav-link {
     padding: 8px 12px 14px;
     width: 100%;
   }
-  .navbar-collapse.show .navbar-nav {
+  .navbar-collapse.show .navbar-nav,
+  .navbar-collapse.collapsing .navbar-nav {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 6px;
@@ -173,12 +175,14 @@ header .navbar .navbar-nav .nav-link {
     padding: 0 !important;
     margin: 0 !important;
   }
-  .navbar-collapse.show .nav-item {
+  .navbar-collapse.show .nav-item,
+  .navbar-collapse.collapsing .nav-item {
     width: 100% !important;
     display: flex !important;
     justify-content: center !important;
   }
-  .navbar-collapse.show .nav-link {
+  .navbar-collapse.show .nav-link,
+  .navbar-collapse.collapsing .nav-link {
     width: 100% !important;
     text-align: center !important;
     justify-content: center !important;
@@ -190,7 +194,8 @@ header .navbar .navbar-nav .nav-link {
     font-weight: 500 !important;
     line-height: 1.4 !important;
   }
-  .navbar-collapse.show .nav-link.active {
+  .navbar-collapse.show .nav-link.active,
+  .navbar-collapse.collapsing .nav-link.active {
     width: 100% !important;
     text-align: center !important;
     margin: 0 !important;
@@ -200,15 +205,18 @@ header .navbar .navbar-nav .nav-link {
   }
   /* Anular regla global de _Layout.cshtml (especificidad 0,4,1) con una mayor (0,5,1):
      el link activo debe tener el mismo padding y line-height que los demás links del menú */
-  header .navbar .navbar-collapse.show .nav-link.active {
+  header .navbar .navbar-collapse.show .nav-link.active,
+  header .navbar .navbar-collapse.collapsing .nav-link.active {
     padding: 12px 16px !important;
     line-height: 1.4 !important;
     border-radius: 8px !important;
   }
-  .navbar-collapse.show .nav-link-stable > .nav-link-ghost {
+  .navbar-collapse.show .nav-link-stable > .nav-link-ghost,
+  .navbar-collapse.collapsing .nav-link-stable > .nav-link-ghost {
     display: none !important;
   }
-  .navbar-collapse.show .nav-link-stable {
+  .navbar-collapse.show .nav-link-stable,
+  .navbar-collapse.collapsing .nav-link-stable {
     display: flex !important;
   }
   /* Feedback visual inmediato al tocar un link del menú */
@@ -216,7 +224,8 @@ header .navbar .navbar-nav .nav-link {
     background-color: #0d6efd !important;
     color: #fff !important;
   }
-  .navbar-collapse.show > div {
+  .navbar-collapse.show > div,
+  .navbar-collapse.collapsing > div {
     display: flex !important;
     flex-direction: row !important;
     justify-content: space-between !important;
@@ -226,8 +235,10 @@ header .navbar .navbar-nav .nav-link {
     margin-top: 6px !important;
     width: 100% !important;
   }
-  .navbar-collapse.show > div .text-muted { font-size: 15px !important; }
-  .navbar-collapse.show .btn-outline-secondary {
+  .navbar-collapse.show > div .text-muted,
+  .navbar-collapse.collapsing > div .text-muted { font-size: 15px !important; }
+  .navbar-collapse.show .btn-outline-secondary,
+  .navbar-collapse.collapsing .btn-outline-secondary {
     border-color: #dc3545 !important;
     color: #dc3545 !important;
   }
@@ -397,3 +408,17 @@ header .navbar .navbar-nav .nav-link {
 .flatpickr-day.primer-dia-disponible { border: 2px solid #0d6efd; font-weight: 700; }
 .flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover { color: #c3c7cc; }
 .flatpickr-calendar { font-family: inherit; }
+
+/* Botones superiores de navegación: siempre en un renglón; en pantallas angostas (< 390 px) más compactos.
+   En pantallas de 390 px o más (ej. iPhone 13 Pro) no cambia nada. */
+.btn-top-nav { white-space: nowrap; }
+@media (max-width: 389.98px) {
+    .btn-top-nav { font-size: .82rem !important; padding: .35rem .6rem !important; }
+    .btn-top-nav .bi { margin-right: .25rem !important; }
+}
+
+/* Pie de página en pantallas angostas: letra un poco menor para que entre en un renglón.
+   Si igual no entra, corta entero antes de "Todos los derechos reservados" (nunca una palabra suelta). */
+@media (max-width: 389.98px) {
+    footer .footer-mobile { font-size: .78rem; }
+}

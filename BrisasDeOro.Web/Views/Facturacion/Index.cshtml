@@ -385,10 +385,13 @@
                         <tr>
                             <th class="text-nowrap col-fecha-sticky">Fecha</th>
                             <th class="col-titular-sticky">Titular</th>
+                            <th class="text-end d-desktop-none">Monto</th>
+                            <th class="d-desktop-none">Concepto</th>
+                            <th class="d-desktop-none">Método</th>
                             <th>Alojamiento</th>
-                            <th>Concepto</th>
-                            <th>Método</th>
-                            <th class="text-end">Monto</th>
+                            <th class="d-mobile-none">Concepto</th>
+                            <th class="d-mobile-none">Método</th>
+                            <th class="text-end d-mobile-none">Monto</th>
                             <th>Observaciones</th>
                         </tr>
                     </thead>
@@ -421,6 +424,11 @@
                                         <small class="text-primary fw-semibold">@mov.VinculadaConNombre</small>
                                     }
                                 </td>
+                                <td class="text-end fw-bold text-nowrap d-desktop-none @(mov.Monto < 0 ? "text-danger" : "text-success")">
+                                    $@Formato.Numero(mov.Monto)
+                                </td>
+                                <td class="d-desktop-none">@EnumDisplayHelper.NombreTipoPago(mov.TipoPago)</td>
+                                <td class="d-desktop-none">@EnumDisplayHelper.NombreMetodoPago(mov.MetodoPago)</td>
                                 <td>
                                     @if (mov.EsGrupal)
                                     {
@@ -442,9 +450,9 @@
                                         @mov.NombreAlojamiento
                                     }
                                 </td>
-                                <td>@EnumDisplayHelper.NombreTipoPago(mov.TipoPago)</td>
-                                <td>@EnumDisplayHelper.NombreMetodoPago(mov.MetodoPago)</td>
-                                <td class="text-end fw-bold text-nowrap @(mov.Monto < 0 ? "text-danger" : "text-success")">
+                                <td class="d-mobile-none">@EnumDisplayHelper.NombreTipoPago(mov.TipoPago)</td>
+                                <td class="d-mobile-none">@EnumDisplayHelper.NombreMetodoPago(mov.MetodoPago)</td>
+                                <td class="text-end fw-bold text-nowrap d-mobile-none @(mov.Monto < 0 ? "text-danger" : "text-success")">
                                     $@Formato.Numero(mov.Monto)
                                 </td>
                                 <td class="text-muted small">@(mov.Observaciones ?? "—")</td>
@@ -453,11 +461,16 @@
                     </tbody>
                     <tfoot class="table-light fw-bold">
                         <tr>
-                            <td colspan="5" class="text-end">Total del período:</td>
-                            <td class="text-end fs-6 text-nowrap" style="background-color:#d4edda;color:#155724;font-weight:bold;">
+                            <td colspan="2" class="text-end d-desktop-none">Total del período:</td>
+                            <td class="text-end fs-6 text-nowrap d-desktop-none" style="background-color:#d4edda;color:#155724;font-weight:bold;">
                                 $@Formato.Numero(Model.TotalPeriodo)
                             </td>
-                            <td></td>
+                            <td colspan="4" class="d-desktop-none"></td>
+                            <td colspan="5" class="text-end d-mobile-none">Total del período:</td>
+                            <td class="text-end fs-6 text-nowrap d-mobile-none" style="background-color:#d4edda;color:#155724;font-weight:bold;">
+                                $@Formato.Numero(Model.TotalPeriodo)
+                            </td>
+                            <td class="d-mobile-none"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -620,12 +633,13 @@
                     <thead class="table-dark">
                         <tr>
                             <th class="col-titular-saldos">Titular</th>
+                            <th class="text-end d-desktop-none">Saldo pendiente</th>
                             <th>Alojamiento</th>
                             <th class="text-center d-mobile-none">Ingreso</th>
                             <th class="text-center d-mobile-none">Egreso</th>
                             <th class="text-end d-mobile-none">Total estadía</th>
                             <th class="text-end d-mobile-none">Cobrado</th>
-                            <th class="text-end">Saldo pendiente</th>
+                            <th class="text-end d-mobile-none">Saldo pendiente</th>
                             <th class="text-center d-mobile-none">Estado pago</th>
                             @if (User.IsInRole("Administrador"))
                             {
@@ -658,6 +672,9 @@
                                         <small class="text-primary fw-semibold">@s.VinculadaConNombre</small>
                                     }
                                 </td>
+                                <td class="text-end fw-bold text-danger text-nowrap d-desktop-none">
+                                    $@Formato.Numero(s.SaldoPendiente)
+                                </td>
                                 <td>
                                     @if (s.EsGrupal)
                                     {
@@ -689,7 +706,7 @@
                                 <td class="text-end text-success text-nowrap d-mobile-none">
                                     $@Formato.Numero(s.TotalCobrado)
                                 </td>
-                                <td class="text-end fw-bold text-danger text-nowrap">
+                                <td class="text-end fw-bold text-danger text-nowrap d-mobile-none">
                                     $@Formato.Numero(s.SaldoPendiente)
                                 </td>
                                 <td class="text-center d-mobile-none">
@@ -711,10 +728,14 @@
                     </tbody>
                     <tfoot class="table-light fw-bold">
                         <tr>
-                            <td colspan="2" class="text-end d-desktop-none">Total:</td>
+                            <td class="text-end d-desktop-none">Total:</td>
+                            <td class="text-end text-nowrap d-desktop-none" style="background-color:#f8d7da;color:#721c24;font-weight:bold;">
+                                $@Formato.Numero(Model.TotalSaldoPendiente)
+                            </td>
+                            <td class="d-desktop-none"></td>
                             <td colspan="2" class="d-mobile-none"></td>
                             <td colspan="4" class="text-end d-mobile-none">Total saldo pendiente:</td>
-                            <td class="text-end text-nowrap" style="background-color:#f8d7da;color:#721c24;font-weight:bold;">
+                            <td class="text-end text-nowrap d-mobile-none" style="background-color:#f8d7da;color:#721c24;font-weight:bold;">
                                 $@Formato.Numero(Model.TotalSaldoPendiente)
                             </td>
                             <td class="d-mobile-none"></td>
