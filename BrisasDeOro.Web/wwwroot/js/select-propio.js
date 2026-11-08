@@ -55,7 +55,8 @@
         Array.from(select.options).forEach(opt => {
             if (opt.hidden) return;
             const item = document.createElement('div');
-            item.className = 'sp-item' + (opt.selected ? ' active' : '') + (opt.disabled ? ' disabled' : '');
+            item.className = 'sp-item' + (opt.selected ? ' active' : '') + (opt.disabled ? ' disabled' : '')
+                           + (opt.hasAttribute('data-discreto') ? ' sp-item-discreto' : '');
             item.textContent = opt.textContent.trim() || ' ';
             item.setAttribute('role', 'option');
             if (!opt.disabled) {

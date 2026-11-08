@@ -61,7 +61,7 @@
     @@media (max-width: 767.98px) {
         #modal-editar-pago .modal-content { height: auto !important; min-height: unset !important; }
         #modal-editar-pago .modal-footer { padding-bottom: 1rem !important; }
-        /* Información de la reserva (individual): bloques apilados a ancho completo */
+        /* Información de la reserva (individual): bloques apilados, cada dato como "etiqueta ··· valor" */
         #info-reserva-row > .info-col-titular,
         #info-reserva-row > .info-col-aloj {
             flex: 0 0 100% !important;
@@ -69,20 +69,31 @@
             padding-left: 0 !important;
             padding-right: 0 !important;
             border-right: none !important;
-            display: grid !important;
-            grid-template-columns: 1fr 1fr;
-            column-gap: 1rem;
-            align-items: start;
+            display: block !important;
         }
         #info-reserva-row > .info-col-aloj {
             border-top: 1px solid #dee2e6 !important;
-            margin-top: 1rem !important;
-            padding-top: 1rem !important;
+            margin-top: .75rem !important;
+            padding-top: .75rem !important;
         }
-        #info-reserva-row .ir-full { grid-column: 1 / -1; }
-        /* Valores largos (nombres, teléfonos, alojamiento): bajan de renglón dentro de su espacio */
-        #info-reserva-row .detalle-valor { overflow-wrap: anywhere; word-break: break-word; min-width: 0; }
-        #info-reserva-row > div > div { min-width: 0; }
+        /* Título de cada bloque */
+        #info-reserva-row > div > div:first-child { margin-bottom: .35rem !important; }
+        /* Cada dato: etiqueta a la izquierda, valor a la derecha, línea fina de lado a lado */
+        #info-reserva-row > div > div:not(:first-child) {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 1rem;
+            padding: .45rem 0;
+            margin: 0 !important;
+            border-bottom: 1px solid #eef0f2;
+        }
+        #info-reserva-row > div > div:last-child { border-bottom: none; }
+        #info-reserva-row .detalle-label { flex: 0 0 auto; margin: 0 !important; text-align: left; }
+        #info-reserva-row .detalle-valor { text-align: right; min-width: 0; overflow-wrap: anywhere; }
+        /* Observaciones con texto: etiqueta arriba y recuadro a todo el ancho */
+        #info-reserva-row > div > div.ir-obs-bloque { display: block; }
+        #info-reserva-row > div > div.ir-obs-bloque .detalle-valor { text-align: left; margin-top: .35rem; }
         /* Título "Datos del alojamiento": igual a "Datos del titular" (.small de Bootstrap) */
         #titulo-datos-aloj { font-size: .875rem !important; letter-spacing: .02em !important; white-space: nowrap !important; }
         /* Fechas y Precios: Ingreso+Egreso en fila 1, Noches+Tarifa en fila 2 */
@@ -602,7 +613,7 @@ else
                                     else { @Model.CanalOrigen }
                                 </div>
                             </div>
-                            <div class="mb-3 ir-full">
+                            <div class="mb-3 ir-full @(string.IsNullOrEmpty(Model.Observaciones) ? "" : "ir-obs-bloque")">
                                 <div class="detalle-label">Observaciones</div>
                                 @if (string.IsNullOrEmpty(Model.Observaciones))
                                 {
@@ -998,7 +1009,11 @@ else
         const fpEp = flatpickr(document.getElementById('ep-fecha'), {
             locale: 'es', dateFormat: 'Y-m-d', altInput: true, altFormat: 'd/m/Y',
             altInputClass: 'form-control fecha-estadia', disableMobile: true, allowInput: false, static: true,
+            clickOpens: false,
             onChange: function () { document.getElementById('ep-fecha-error').classList.add('d-none'); }
+        });
+        fpEp.altInput.addEventListener('click', function () {
+            if (fpEp.isOpen) fpEp.close(); else fpEp.open();
         });
         const modal = new bootstrap.Modal(modalEl);
         let modoEdicion = false;

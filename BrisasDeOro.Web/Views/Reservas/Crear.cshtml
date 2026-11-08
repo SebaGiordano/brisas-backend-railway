@@ -262,9 +262,9 @@
                     </label>
                     <div class="input-group">
                         <span class="input-group-text">$</span>
-                        <input asp-for="PrecioPorDia" type="number" step="0.01" min="0"
+                        <input asp-for="PrecioPorDia" type="number" step="1" min="0"
                                class="form-control campo-inactivo" id="PrecioPorDia"
-                               placeholder="0,00" readonly />
+                               placeholder="0" readonly />
                     </div>
                     <div class="form-text" id="precio-hint">
                         Completá alojamiento y personas para habilitar
@@ -277,21 +277,22 @@
                     </label>
                     <div class="input-group">
                         <span class="input-group-text">$</span>
-                        <input asp-for="MontoTotal" type="number" step="0.01" min="0"
+                        <input asp-for="MontoTotal" type="number" step="1" min="0"
                                class="form-control campo-inactivo" id="MontoTotal"
-                               placeholder="0,00" readonly />
+                               placeholder="0" readonly />
+                        <button type="button" class="btn btn-outline-primary d-none" id="btn-recalcular-total"
+                                title="Volver al cálculo automático (tarifa × noches)">
+                            <i class="bi bi-arrow-repeat me-1"></i>Recalcular
+                        </button>
                     </div>
                     <div class="form-text" id="total-hint">
                         Se calcula automáticamente (precio × noches)
                     </div>
-                    <button type="button" class="btn btn-link btn-sm p-0 d-none" id="btn-recalcular-total">
-                        <i class="bi bi-arrow-repeat me-1"></i>Recalcular (tarifa × noches)
-                    </button>
                     <span asp-validation-for="MontoTotal" class="text-danger small"></span>
                 </div>
                 <div class="col-md-4 d-flex align-items-center">
                     <div class="alert alert-info py-2 px-3 mb-0 small w-100">
-                        <strong>Total:</strong> se calcula automáticamente (tarifa por día × noches). Si lo editás a mano para redondear o aplicar un descuento, queda fijo y la tarifa no lo modifica. Con <em>Recalcular</em> vuelve al cálculo automático.
+                        <strong>Total:</strong> se calcula solo (tarifa × noches). Si lo editás, queda fijo.
                     </div>
                 </div>
                 <div id="desglose-aire" class="col-12">
@@ -347,11 +348,12 @@
                 <div class="col-md-3">
                     <label asp-for="CanalOrigen" class="form-label">Canal de origen</label>
                     <select asp-for="CanalOrigen" class="form-select">
-                        <option value="">— Sin especificar —</option>
                         <option value="WhatsApp">WhatsApp</option>
                         <option value="Página web">Página web</option>
+                        <option value="Alquiler Argentina">Alquiler Argentina</option>
                         <option value="Recomendación">Recomendación</option>
                         <option value="De paso">De paso</option>
+                        <option value="" data-discreto selected="@(string.IsNullOrEmpty(Model.CanalOrigen) ? "selected" : null)">— Sin especificar —</option>
                     </select>
                 </div>
                 <div class="col-md-5">
@@ -377,6 +379,10 @@
     }
     .resumen-grupal-box strong { font-size: 1.5rem; color: #0d6efd; }
     .resumen-grupal-sep { color: #6c757d; font-size: 1.2rem; }
+    .input-group > #MontoTotal:has(+ #btn-recalcular-total.d-none) {
+        border-top-right-radius: var(--bs-border-radius) !important;
+        border-bottom-right-radius: var(--bs-border-radius) !important;
+    }
     .campo-inactivo {
         background-color: #e9ecef !important;
         cursor: not-allowed;
@@ -1515,7 +1521,7 @@
         if (!totalFijo) {
             const precio = parseFloat(gid('PrecioPorDia').value);
             if (noches != null && precio > 0) {
-                gid('MontoTotal').value = (precio * noches).toFixed(2);
+                gid('MontoTotal').value = Math.round(precio * noches);
                 gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
             } else {
                 gid('MontoTotal').value = '';
@@ -1544,7 +1550,7 @@
                 habilitarCampo('PrecioPorDia');
                 gid('PrecioPorDia').value = precio;
                 const tempLabel = data.temporada ? ` — ${data.temporada}` : '';
-                gid('precio-hint').textContent = `Tarifa configurada: $${precio}/día${tempLabel}`;
+                gid('precio-hint').textContent = `Tarifa configurada: $${Number(precio).toLocaleString('es-AR', { maximumFractionDigits: 0 })}/día${tempLabel}`;
                 setModoTotal(false);
                 actualizarNochesYTotal();
             } else {
@@ -1881,7 +1887,7 @@
         const subtotalAire = calcularSubtotalAire();
         if (subtotalAire > 0) {
             const montoAlojamiento = parseFloat(gid('MontoTotal').value) || 0;
-            gid('MontoTotal').value = (montoAlojamiento + subtotalAire).toFixed(2);
+            gid('MontoTotal').value = Math.round(montoAlojamiento + subtotalAire);
         }
         gid('PrecioPorDia').readOnly = false;
         gid('MontoTotal').readOnly   = false;

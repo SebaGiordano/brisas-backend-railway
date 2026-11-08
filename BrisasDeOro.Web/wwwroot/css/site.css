@@ -434,3 +434,4 @@ header .navbar .navbar-nav .nav-link {
 .sp-item { padding: .5rem .75rem; cursor: pointer; font-size: .95rem; white-space: nowrap; }
 .sp-item:hover, .sp-item.active { background-color: #e9ecef; }
 .sp-item.disabled { color: #adb5bd; cursor: not-allowed; background: none; }
+.sp-item.sp-item-discreto { color: #8a9099; font-style: italic; font-size: .88rem; border-top: 1px solid #eef0f2; }

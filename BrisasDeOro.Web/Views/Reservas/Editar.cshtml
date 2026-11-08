@@ -272,9 +272,10 @@
                     </label>
                     <div class="input-group">
                         <span class="input-group-text">$</span>
-                        <input asp-for="PrecioPorDia" type="number" step="0.01" min="0"
+                        <input asp-for="PrecioPorDia" type="number" step="1" min="0"
                                class="form-control campo-inactivo" id="PrecioPorDia"
-                               placeholder="0,00" readonly />
+                               value="@(Model.PrecioPorDia?.ToString("0", System.Globalization.CultureInfo.InvariantCulture))"
+                               placeholder="0" readonly />
                     </div>
                     <div class="form-text" id="precio-hint">
                         Completá alojamiento y personas para habilitar
@@ -287,21 +288,23 @@
                     </label>
                     <div class="input-group">
                         <span class="input-group-text">$</span>
-                        <input asp-for="MontoTotal" type="number" step="0.01" min="0"
+                        <input asp-for="MontoTotal" type="number" step="1" min="0"
                                class="form-control campo-inactivo" id="MontoTotal"
-                               placeholder="0,00" readonly />
+                               value="@(Model.MontoTotal?.ToString("0", System.Globalization.CultureInfo.InvariantCulture))"
+                               placeholder="0" readonly />
+                        <button type="button" class="btn btn-outline-primary d-none" id="btn-recalcular-total"
+                                title="Volver al cálculo automático (tarifa × noches)">
+                            <i class="bi bi-arrow-repeat me-1"></i>Recalcular
+                        </button>
                     </div>
                     <div class="form-text" id="total-hint">
                         Se calcula automáticamente (precio × noches)
                     </div>
-                    <button type="button" class="btn btn-link btn-sm p-0 d-none" id="btn-recalcular-total">
-                        <i class="bi bi-arrow-repeat me-1"></i>Recalcular (tarifa × noches)
-                    </button>
                     <span asp-validation-for="MontoTotal" class="text-danger small"></span>
                 </div>
                 <div class="col-md-4 d-flex align-items-center">
                     <div class="alert alert-info py-2 px-3 mb-0 small w-100">
-                        <strong>Total:</strong> se calcula automáticamente (tarifa por día × noches). Si lo editás a mano para redondear o aplicar un descuento, queda fijo y la tarifa no lo modifica. Con <em>Recalcular</em> vuelve al cálculo automático.
+                        <strong>Total:</strong> se calcula solo (tarifa × noches). Si lo editás, queda fijo.
                     </div>
                 </div>
                 <div id="desglose-aire" class="col-12">
@@ -359,11 +362,19 @@
                 <div class="col-md-3">
                     <label asp-for="CanalOrigen" class="form-label">Canal de origen</label>
                     <select asp-for="CanalOrigen" class="form-select">
-                        <option value="">— Sin especificar —</option>
                         <option value="WhatsApp">WhatsApp</option>
                         <option value="Página web">Página web</option>
+                        <option value="Alquiler Argentina">Alquiler Argentina</option>
                         <option value="Recomendación">Recomendación</option>
                         <option value="De paso">De paso</option>
+                        @{
+                            var canalesLista = new[] { "WhatsApp", "Página web", "Alquiler Argentina", "Recomendación", "De paso" };
+                        }
+                        @if (!string.IsNullOrEmpty(Model.CanalOrigen) && !canalesLista.Contains(Model.CanalOrigen))
+                        {
+                            <option value="@Model.CanalOrigen">@Model.CanalOrigen</option>
+                        }
+                        <option value="" data-discreto selected="@(string.IsNullOrEmpty(Model.CanalOrigen) ? "selected" : null)">— Sin especificar —</option>
                     </select>
                 </div>
                 <div class="col-md-5">
@@ -458,6 +469,11 @@
     }
     .resumen-grupal-box strong { font-size: 1.5rem; color: #0d6efd; }
     .resumen-grupal-sep { color: #6c757d; font-size: 1.2rem; }
+    .msg-no-disponible { color: #9a5b00; }
+    .input-group > #MontoTotal:has(+ #btn-recalcular-total.d-none) {
+        border-top-right-radius: var(--bs-border-radius) !important;
+        border-bottom-right-radius: var(--bs-border-radius) !important;
+    }
     #AlojamientoId-btn {
         cursor: pointer;
     }
@@ -637,6 +653,7 @@
     let esGrupal         = @(Model.EsGrupal ? "true" : "false");
     let unidadesGrupales = {};          // { id -> { nombre, capacidad, personas, tipo } }
     let _datosDisponibles = [];
+    let msgDisponibilidadBase = null;   // { className, text } del último mensaje de disponibilidad (no el de "no disponible")
 
     // IDs de unidades originalmente en la reserva (para confirmar antes de quitar)
     const unidadesOriginales = new Set(preUnidades.map(u => String(u.id)));
@@ -1380,6 +1397,7 @@
         const select = gid('AlojamientoId');
         const msg    = gid('disponibilidad-msg');
         const curVal = prevAlojId ?? select.value;
+        const curNombre = (curVal && select.querySelector(`option[value="${curVal}"]`)?.textContent) || 'El alojamiento elegido';
 
         msg.className   = 'form-text text-muted';
         msg.textContent = 'Verificando disponibilidad…';
@@ -1420,6 +1438,7 @@
                 msg.className   = 'form-text text-success';
                 msg.textContent = `${cantUnidades} de ${TOTAL_UNIDADES_NO_APART} unidades disponibles.`;
             }
+            msgDisponibilidadBase = { className: msg.className, text: msg.textContent };
 
             if (esGrupal) {
                 renderCheckboxesGrupales(data);
@@ -1430,8 +1449,10 @@
                 } else if (curVal) {
                     select.value = '';
                     sincronizarBotonAlojamiento();
-                    msg.className   = 'form-text text-warning fw-semibold';
-                    msg.textContent = 'El alojamiento anterior no está disponible en las nuevas fechas.';
+                    msg.className   = 'form-text fw-semibold msg-no-disponible';
+                    msg.textContent = `${curNombre} no está disponible en las nuevas fechas porque tiene otra reserva. ` +
+                                      'Elegí otro alojamiento o ajustá las fechas. Si el huésped extiende su estadía en otra unidad, ' +
+                                      'podés crear una reserva vinculada para los días extra.';
                 }
                 actualizarCantidadState();
                 actualizarPrecioState();
@@ -1527,7 +1548,7 @@
             const precio = parseFloat(gid('PrecioPorDia').value);
             if (noches != null && precio > 0) {
                 habilitarCampo('MontoTotal');
-                gid('MontoTotal').value = (precio * noches).toFixed(2);
+                gid('MontoTotal').value = Math.round(precio * noches);
                 gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
             } else {
                 bloquearCampo('MontoTotal');
@@ -1554,7 +1575,7 @@
                 habilitarCampo('PrecioPorDia');
                 gid('PrecioPorDia').value = precio;
                 const tempLabel = data.temporada ? ` — ${data.temporada}` : '';
-                gid('precio-hint').textContent = `Tarifa configurada: $${precio}/día${tempLabel}`;
+                gid('precio-hint').textContent = `Tarifa configurada: $${Number(precio).toLocaleString('es-AR', { maximumFractionDigits: 0 })}/día${tempLabel}`;
                 setModoTotal(false);
                 actualizarNochesYTotal();
             } else {
@@ -1620,6 +1641,12 @@
     });
 
     gid('AlojamientoId').addEventListener('change', function () {
+        // Al elegir otra unidad, el aviso de "no disponible" se reemplaza por el mensaje de disponibilidad
+        const msgDisp = gid('disponibilidad-msg');
+        if (this.value && msgDisp.classList.contains('msg-no-disponible') && msgDisponibilidadBase) {
+            msgDisp.className   = msgDisponibilidadBase.className;
+            msgDisp.textContent = msgDisponibilidadBase.text;
+        }
         actualizarCantidadState();
         gid('PrecioPorDia').value = '';
         setModoTotal(false);
@@ -1822,7 +1849,7 @@
         const subtotalAire = calcularSubtotalAire();
         if (subtotalAire > 0) {
             const montoAlojamiento = parseFloat(gid('MontoTotal').value) || 0;
-            gid('MontoTotal').value = (montoAlojamiento + subtotalAire).toFixed(2);
+            gid('MontoTotal').value = Math.round(montoAlojamiento + subtotalAire);
         }
         // requestSubmit dispara el evento submit (con validación), que ahora dejará pasar
         gid('form-reserva').requestSubmit();

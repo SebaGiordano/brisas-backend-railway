@@ -50,12 +50,10 @@
     /* Encabezados de columna: nunca partir el texto en dos líneas (ej. "Saldo pendiente",
        "Estado de pago"), en ningún ancho de pantalla. */
     .tabla-reservas-responsive th { white-space: nowrap; }
-    .btn-ver-reserva { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; }
+    .btn-ver-reserva { white-space: nowrap; align-items: center; justify-content: center; }
+    .btn-ver-reserva.d-md-none { display: flex; padding-top: .45rem; padding-bottom: .45rem; }
     .tabla-reservas-responsive td .badge,
     .tabla-reservas-responsive td .badge-pago { vertical-align: middle; line-height: 1.2; }
-    @@media (max-width: 767.98px) {
-        .btn-ver-reserva { width: 100%; padding-top: .45rem; padding-bottom: .45rem; }
-    }
     @@media (max-width: 767.98px) {
         .tabla-reservas-responsive { overflow-x: auto; overflow-y: auto; max-height: 400px; -webkit-overflow-scrolling: touch; }
         .tabla-reservas-responsive table { min-width: 900px; }
@@ -177,20 +175,25 @@
 {
     var tipo = TempData["MensajeTipo"]?.ToString() ?? "success";
     int? reservaCreadaId = int.TryParse(TempData["ReservaCreadaId"]?.ToString(), out var rid) ? rid : null;
-    <div class="alert alert-@tipo alert-dismissible fade show" role="alert">
-        <div class="d-flex flex-column flex-md-row align-items-md-center gap-2 pe-4">
+    <div class="alert alert-@tipo fade show alerta-reserva" role="alert">
+        <div class="d-flex align-items-center gap-2">
             <div class="flex-grow-1">
-                <i class="bi bi-@(tipo == "success" ? "check-circle" : tipo == "warning" ? "exclamation-triangle" : "info-circle") me-2"></i>
-                @TempData["Mensaje"]
+                <i class="bi bi-@(tipo == "success" ? "check-circle" : tipo == "warning" ? "exclamation-triangle" : "info-circle") me-2"></i>@TempData["Mensaje"]
             </div>
             @if (reservaCreadaId.HasValue)
             {
-                <a asp-action="Details" asp-route-id="@reservaCreadaId" class="btn btn-success btn-sm btn-ver-reserva">
+                <a asp-action="Details" asp-route-id="@reservaCreadaId" class="btn btn-success btn-sm btn-ver-reserva d-none d-md-inline-flex">
                     Ver reserva <i class="bi bi-arrow-right ms-1"></i>
                 </a>
             }
+            <button type="button" class="btn-close flex-shrink-0" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        @if (reservaCreadaId.HasValue)
+        {
+            <a asp-action="Details" asp-route-id="@reservaCreadaId" class="btn btn-success btn-sm btn-ver-reserva w-100 mt-2 d-md-none">
+                Ver reserva <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        }
     </div>
 }
 
