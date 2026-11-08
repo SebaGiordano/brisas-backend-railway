@@ -422,3 +422,15 @@ header .navbar .navbar-nav .nav-link {
 @media (max-width: 389.98px) {
     footer .footer-mobile { font-size: .78rem; }
 }
+
+/* ── Desplegable propio (select-propio.js) ── */
+.sp-btn { cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-btn:disabled { cursor: not-allowed; }
+.sp-menu {
+    position: fixed; z-index: 2000; overflow-y: auto; background: #fff;
+    border: 1px solid #ced4da; border-radius: .375rem; box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+    max-width: calc(100vw - 16px);
+}
+.sp-item { padding: .5rem .75rem; cursor: pointer; font-size: .95rem; white-space: nowrap; }
+.sp-item:hover, .sp-item.active { background-color: #e9ecef; }
+.sp-item.disabled { color: #adb5bd; cursor: not-allowed; background: none; }

@@ -369,16 +369,25 @@
             return { td, text: td.textContent.trim(), avail, nights };
         });
 
-        data.forEach(({ td, text, avail, nights }) => {
-            if (avail < 4 || !text) return;
-            const fs = bsFont(text, getTargetPx(avail, nights), family);
-            let fsFinal = fs;
-            if (!isMobile) {
-                const filas = td.rowSpan || 1;
-                const maxFs = filas > 1 ? 22 : 17; // tope: 17 px una fila, 22 px reservas de dos filas (aparts)
-                fsFinal = Math.min(fs, maxFs);
-            }
-            td.style.fontSize     = fsFinal.toFixed(1) + 'px';
+        // Tamaño calculado para cada reserva
+        const calculados = data.map(d =>
+            (d.avail < 4 || !d.text) ? null : bsFont(d.text, getTargetPx(d.avail, d.nights), family));
+
+        // Mobile: tope = mediana de las reservas de 2+ noches (así las cortas no quedan más grandes que el resto)
+        let topeMobile = 13;
+        if (isMobile) {
+            const largos = calculados.filter((fs, i) => fs != null && data[i].nights >= 2).sort((a, b) => a - b);
+            if (largos.length) topeMobile = largos[Math.floor(largos.length / 2)];
+        }
+
+        data.forEach(({ td }, i) => {
+            const fs = calculados[i];
+            if (fs == null) return;
+            const filas = td.rowSpan || 1;
+            const maxFs = isMobile
+                ? (filas > 1 ? topeMobile * 1.25 : topeMobile)
+                : (filas > 1 ? 22 : 17); // escritorio: 17 px una fila, 22 px reservas de dos filas (aparts)
+            td.style.fontSize     = Math.min(fs, maxFs).toFixed(1) + 'px';
             td.style.whiteSpace   = 'nowrap';
             td.style.textOverflow = 'ellipsis';
             td.style.textAlign    = 'center';

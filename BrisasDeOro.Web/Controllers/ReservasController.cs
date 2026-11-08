@@ -960,6 +960,7 @@ public class ReservasController : Controller
 
         TempData["Mensaje"]     = $"Reserva de {reserva.NombreHuesped} guardada correctamente.";
         TempData["MensajeTipo"] = "success";
+        TempData["ReservaCreadaId"] = reserva.Id;
         return RedirectToAction(nameof(Index));
     }
 

@@ -24,10 +24,13 @@
         #header-pago #nav-bar-pago-mobile .btn-volver-detalle > span.d-md-none { font-size: 13px !important; }
         /* Botón Volver al calendario: font-size explícito con máxima especificidad */
         #header-pago #nav-bar-pago-mobile .btn-volver-calendario { font-size: 13px !important; }
-        /* Resumen — fila 1: Titular + Alojamiento + Tarifa/día */
-        #resumen-row > div:nth-child(1) { order: 1; flex: 0 0 33.333% !important; max-width: 33.333% !important; }
-        #resumen-row > div:nth-child(2) { order: 2; flex: 0 0 33.333% !important; max-width: 33.333% !important; }
-        #resumen-row > div:nth-child(6) { order: 3; flex: 0 0 33.333% !important; max-width: 33.333% !important; padding-left: .75rem !important; }
+        /* Resumen — fila 1: Titular a todo el ancho */
+        #resumen-row > div:nth-child(1) { order: 1; flex: 0 0 100% !important; max-width: 100% !important; }
+        #resumen-row > div:nth-child(1) .detalle-valor { white-space: normal !important; overflow-wrap: anywhere; }
+        /* Resumen — fila 2: Alojamiento + Tarifa/día */
+        #resumen-row > div:nth-child(2) { order: 2; flex: 0 0 50% !important; max-width: 50% !important; margin-top: .75rem !important; }
+        #resumen-row > div:nth-child(6) { order: 3; flex: 0 0 50% !important; max-width: 50% !important; margin-top: .75rem !important; }
+        #resumen-row > div:nth-child(2) .detalle-valor { white-space: normal !important; overflow-wrap: anywhere; }
         /* Resumen — fila 2: Ingreso + Salida + Noches (margin-top para separar de fila 1) */
         #resumen-row > div:nth-child(3) { order: 4; flex: 0 0 33.333% !important; max-width: 33.333% !important; margin-top: .75rem !important; }
         #resumen-row > div:nth-child(4) { order: 5; flex: 0 0 33.333% !important; max-width: 33.333% !important; margin-top: .75rem !important; }
@@ -362,7 +365,23 @@
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
+    <script src="~/lib/flatpickr/flatpickr.min.js"></script>
+    <script src="~/lib/flatpickr/l10n/es.js"></script>
+
     <script>
+    let fpFechaPago = null;
+    fpFechaPago = flatpickr(document.getElementById('Fecha'), {
+        locale: 'es', dateFormat: 'Y-m-d', altInput: true, altFormat: 'd/m/Y',
+        altInputClass: 'form-control fecha-estadia', disableMobile: true, allowInput: false,
+        onChange: function () {
+            const err = document.querySelector('[data-valmsg-for="Fecha"]');
+            if (err) err.textContent = '';
+            if (fpFechaPago) fpFechaPago.altInput.classList.remove('is-invalid');
+        }
+    });
+    fpFechaPago.altInput.placeholder = 'dd/mm/aaaa';
+
     // ── Constantes del servidor ───────────────────────────────────────────────
     const saldoPendiente  = @Model.SaldoPendiente.ToString(System.Globalization.CultureInfo.InvariantCulture);
     const montoTotal      = @Model.MontoTotal.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -454,6 +473,14 @@
 
     document.getElementById('form-pago').addEventListener('submit', function (e) {
         if (_confirmadoPago) return;
+        if (!document.getElementById('Fecha').value) {
+            e.preventDefault();
+            const err = document.querySelector('[data-valmsg-for="Fecha"]');
+            if (err) { err.textContent = 'Seleccioná la fecha en que se realizó el pago.'; err.classList.add('field-validation-error'); }
+            fpFechaPago.altInput.classList.add('is-invalid');
+            fpFechaPago.altInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
         e.preventDefault();
 
         const tipo   = document.getElementById('TipoPago');

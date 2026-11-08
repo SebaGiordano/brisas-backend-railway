@@ -50,7 +50,8 @@ public class PagosController : Controller
             TotalCobrado      = totalCobrado,
             SaldoPendiente    = saldoPendiente,
             Monto             = saldoPendiente,
-            Fecha             = DateTime.Today,
+            // Reserva ya terminada (ej.: carga de temporadas anteriores): la fecha arranca vacía y hay que elegirla
+            Fecha = reserva.FechaSalida.Date < DateTime.Today ? null : DateTime.Today,
             TipoPago          = saldoPendiente < 0 ? TipoPago.Ajuste
                               : tienePagosPrevios  ? TipoPago.Cancelacion
                               :                      TipoPago.Sena,
@@ -87,7 +88,8 @@ public class PagosController : Controller
             TipoPago     = model.TipoPago,
             Monto        = model.Monto,
             MetodoPago   = model.MetodoPago,
-            Fecha        = DateTime.Now,
+            // Día elegido por el usuario + hora del momento del registro
+            Fecha = DateTime.SpecifyKind(model.Fecha!.Value.Date + DateTime.Now.TimeOfDay, DateTimeKind.Local),
             Observaciones = model.Observaciones
         };
 
@@ -105,6 +107,42 @@ public class PagosController : Controller
                 routeValues["returnUrl"] = model.ReturnUrl;
         }
 
+        return RedirectToAction("Details", "Reservas", routeValues);
+    }
+
+    // ── EditarPago POST ───────────────────────────────────────────────────────
+    // Edita fecha, método y observaciones. Monto y concepto no se modifican.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditarPago(int id, DateTime? fecha, MetodoPago metodoPago,
+                                                string? observaciones, string? from, string? returnUrl)
+    {
+        var pago = await _context.Pagos.FindAsync(id);
+        if (pago == null) return NotFound();
+
+        var routeValues = new Dictionary<string, string?> { ["id"] = pago.ReservaId.ToString() };
+        if (!string.IsNullOrEmpty(from))
+        {
+            routeValues["from"] = from;
+            if (from == "facturacion" && Url.IsLocalUrl(returnUrl))
+                routeValues["returnUrl"] = returnUrl;
+        }
+
+        if (fecha == null)
+        {
+            TempData["Mensaje"]     = "Seleccioná la fecha en que se realizó el pago.";
+            TempData["MensajeTipo"] = "danger";
+            return RedirectToAction("Details", "Reservas", routeValues);
+        }
+
+        // Se conserva la hora original del registro; solo cambia el día
+        pago.Fecha         = DateTime.SpecifyKind(fecha.Value.Date + pago.Fecha.TimeOfDay, DateTimeKind.Local);
+        pago.MetodoPago    = metodoPago;
+        pago.Observaciones = string.IsNullOrWhiteSpace(observaciones) ? null : observaciones.Trim();
+        await _context.SaveChangesAsync();
+
+        TempData["Mensaje"]     = "Pago actualizado correctamente.";
+        TempData["MensajeTipo"] = "success";
         return RedirectToAction("Details", "Reservas", routeValues);
     }
 

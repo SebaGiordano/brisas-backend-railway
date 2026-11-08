@@ -169,13 +169,10 @@
                 <div id="disponibilidad-msg-grupal" class="form-text mb-2"></div>
                 <div id="lista-checkboxes-grupal"></div>
                 <div id="resumen-grupal" class="mt-3 d-none">
-                    <div class="d-flex gap-3 flex-wrap">
-                        <span class="text-muted small">
-                            Unidades seleccionadas: <strong id="grupal-cant-unidades">0</strong>
-                        </span>
-                        <span class="text-muted small">
-                            Total personas: <strong id="grupal-total-personas">0</strong>
-                        </span>
+                    <div class="resumen-grupal-box">
+                        <span><strong id="grupal-cant-unidades">0</strong> <span id="grupal-lbl-unidades">unidades</span></span>
+                        <span class="resumen-grupal-sep">·</span>
+                        <span><strong id="grupal-total-personas">0</strong> <span id="grupal-lbl-personas">personas</span></span>
                     </div>
                 </div>
                 @* Campos ocultos que el JS completa antes del submit *@
@@ -287,11 +284,14 @@
                     <div class="form-text" id="total-hint">
                         Se calcula automáticamente (precio × noches)
                     </div>
+                    <button type="button" class="btn btn-link btn-sm p-0 d-none" id="btn-recalcular-total">
+                        <i class="bi bi-arrow-repeat me-1"></i>Recalcular (tarifa × noches)
+                    </button>
                     <span asp-validation-for="MontoTotal" class="text-danger small"></span>
                 </div>
                 <div class="col-md-4 d-flex align-items-center">
                     <div class="alert alert-info py-2 px-3 mb-0 small w-100">
-                        <strong>Bidireccional:</strong> ingresá el precio por día <em>o</em> el total directamente. El otro campo se recalcula automáticamente según las noches de estadía.
+                        <strong>Total:</strong> se calcula automáticamente (tarifa por día × noches). Si lo editás a mano para redondear o aplicar un descuento, queda fijo y la tarifa no lo modifica. Con <em>Recalcular</em> vuelve al cálculo automático.
                     </div>
                 </div>
                 <div id="desglose-aire" class="col-12">
@@ -370,6 +370,13 @@
 </form>
 
 <style>
+    .resumen-grupal-box {
+        display: flex; justify-content: center; align-items: baseline; flex-wrap: wrap; gap: .5rem;
+        text-align: center; background: #eef4ff; border: 1px solid #b6cdf5; border-left: 4px solid #0d6efd;
+        border-radius: .5rem; padding: .75rem 1rem; font-size: 1.05rem; color: #212529;
+    }
+    .resumen-grupal-box strong { font-size: 1.5rem; color: #0d6efd; }
+    .resumen-grupal-sep { color: #6c757d; font-size: 1.2rem; }
     .campo-inactivo {
         background-color: #e9ecef !important;
         cursor: not-allowed;
@@ -621,6 +628,20 @@
     const PREV_ALOJ_ID = '@prevAlojId';
     let capacidades    = {};   // { "id": capacidad } de alojamientos disponibles
     let totalFijo      = false;
+
+    // ── Modo del total: automático (tarifa × noches) o manual ───────────────
+    function setModoTotal(manual) {
+        totalFijo = manual;
+        gid('total-hint').textContent = manual
+            ? 'Total editado manualmente — la tarifa por día no lo modifica.'
+            : 'Se calcula automáticamente (tarifa × noches)';
+        actualizarBotonRecalcular();
+    }
+    function actualizarBotonRecalcular() {
+        const btn = gid('btn-recalcular-total');
+        if (btn) btn.classList.toggle('d-none', !totalFijo || gid('EsInvitacion').checked);
+    }
+
     let esGrupal       = false;
 
     // Estado grupal: { id -> { nombre, capacidad, personas } }
@@ -1050,9 +1071,8 @@
         if (activar) {
             actualizarAlertaGrupal();
             // En modo grupal: precio por día queda bloqueado hasta tener fechas + unidades tildadas
-            totalFijo = false;
+            setModoTotal(false);
             gid('MontoTotal').value = '';
-            gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
             actualizarPrecioState();
             // Renderizar checkboxes si ya hay disponibles cargados (con su "tipo" original)
             if (_datosDisponibles.length > 0)
@@ -1069,10 +1089,9 @@
             gid('CantidadHuespedes').value    = '';
             gid('capacidad-hint').textContent = 'Seleccioná un alojamiento primero';
 
-            totalFijo = false;
+            setModoTotal(false);
             gid('PrecioPorDia').value = '';
             gid('MontoTotal').value   = '';
-            gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
             actualizarPrecioState();
             actualizarNochesYTotal();
         }
@@ -1296,6 +1315,8 @@
         gid('grupal-cant-unidades').textContent  = cantUnidades;
         gid('grupal-total-personas').textContent = totalPersonas;
         gid('resumen-grupal').classList.toggle('d-none', cantUnidades === 0);
+        gid('grupal-lbl-unidades').textContent = cantUnidades === 1 ? 'unidad' : 'unidades';
+        gid('grupal-lbl-personas').textContent = totalPersonas === 1 ? 'persona' : 'personas';
 
         actualizarPrecioState();
         actualizarBloqueoApartGrupal();
@@ -1399,8 +1420,7 @@
         bloquearCampo('MontoTotal');
         gid('PrecioPorDia').value = '';
         gid('MontoTotal').value   = '';
-        gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
-        totalFijo = false;
+        setModoTotal(false);
 
         if (esGrupal) {
             unidadesGrupales = {};
@@ -1418,10 +1438,10 @@
             if (!gid('MontoTotal').value) gid('MontoTotal').value = '0';
             totalFijo = true;
             gid('total-hint').textContent = 'Podés registrar una colaboración voluntaria si aplica';
+            actualizarBotonRecalcular();
         } else {
-            totalFijo = false;
+            setModoTotal(false);
             gid('MontoTotal').value = '';
-            gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
             actualizarPrecioState();
             actualizarNochesYTotal();
         }
@@ -1463,8 +1483,7 @@
                     : 'Tildá al menos una unidad con personas asignadas para habilitar';
                 bloquearCampo('MontoTotal');
                 gid('MontoTotal').value = '';
-                gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
-                totalFijo = false;
+                setModoTotal(false);
             }
             return;
         }
@@ -1482,8 +1501,7 @@
             bloquearCampo('MontoTotal');
             gid('MontoTotal').value     = '';
             gid('noches-display').value = '';
-            gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
-            totalFijo = false;
+            setModoTotal(false);
         }
     }
 
@@ -1494,13 +1512,7 @@
         gid('noches-display').value = noches != null
             ? `${noches} noche${noches !== 1 ? 's' : ''}` : '';
 
-        if (totalFijo) {
-            const total = parseFloat(gid('MontoTotal').value);
-            if (noches != null && noches > 0 && total > 0) {
-                gid('PrecioPorDia').value = (total / noches).toFixed(2);
-                gid('precio-hint').textContent = 'Calculado automáticamente (total ÷ noches)';
-            }
-        } else {
+        if (!totalFijo) {
             const precio = parseFloat(gid('PrecioPorDia').value);
             if (noches != null && precio > 0) {
                 gid('MontoTotal').value = (precio * noches).toFixed(2);
@@ -1533,12 +1545,12 @@
                 gid('PrecioPorDia').value = precio;
                 const tempLabel = data.temporada ? ` — ${data.temporada}` : '';
                 gid('precio-hint').textContent = `Tarifa configurada: $${precio}/día${tempLabel}`;
-                totalFijo = false;
+                setModoTotal(false);
                 actualizarNochesYTotal();
             } else {
                 gid('PrecioPorDia').value = '';
                 gid('precio-hint').textContent = 'Sin tarifa configurada — ingresá el precio manualmente';
-                totalFijo = false;
+                setModoTotal(false);
                 actualizarNochesYTotal();
             }
         } catch { /* silencioso */ }
@@ -1634,26 +1646,32 @@
     });
 
     gid('PrecioPorDia').addEventListener('input', function () {
-        // El precio por día siempre tiene prioridad: resetear cualquier edición
-        // manual del total y recalcular automáticamente.
-        totalFijo = false;
-        gid('total-hint').textContent = 'Se calcula automáticamente (precio × noches)';
-        actualizarNochesYTotal();
+        // Si el total está vacío o en cero, vuelve a ser automático
+        const total = parseFloat(gid('MontoTotal').value);
+        if (totalFijo && !(total > 0) && !gid('EsInvitacion').checked) setModoTotal(false);
+        if (!totalFijo) actualizarNochesYTotal();
+        else actualizarTotalFinalUI();
     });
 
     gid('MontoTotal').addEventListener('input', function () {
-        totalFijo = true;
-        const noches = calcularNoches();
-        const total  = parseFloat(this.value);
-        if (noches != null && noches > 0 && total > 0) {
-            gid('PrecioPorDia').value = (total / noches).toFixed(2);
-            gid('precio-hint').textContent = 'Calculado automáticamente (total ÷ noches)';
-            gid('total-hint').textContent  = 'Total ingresado manualmente';
-        } else {
-            gid('PrecioPorDia').value = '';
-            gid('total-hint').textContent = 'Total ingresado manualmente';
-        }
+        // Escribir un total > 0 lo fija; nunca modifica la tarifa por día
+        const total = parseFloat(this.value);
+        if (total > 0 && !totalFijo && !gid('EsInvitacion').checked) setModoTotal(true);
         actualizarTotalFinalUI();
+    });
+
+    gid('MontoTotal').addEventListener('change', function () {
+        // Al salir del campo: vacío o cero → vuelve al cálculo automático
+        const total = parseFloat(this.value);
+        if (!(total > 0) && !gid('EsInvitacion').checked) {
+            setModoTotal(false);
+            actualizarNochesYTotal();
+        }
+    });
+
+    gid('btn-recalcular-total').addEventListener('click', function () {
+        setModoTotal(false);
+        actualizarNochesYTotal();
     });
 
     // ── Poblar hidden inputs grupal antes del submit ──────────────────────────
@@ -1893,8 +1911,14 @@
 
         if (gid('MontoTotal').value) {
             habilitarCampo('MontoTotal');
-            totalFijo = true;
-            gid('total-hint').textContent = 'Total ingresado manualmente';
+            if (!gid('EsInvitacion').checked) {
+                const precioInit = parseFloat(gid('PrecioPorDia').value);
+                const totalInit  = parseFloat(gid('MontoTotal').value);
+                if (precioInit > 0 && totalInit > 0 && noches != null && Math.abs(precioInit * noches - totalInit) > 1)
+                    setModoTotal(true);
+                else
+                    setModoTotal(false);
+            }
         }
     })();
     </script>

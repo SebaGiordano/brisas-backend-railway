@@ -32,10 +32,10 @@ public class AgregarPagoViewModel
     [Display(Name = "Método de pago")]
     public MetodoPago MetodoPago { get; set; } = MetodoPago.Efectivo;
 
-    [Required(ErrorMessage = "La fecha es obligatoria.")]
+    [Required(ErrorMessage = "Seleccioná la fecha en que se realizó el pago.")]
     [DataType(DataType.Date)]
     [Display(Name = "Fecha")]
-    public DateTime Fecha { get; set; } = DateTime.Today;
+    public DateTime? Fecha { get; set; }
 
     [Display(Name = "Observaciones")]
     public string? Observaciones { get; set; }
